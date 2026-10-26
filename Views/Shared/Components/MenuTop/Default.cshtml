@@ -1,0 +1,382 @@
+﻿@using System
+@using System.Linq
+@model IEnumerable<AlumniJobConnect.Models.Menu>
+
+@{
+    var menus = Model.ToList();
+
+    var profileMenus = menus
+        .Where(x => (x.MenuName ?? "").Trim()
+            .StartsWith("Hồ sơ", StringComparison.OrdinalIgnoreCase))
+        .ToList();
+
+    bool profileRendered = false;
+}
+
+@foreach (var item in menus)
+{
+    if (profileMenus.Contains(item))
+    {
+        if (!profileRendered)
+        {
+            profileRendered = true;
+
+            <details class="ac-profile">
+                <summary class="ac-link ac-profile-toggle">
+                    Hồ sơ
+
+                    <svg width="14" height="14"
+                         viewBox="0 0 16 16"
+                         fill="none"
+                         stroke="currentColor"
+                         stroke-width="1.8"
+                         aria-hidden="true">
+                        <path d="m4 6 4 4 4-4" />
+                    </svg>
+                </summary>
+
+                <div class="ac-profile-panel">
+                    <span class="ac-panel-title">HỒ SƠ CỦA BẠN</span>
+
+                    @foreach (var profile in profileMenus)
+                    {
+                        <a href="#" class="ac-profile-link">
+                            <span>@profile.MenuName</span>
+                            <span aria-hidden="true">›</span>
+                        </a>
+                    }
+                </div>
+            </details>
+        }
+    }
+    else
+    {
+        <a href="#" class="ac-link">@item.MenuName</a>
+    }
+}
+
+<style>
+    .ac-header,
+    .ac-header * {
+        box-sizing: border-box;
+    }
+
+    .ac-header {
+        position: sticky;
+        top: 0;
+        z-index: 1030;
+        background: #fff;
+        border-bottom: 1px solid #e7eee9;
+        box-shadow: 0 4px 20px rgb(20 50 35 / 5%);
+        font-family: "Segoe UI", Arial, sans-serif;
+    }
+
+    /* Logo trái, menu phải, luôn cùng hàng */
+    .ac-header-inner {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: nowrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 24px;
+        width: 100%;
+        min-height: 82px;
+        padding: 16px 32px;
+    }
+
+    .ac-brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 11px;
+        flex-shrink: 0;
+        color: #193d30;
+        text-decoration: none;
+    }
+
+        .ac-brand:hover {
+            color: #193d30;
+        }
+
+    .ac-brand-icon {
+        display: grid;
+        place-items: center;
+        width: 46px;
+        height: 46px;
+        flex-shrink: 0;
+        color: #fff;
+        background: linear-gradient(135deg, #00b67a, #008d61);
+        border-radius: 13px;
+        box-shadow: 0 4px 12px rgb(0 166 110 / 18%);
+    }
+
+    .ac-brand-name {
+        display: block;
+        font-size: 23px;
+        font-weight: 750;
+        line-height: 1.15;
+        letter-spacing: -.7px;
+        white-space: nowrap;
+    }
+
+        .ac-brand-name > span {
+            color: #00a36c;
+        }
+
+        .ac-brand-name small {
+            display: block;
+            margin-top: 6px;
+            color: #8a9991;
+            font-size: 8px;
+            font-weight: 600;
+            line-height: 1.4;
+            letter-spacing: 1.1px;
+        }
+
+    .ac-navigation {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: nowrap;
+        align-items: center;
+        justify-content: flex-end;
+        flex-shrink: 0;
+        gap: 4px;
+        margin-left: auto;
+    }
+
+        .ac-navigation .ac-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+            margin: 0;
+            padding: 11px 13px;
+            color: #45584d;
+            background: transparent;
+            border: 0;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            line-height: 1.5;
+            text-decoration: none;
+            text-transform: none;
+            white-space: nowrap;
+            cursor: pointer;
+            transition: color .2s, background-color .2s;
+        }
+
+            .ac-navigation .ac-link:hover,
+            .ac-profile[open] > .ac-profile-toggle {
+                color: #008d5f;
+                background: #eaf8f0;
+            }
+
+    .ac-profile {
+        position: relative;
+        flex-shrink: 0;
+    }
+
+    .ac-profile-toggle {
+        list-style: none;
+        user-select: none;
+    }
+
+        .ac-profile-toggle::-webkit-details-marker {
+            display: none;
+        }
+
+        .ac-profile-toggle svg {
+            transition: transform .2s;
+        }
+
+    .ac-profile[open] .ac-profile-toggle svg {
+        transform: rotate(180deg);
+    }
+
+    .ac-profile-panel {
+        position: absolute;
+        top: calc(100% + 10px);
+        right: 0;
+        z-index: 1040;
+        width: 250px;
+        padding: 10px;
+        background: #fff;
+        border: 1px solid #e5eee8;
+        border-radius: 13px;
+        box-shadow: 0 14px 35px rgb(20 50 35 / 14%);
+    }
+
+    .ac-panel-title {
+        display: block;
+        padding: 8px 12px 10px;
+        color: #8a9991;
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 1.2px;
+    }
+
+    .ac-profile-link {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        padding: 12px;
+        color: #344d40;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        line-height: 1.5;
+        text-decoration: none;
+    }
+
+        .ac-profile-link:hover {
+            color: #008d5f;
+            background: #edf8f2;
+        }
+
+        .ac-link:focus-visible,
+        .ac-profile-link:focus-visible {
+            outline: 2px solid #00a36c;
+            outline-offset: 3px;
+        }
+
+    @@media (max-width: 1199.98px) {
+        .ac-header-inner {
+            gap: 16px;
+            padding: 14px 20px;
+        }
+
+        .ac-brand-name {
+            font-size: 20px;
+        }
+
+            .ac-brand-name small {
+                font-size: 7px;
+                letter-spacing: .6px;
+            }
+
+        .ac-navigation {
+            gap: 2px;
+        }
+
+            .ac-navigation .ac-link {
+                padding: 10px 8px;
+                font-size: 13px;
+            }
+    }
+
+    /* Màn hình nhỏ: vẫn cùng hàng, vuốt ngang để xem menu */
+    @@media (max-width: 991.98px) {
+        .ac-header {
+            position: relative;
+            overflow-x: auto;
+        }
+
+        .ac-header-inner {
+            width: max-content;
+            min-width: 100%;
+            min-height: 74px;
+            gap: 24px;
+            padding: 14px 16px;
+            align-items: flex-start;
+        }
+
+        .ac-brand {
+            min-height: 42px;
+        }
+
+        .ac-brand-icon {
+            width: 38px;
+            height: 38px;
+        }
+
+        .ac-brand-name {
+            font-size: 19px;
+        }
+
+            .ac-brand-name small {
+                display: none;
+            }
+
+        .ac-profile-panel {
+            position: static;
+            width: 230px;
+            margin-top: 10px;
+            box-shadow: none;
+        }
+    }
+
+    .ac-account {
+        margin-left: 10px;
+    }
+
+    .ac-navigation .ac-account-toggle {
+        padding: 11px 16px;
+        color: #fff;
+        background: #00a36c;
+        border-radius: 9px;
+    }
+
+        .ac-navigation .ac-account-toggle:hover,
+        .ac-account[open] > .ac-account-toggle {
+            color: #fff;
+            background: #008859;
+        }
+
+    .ac-account .ac-register-link {
+        margin-top: 4px;
+        color: #008859;
+        background: #edf8f2;
+    }
+
+        .ac-account .ac-register-link:hover {
+            background: #dff3e8;
+        }
+</style>
+
+<script>
+    (() => {
+        function setupAccountMenus() {
+            const navigation = document.querySelector(".ac-navigation");
+
+            if (!navigation || navigation.dataset.menusReady) return;
+            navigation.dataset.menusReady = "true";
+
+            const dropdowns = navigation.querySelectorAll("details.ac-profile");
+
+            dropdowns.forEach(dropdown => {
+                dropdown.addEventListener("toggle", () => {
+                    if (!dropdown.open) return;
+
+                    dropdowns.forEach(other => {
+                        if (other !== dropdown) other.open = false;
+                    });
+                });
+            });
+
+            document.addEventListener("click", event => {
+                dropdowns.forEach(dropdown => {
+                    if (!dropdown.contains(event.target)) {
+                        dropdown.open = false;
+                    }
+                });
+            });
+
+            navigation.addEventListener("keydown", event => {
+                if (event.key !== "Escape") return;
+
+                dropdowns.forEach(dropdown => {
+                    if (dropdown.open) {
+                        dropdown.open = false;
+                        dropdown.querySelector("summary").focus();
+                    }
+                });
+            });
+        }
+
+        if (document.readyState === "loading") {
+            document.addEventListener("DOMContentLoaded", setupAccountMenus);
+        } else {
+            setupAccountMenus();
+        }
+    })();
+</script>

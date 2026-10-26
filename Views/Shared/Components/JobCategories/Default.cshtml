@@ -1,0 +1,213 @@
+﻿@using System.Linq
+@model IEnumerable<AlumniJobConnect.Models.JobCategory>
+
+@{
+    string GetIcon(string name)
+    {
+        var text = (name ?? "").ToLowerInvariant();
+
+        if (text.Contains("marketing")) return "fa-bullhorn";
+        if (text.Contains("khách hàng")) return "fa-headset";
+        if (text.Contains("công nghệ thông tin")) return "fa-laptop-code";
+        if (text.Contains("dự án")) return "fa-tasks";
+        if (text.Contains("kinh doanh")) return "fa-chart-line";
+        if (text.Contains("bán hàng")) return "fa-shopping-bag";
+        if (text.Contains("giáo dục")) return "fa-book-reader";
+        if (text.Contains("thiết kế")) return "fa-palette";
+
+        return "fa-briefcase";
+    }
+}
+
+<section class="jc-section">
+    <div class="jc-container">
+
+        <div class="jc-heading">
+            <span class="jc-eyebrow">ĐỊNH HƯỚNG TƯƠNG LAI</span>
+            <h2>Khám phá <span>ngành nghề</span></h2>
+            <p>Tìm lĩnh vực phù hợp, mở lối cho hành trình sự nghiệp của bạn.</p>
+        </div>
+
+        <div class="jc-grid">
+            @foreach (var item in Model)
+            {
+                var count = item.JobPosts.Count();
+
+                <article class="jc-card">
+                    <div class="jc-card-top">
+                        <span class="jc-icon">
+                            <i class="fa @GetIcon(item.CategoryName)"
+                               aria-hidden="true"></i>
+                        </span>
+
+                        <span class="jc-count">
+                            @count tin tuyển dụng
+                        </span>
+                    </div>
+
+                    <h3>@item.CategoryName</h3>
+
+                    <p class="jc-description">
+                        @(count > 0
+                                            ? "Khám phá những cơ hội trong lĩnh vực này."
+                                            : "Cơ hội mới sẽ được cập nhật tại đây.")
+                </p>
+            </article>
+                        }
+        </div>
+
+    </div>
+</section>
+
+<style>
+    .jc-section,
+    .jc-section * {
+        box-sizing: border-box;
+    }
+
+    .jc-section {
+        padding: 64px 24px;
+        background: linear-gradient(180deg, #f4faf7 0%, #fff 100%);
+        font-family: "Segoe UI", Arial, sans-serif;
+    }
+
+    .jc-container {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    .jc-heading {
+        margin-bottom: 36px;
+        text-align: center;
+    }
+
+    .jc-eyebrow {
+        display: inline-block;
+        margin-bottom: 12px;
+        color: #008b5f;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 2px;
+    }
+
+    .jc-section .jc-heading h2 {
+        margin: 0 0 12px;
+        color: #19392c;
+        font-family: "Segoe UI", Arial, sans-serif !important;
+        font-size: clamp(28px, 3vw, 38px);
+        font-weight: 750 !important;
+        line-height: 1.25;
+        letter-spacing: -1px;
+    }
+
+    .jc-heading h2 span {
+        color: #00a36c;
+    }
+
+    .jc-heading > p {
+        max-width: 540px;
+        margin: 0 auto;
+        color: #78877f;
+        font-size: 15px;
+        line-height: 1.7;
+    }
+
+    .jc-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 20px;
+    }
+
+    .jc-card {
+        padding: 24px;
+        background: #fff;
+        border: 1px solid #e3eee7;
+        border-radius: 18px;
+        box-shadow: 0 4px 16px rgb(25 57 44 / 3%);
+        transition: transform .2s, box-shadow .2s, border-color .2s;
+    }
+
+        .jc-card:hover {
+            transform: translateY(-5px);
+            border-color: #99d8b9;
+            box-shadow: 0 14px 30px rgb(25 57 44 / 8%);
+        }
+
+    .jc-card-top {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 24px;
+    }
+
+    .jc-icon {
+        display: grid;
+        place-items: center;
+        width: 50px;
+        height: 50px;
+        color: #009d69;
+        background: #eaf8f0;
+        border: 1px solid #d9f0e3;
+        border-radius: 14px;
+        font-size: 23px;
+    }
+
+    .jc-count {
+        padding: 5px 9px;
+        color: #587063;
+        background: #f3f7f4;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .jc-section .jc-card h3 {
+        margin: 0 0 10px;
+        color: #243e31;
+        font-family: "Segoe UI", Arial, sans-serif !important;
+        font-size: 17px;
+        font-weight: 700 !important;
+        line-height: 1.5;
+    }
+
+    .jc-description {
+        margin: 0;
+        color: #859189;
+        font-size: 13px;
+        line-height: 1.7;
+    }
+
+    @@media (max-width: 991.98px) {
+        .jc-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+
+    @@media (max-width: 575.98px) {
+        .jc-section {
+            padding: 40px 16px;
+        }
+
+        .jc-grid {
+            grid-template-columns: 1fr;
+            gap: 14px;
+        }
+
+        .jc-card {
+            padding: 22px;
+        }
+    }
+
+    @@media (prefers-reduced-motion: reduce) {
+        .jc-card {
+            transition: none;
+        }
+
+            .jc-card:hover {
+                transform: none;
+            }
+    }
+</style>

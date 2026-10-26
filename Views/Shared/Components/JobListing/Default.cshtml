@@ -1,0 +1,361 @@
+﻿@using System
+@using System.Linq
+@using System.Globalization
+@model IEnumerable<AlumniJobConnect.Models.JobPost>
+
+@{
+    var jobs = Model.ToList();
+    var culture = CultureInfo.GetCultureInfo("vi-VN");
+
+    bool IsType(string? value, params string[] names)
+    {
+        return names.Any(name =>
+            string.Equals(value?.Trim(), name,
+                StringComparison.OrdinalIgnoreCase));
+    }
+
+    var tabs = new[]
+    {
+        new {
+            Id = "jl-all",
+            Name = "Tất cả",
+            Jobs = jobs
+        },
+        new {
+            Id = "jl-fulltime",
+            Name = "Toàn thời gian",
+            Jobs = jobs.Where(x => IsType(
+                x.EmploymentType,
+                "Full Time", "Full-time", "FullTime",
+                "Toàn thời gian")).ToList()
+        },
+        new {
+            Id = "jl-parttime",
+            Name = "Bán thời gian",
+            Jobs = jobs.Where(x => IsType(
+                x.EmploymentType,
+                "Part Time", "Part-time", "PartTime",
+                "Bán thời gian")).ToList()
+        }
+    };
+
+    string GetSalary(AlumniJobConnect.Models.JobPost job)
+    {
+        var currency = string.IsNullOrWhiteSpace(job.CurrencyCode)
+            ? "VND"
+            : job.CurrencyCode;
+
+        if (job.SalaryMin.HasValue && job.SalaryMax.HasValue)
+        {
+            return $"{job.SalaryMin.Value.ToString("N0", culture)}"
+                + $" – {job.SalaryMax.Value.ToString("N0", culture)} {currency}";
+        }
+
+        if (job.SalaryMin.HasValue)
+            return $"Từ {job.SalaryMin.Value.ToString("N0", culture)} {currency}";
+
+        if (job.SalaryMax.HasValue)
+            return $"Đến {job.SalaryMax.Value.ToString("N0", culture)} {currency}";
+
+        return "Lương thỏa thuận";
+    }
+}
+
+<section class="jl-section">
+    <div class="container">
+
+        <div class="text-center mb-4">
+            <span class="jl-label">KẾT NỐI CƠ HỘI</span>
+            <h2 class="jl-title">Việc làm mới nhất</h2>
+            <p class="text-muted">
+                Khởi đầu hành trình sự nghiệp của bạn tại đây.
+            </p>
+        </div>
+
+        <ul class="nav nav-pills justify-content-center gap-2 mb-4"
+            role="tablist">
+            @for (var i = 0; i < tabs.Length; i++)
+            {
+                var tab = tabs[i];
+
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link jl-tab @(i == 0 ? "active" : "")"
+                            id="@(tab.Id)-button"
+                            data-bs-toggle="pill"
+                            data-bs-target="#@tab.Id"
+                            type="button"
+                            role="tab"
+                            aria-controls="@tab.Id"
+                            aria-selected="@(i == 0 ? "true" : "false")">
+                        @tab.Name
+                        <span class="ms-1">(@tab.Jobs.Count)</span>
+                    </button>
+                </li>
+            }
+        </ul>
+
+        <div class="tab-content">
+            @for (var i = 0; i < tabs.Length; i++)
+            {
+                var tab = tabs[i];
+
+                <div class="tab-pane fade @(i == 0 ? "show active" : "")"
+                     id="@tab.Id"
+                     role="tabpanel"
+                     aria-labelledby="@(tab.Id)-button"
+                     tabindex="0">
+
+                    @if (!tab.Jobs.Any())
+                    {
+                        <div class="jl-empty">
+                            Chưa có tin tuyển dụng phù hợp.
+                        </div>
+                    }
+
+                    @foreach (var item in tab.Jobs)
+                    {
+                        <article class="jl-card">
+                            <div class="jl-icon" aria-hidden="true">
+                                <i class="fa fa-briefcase"></i>
+                            </div>
+
+                            <div class="jl-info">
+                                <span class="jl-category">
+                                    @(item.JobCategory?.CategoryName
+                                                                ?? "Ngành nghề khác")
+                        </span>
+
+                                <h3>@item.Title</h3>
+
+                                <div class="jl-meta">
+                                    <span>
+                                        <i class="fa fa-map-marker-alt"
+                                           aria-hidden="true"></i>
+                                        @(item.WorkLocation ?? "Chưa cập nhật")
+                                    </span>
+
+                                    <span>
+                                        <i class="far fa-clock"
+                                           aria-hidden="true"></i>
+                                        @(item.EmploymentType ?? "Chưa cập nhật")
+                                    </span>
+
+                                    <span>
+                                        <i class="fa fa-users"
+                                           aria-hidden="true"></i>
+                                        Tuyển @item.Quantity người
+                                    </span>
+                                </div>
+
+                                <details class="jl-details">
+                                    <summary>Mô tả công việc</summary>
+
+                                    <div class="jl-description">@item.JobDescription</div>
+
+                            @if (!string.IsNullOrWhiteSpace(item.Requirements))
+                                    {
+                                        <h4>Yêu cầu</h4>
+                                        <div class="jl-description">@item.Requirements</div>
+                                    }
+
+                                    @if (!string.IsNullOrWhiteSpace(item.Benefits))
+                                    {
+                                        <h4>Quyền lợi</h4>
+                                        <div class="jl-description">@item.Benefits</div>
+                                    }
+                            </details>
+                        </div>
+
+                        <div class="jl-side">
+                            <strong>@GetSalary(item)</strong>
+
+                            <small>
+                                <i class="far fa-calendar-alt"
+                                   aria-hidden="true"></i>
+                                @(item.Deadline.HasValue
+                                                            ? $"Hạn nộp: {item.Deadline.Value:dd/MM/yyyy}"
+                                                            : "Chưa quy định hạn nộp")
+                        </small>
+                    </div>
+                </article>
+                                }
+                </div>
+            }
+        </div>
+
+    </div>
+</section>
+
+<style>
+    .jl-section {
+        padding: 60px 0;
+        background: #f6faf8;
+        font-family: "Segoe UI", Arial, sans-serif;
+    }
+
+    .jl-label {
+        color: #009c69;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 2px;
+    }
+
+    .jl-section .jl-title {
+        margin: 10px 0 12px;
+        color: #213e30;
+        font-family: inherit !important;
+        font-size: clamp(28px, 3vw, 36px);
+        font-weight: 750 !important;
+    }
+
+    .jl-section .jl-tab {
+        padding: 11px 20px;
+        color: #65766b;
+        background: #fff;
+        border: 1px solid #e2ece5;
+        border-radius: 25px;
+        font-size: 14px;
+        font-weight: 600;
+    }
+
+        .jl-section .jl-tab.active {
+            color: #fff;
+            background: #00a36c;
+            border-color: #00a36c;
+        }
+
+    .jl-card {
+        display: flex;
+        align-items: flex-start;
+        gap: 22px;
+        margin-bottom: 16px;
+        padding: 26px;
+        background: #fff;
+        border: 1px solid #e3ece6;
+        border-radius: 16px;
+    }
+
+        .jl-card:hover {
+            border-color: #9bd8b9;
+            box-shadow: 0 8px 24px rgb(25 57 44 / 6%);
+        }
+
+    .jl-icon {
+        display: grid;
+        place-items: center;
+        width: 60px;
+        height: 60px;
+        flex-shrink: 0;
+        color: #00a36c;
+        background: #eaf8f0;
+        border-radius: 14px;
+        font-size: 25px;
+    }
+
+    .jl-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .jl-category {
+        color: #009565;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .jl-section .jl-info h3 {
+        margin: 6px 0 12px;
+        color: #263f32;
+        font-family: inherit !important;
+        font-size: 20px;
+        font-weight: 700 !important;
+        overflow-wrap: anywhere;
+    }
+
+    .jl-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px 18px;
+        color: #7b8980;
+        font-size: 13px;
+    }
+
+        .jl-meta i {
+            margin-right: 5px;
+            color: #00a36c;
+        }
+
+    .jl-side {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        max-width: 280px;
+        text-align: right;
+    }
+
+        .jl-side strong {
+            color: #009565;
+            font-size: 16px;
+        }
+
+        .jl-side small {
+            color: #819086;
+        }
+
+    .jl-details {
+        margin-top: 16px;
+        color: #52685a;
+        font-size: 14px;
+    }
+
+        .jl-details summary {
+            width: fit-content;
+            color: #009565;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+    .jl-description {
+        margin-top: 12px;
+        white-space: pre-line;
+        overflow-wrap: anywhere;
+        line-height: 1.8;
+    }
+
+    .jl-section .jl-details h4 {
+        margin: 18px 0 0;
+        font-family: inherit !important;
+        font-size: 15px;
+        font-weight: 700 !important;
+    }
+
+    .jl-empty {
+        padding: 40px 20px;
+        color: #78877e;
+        text-align: center;
+        background: #fff;
+        border: 1px dashed #cadfd1;
+        border-radius: 16px;
+    }
+
+    @@media (max-width: 767.98px) {
+        .jl-card {
+            flex-wrap: wrap;
+            gap: 14px;
+            padding: 20px;
+        }
+
+        .jl-side {
+            width: 100%;
+            max-width: none;
+            padding-top: 14px;
+            border-top: 1px solid #edf2ef;
+            text-align: left;
+        }
+
+        .jl-section .jl-tab {
+            padding: 9px 12px;
+            font-size: 12px;
+        }
+    }
+</style>
