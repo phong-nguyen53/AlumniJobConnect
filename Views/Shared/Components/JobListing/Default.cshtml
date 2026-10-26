@@ -10,18 +10,22 @@
     bool IsType(string? value, params string[] names)
     {
         return names.Any(name =>
-            string.Equals(value?.Trim(), name,
+            string.Equals(
+                value?.Trim(),
+                name,
                 StringComparison.OrdinalIgnoreCase));
     }
 
     var tabs = new[]
     {
-        new {
+        new
+        {
             Id = "jl-all",
             Name = "Tất cả",
             Jobs = jobs
         },
-        new {
+        new
+        {
             Id = "jl-fulltime",
             Name = "Toàn thời gian",
             Jobs = jobs.Where(x => IsType(
@@ -29,7 +33,8 @@
                 "Full Time", "Full-time", "FullTime",
                 "Toàn thời gian")).ToList()
         },
-        new {
+        new
+        {
             Id = "jl-parttime",
             Name = "Bán thời gian",
             Jobs = jobs.Where(x => IsType(
@@ -52,10 +57,14 @@
         }
 
         if (job.SalaryMin.HasValue)
+        {
             return $"Từ {job.SalaryMin.Value.ToString("N0", culture)} {currency}";
+        }
 
         if (job.SalaryMax.HasValue)
+        {
             return $"Đến {job.SalaryMax.Value.ToString("N0", culture)} {currency}";
+        }
 
         return "Lương thỏa thuận";
     }
@@ -66,7 +75,9 @@
 
         <div class="text-center mb-4">
             <span class="jl-label">KẾT NỐI CƠ HỘI</span>
+
             <h2 class="jl-title">Việc làm mới nhất</h2>
+
             <p class="text-muted">
                 Khởi đầu hành trình sự nghiệp của bạn tại đây.
             </p>
@@ -182,6 +193,23 @@
                 </div>
             }
         </div>
+
+        @* Chỉ doanh nghiệp được thấy nút này *@
+        @if (User.Identity?.IsAuthenticated == true
+                && User.IsInRole("Employer"))
+        {
+            <div class="text-center mt-4 pt-3">
+                <a href="@Url.Action("Create", "EmployerJobs")"
+                   class="btn btn-primary rounded-3 px-4 py-3">
+                    <i class="fa fa-plus me-2" aria-hidden="true"></i>
+                    Đăng tin tuyển dụng
+                </a>
+
+                <p class="text-muted small mt-3 mb-0">
+                    Kết nối doanh nghiệp của bạn với những ứng viên phù hợp.
+                </p>
+            </div>
+        }
 
     </div>
 </section>

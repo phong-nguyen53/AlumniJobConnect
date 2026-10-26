@@ -17,7 +17,30 @@ namespace AlumniJobConnect.Controllers
         {
             return View();
         }
-
+        public IActionResult DoanhNghiep()
+        {
+            return View();
+        }
+        public IActionResult Alumni()
+        {
+            return View();
+        }
+        public IActionResult jobs()
+        {
+            return View();
+        }
+        public IActionResult Events()
+        {
+            return View();
+        }
+        public IActionResult Profile()
+        {
+            return View();
+        }
+        public IActionResult ungtuyen()
+        {
+            return View();
+        }
         public IActionResult Privacy()
         {
             return View();
