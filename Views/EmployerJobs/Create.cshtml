@@ -1,0 +1,536 @@
+﻿@model AlumniJobConnect.Controllers.EmployerJobsController.JobInput
+
+@{
+    ViewData["Title"] = "Đăng tin tuyển dụng";
+}
+
+<section class="post-job-page">
+    <div class="post-job-card">
+
+        <header class="post-job-header">
+            <span class="post-job-label">DÀNH CHO DOANH NGHIỆP</span>
+            <h1>Đăng tin tuyển dụng</h1>
+            <p class="post-job-caption">
+                Tìm kiếm ứng viên phù hợp cho doanh nghiệp của bạn. Điền đầy đủ thông tin để tin được duyệt nhanh hơn.
+            </p>
+        </header>
+
+        @if (TempData["JobSuccess"] is string message)
+        {
+            <div class="alert alert-success post-job-alert" role="status">
+                @message
+            </div>
+        }
+
+        <form action="@Url.Action("Create", "EmployerJobs")" method="post" novalidate>
+            @Html.AntiForgeryToken()
+
+            <div asp-validation-summary="All"
+                 class="text-danger mb-3"
+                 role="alert"></div>
+
+            <!-- Phần 1 -->
+            <div class="form-section">
+                <div class="section-title">
+                    <span class="section-number">1</span>
+                    <div>
+                        <h2>Thông tin cơ bản</h2>
+                        <p>Vị trí, ngành nghề và nơi làm việc</p>
+                    </div>
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label asp-for="Title" class="form-label">
+                            Tên công việc <span class="req">*</span>
+                        </label>
+                        <input asp-for="Title"
+                               class="form-control"
+                               placeholder="Ví dụ: Lập trình viên ASP.NET Core"
+                               maxlength="200"
+                               required />
+                        <span asp-validation-for="Title" class="field-error"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="JobCategoryId" class="form-label">
+                            Ngành nghề <span class="req">*</span>
+                        </label>
+                        <select asp-for="JobCategoryId"
+                                asp-items="ViewBag.Categories"
+                                class="form-select"
+                                required>
+                            <option value="">Chọn ngành nghề</option>
+                        </select>
+                        <span asp-validation-for="JobCategoryId" class="field-error"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label">
+                            Hình thức làm việc <span class="req">*</span>
+                        </label>
+                        <div class="type-toggle" role="radiogroup" aria-label="Hình thức làm việc">
+                            <input type="radio" class="btn-check" name="EmploymentType" id="type-full"
+                                   value="Full Time" checked="@(Model?.EmploymentType != "Part Time")" />
+                            <label class="type-option" for="type-full">Toàn thời gian</label>
+
+                            <input type="radio" class="btn-check" name="EmploymentType" id="type-part"
+                                   value="Part Time" checked="@(Model?.EmploymentType == "Part Time")" />
+                            <label class="type-option" for="type-part">Bán thời gian</label>
+                        </div>
+                        <span asp-validation-for="EmploymentType" class="field-error"></span>
+                    </div>
+
+                    <div class="col-12">
+                        <label asp-for="WorkLocation" class="form-label">
+                            Địa điểm làm việc <span class="req">*</span>
+                        </label>
+                        <input asp-for="WorkLocation"
+                               class="form-control"
+                               placeholder="Ví dụ: Thành phố Vinh, Nghệ An"
+                               maxlength="200"
+                               required />
+                        <span asp-validation-for="WorkLocation" class="field-error"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Phần 2 -->
+            <div class="form-section">
+                <div class="section-title">
+                    <span class="section-number">2</span>
+                    <div>
+                        <h2>Mức lương &amp; số lượng</h2>
+                        <p>Để trống hai ô lương nếu mức lương thỏa thuận</p>
+                    </div>
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label asp-for="SalaryMin" class="form-label">Lương tối thiểu</label>
+                        <div class="input-group">
+                            <input asp-for="SalaryMin"
+                                   type="number"
+                                   min="0"
+                                   max="1000000000"
+                                   step="1"
+                                   class="form-control"
+                                   placeholder="0" />
+                            <span class="input-group-text">VNĐ</span>
+                        </div>
+                        <span asp-validation-for="SalaryMin" class="field-error"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="SalaryMax" class="form-label">Lương tối đa</label>
+                        <div class="input-group">
+                            <input asp-for="SalaryMax"
+                                   type="number"
+                                   min="0"
+                                   max="1000000000"
+                                   step="1"
+                                   class="form-control"
+                                   placeholder="0" />
+                            <span class="input-group-text">VNĐ</span>
+                        </div>
+                        <span asp-validation-for="SalaryMax" class="field-error"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="Quantity" class="form-label">
+                            Số người cần tuyển <span class="req">*</span>
+                        </label>
+                        <input asp-for="Quantity"
+                               type="number"
+                               min="1"
+                               max="10000"
+                               class="form-control"
+                               required />
+                        <span asp-validation-for="Quantity" class="field-error"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="Deadline" class="form-label">
+                            Hạn nộp hồ sơ <span class="req">*</span>
+                        </label>
+                        <input asp-for="Deadline"
+                               type="date"
+                               class="form-control"
+                               required />
+                        <span asp-validation-for="Deadline" class="field-error"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Phần 3 -->
+            <div class="form-section">
+                <div class="section-title">
+                    <span class="section-number">3</span>
+                    <div>
+                        <h2>Nội dung tuyển dụng</h2>
+                        <p>Mô tả rõ ràng giúp thu hút đúng ứng viên</p>
+                    </div>
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label asp-for="JobDescription" class="form-label">
+                            Mô tả công việc <span class="req">*</span>
+                        </label>
+                        <textarea asp-for="JobDescription"
+                                  rows="5"
+                                  class="form-control"
+                                  placeholder="Các nhiệm vụ ứng viên sẽ đảm nhận..."
+                                  required></textarea>
+                        <span asp-validation-for="JobDescription" class="field-error"></span>
+                    </div>
+
+                    <div class="col-12">
+                        <label asp-for="Requirements" class="form-label">Yêu cầu ứng viên</label>
+                        <textarea asp-for="Requirements"
+                                  rows="4"
+                                  class="form-control"
+                                  placeholder="Kỹ năng, kinh nghiệm, trình độ..."></textarea>
+                        <span asp-validation-for="Requirements" class="field-error"></span>
+                    </div>
+
+                    <div class="col-12">
+                        <label asp-for="Benefits" class="form-label">Quyền lợi</label>
+                        <textarea asp-for="Benefits"
+                                  rows="4"
+                                  class="form-control"
+                                  placeholder="Chế độ đãi ngộ, đào tạo, thưởng..."></textarea>
+                        <span asp-validation-for="Benefits" class="field-error"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="post-job-footer">
+                <span class="footer-note">
+                    <i class="footer-dot"></i>
+                    Tin sẽ được kiểm duyệt trước khi hiển thị.
+                </span>
+
+                <button type="submit" class="btn-submit">
+                    Gửi tin tuyển dụng
+                    <span aria-hidden="true">→</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</section>
+
+<style>
+    .post-job-page {
+        padding: 56px 16px 72px;
+        background: radial-gradient(1200px 400px at 50% -100px, #dff3e8 0%, rgb(223 243 232 / 0%) 70%), #f4f9f6;
+        font-family: "Segoe UI", Arial, sans-serif;
+    }
+
+    .post-job-card {
+        position: relative;
+        max-width: 880px;
+        margin: 0 auto;
+        padding: 44px 44px 36px;
+        background: #fff;
+        border: 1px solid #e0ebe4;
+        border-radius: 24px;
+        box-shadow: 0 20px 50px rgb(25 57 44 / 7%);
+        overflow: hidden;
+    }
+
+        .post-job-card::before {
+            content: "";
+            position: absolute;
+            inset: 0 0 auto 0;
+            height: 5px;
+            background: linear-gradient(90deg, #009565, #3ccf91);
+        }
+
+    .post-job-header {
+        margin-bottom: 32px;
+        padding-bottom: 24px;
+        border-bottom: 1px solid #edf2ef;
+    }
+
+    .post-job-label {
+        display: inline-block;
+        padding: 5px 12px;
+        color: #009565;
+        background: #e6f6ee;
+        border-radius: 999px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 1.5px;
+    }
+
+    .post-job-card h1 {
+        margin: 16px 0 8px;
+        color: #243e31;
+        font-family: inherit !important;
+        font-size: 32px;
+        font-weight: 750 !important;
+        letter-spacing: -0.3px;
+    }
+
+    .post-job-caption {
+        margin: 0;
+        color: #7d8d82;
+        font-size: 14.5px;
+        line-height: 1.7;
+    }
+
+    .post-job-alert {
+        border: 0;
+        border-radius: 12px;
+        background: #e6f6ee;
+        color: #0b6b47;
+    }
+
+    /* Sections */
+    .form-section {
+        margin-bottom: 20px;
+        padding: 24px;
+        background: #fafcfb;
+        border: 1px solid #e8f0ea;
+        border-radius: 16px;
+    }
+
+    .section-title {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        margin-bottom: 20px;
+    }
+
+        .section-title h2 {
+            margin: 0;
+            color: #243e31;
+            font-size: 17px;
+            font-weight: 700;
+        }
+
+        .section-title p {
+            margin: 2px 0 0;
+            color: #8a9a8f;
+            font-size: 12.5px;
+        }
+
+    .section-number {
+        display: inline-flex;
+        flex: 0 0 34px;
+        align-items: center;
+        justify-content: center;
+        width: 34px;
+        height: 34px;
+        color: #fff;
+        background: linear-gradient(135deg, #009565, #2fbf86);
+        border-radius: 10px;
+        font-size: 15px;
+        font-weight: 700;
+        box-shadow: 0 6px 14px rgb(0 149 101 / 25%);
+    }
+
+    /* Fields */
+    .post-job-card .form-label {
+        margin-bottom: 6px;
+        color: #40574a;
+        font-size: 13.5px;
+        font-weight: 600;
+    }
+
+    .req {
+        color: #e5484d;
+    }
+
+    .post-job-card .form-control,
+    .post-job-card .form-select,
+    .post-job-card .input-group-text {
+        padding: 12px 14px;
+        color: #243e31;
+        background-color: #fff;
+        border: 1px solid #dce7df;
+        font-size: 14px;
+        transition: border-color .15s, box-shadow .15s;
+    }
+
+    .post-job-card .form-control,
+    .post-job-card .form-select {
+        border-radius: 10px;
+    }
+
+        .post-job-card .form-control::placeholder {
+            color: #aab7ae;
+        }
+
+        .post-job-card .form-control:hover,
+        .post-job-card .form-select:hover {
+            border-color: #b9d3c3;
+        }
+
+        .post-job-card .form-control:focus,
+        .post-job-card .form-select:focus {
+            border-color: #00a36c;
+            box-shadow: 0 0 0 4px rgb(0 163 108 / 12%);
+        }
+
+    .post-job-card .input-group > .form-control {
+        border-radius: 10px 0 0 10px;
+    }
+
+    .post-job-card .input-group-text {
+        color: #6f8377;
+        background: #f1f6f3;
+        border-radius: 0 10px 10px 0;
+        font-size: 12.5px;
+        font-weight: 600;
+    }
+
+    .post-job-card .input-group:focus-within .input-group-text {
+        border-color: #00a36c;
+    }
+
+    .post-job-card textarea.form-control {
+        resize: vertical;
+        line-height: 1.6;
+    }
+
+    .field-error {
+        display: block;
+        margin-top: 4px;
+        color: #e5484d;
+        font-size: 12.5px;
+    }
+
+        .field-error:empty {
+            display: none;
+        }
+
+    /* Employment type toggle */
+    .type-toggle {
+        display: flex;
+        gap: 4px;
+        padding: 4px;
+        background: #eef4f0;
+        border-radius: 12px;
+    }
+
+    .type-option {
+        flex: 1;
+        padding: 9px 12px;
+        margin: 0;
+        color: #5d7266;
+        border-radius: 9px;
+        font-size: 13.5px;
+        font-weight: 600;
+        text-align: center;
+        cursor: pointer;
+        user-select: none;
+        transition: background .15s, color .15s, box-shadow .15s;
+    }
+
+        .type-option:hover {
+            color: #009565;
+        }
+
+    .type-toggle .btn-check:checked + .type-option {
+        color: #009565;
+        background: #fff;
+        box-shadow: 0 2px 8px rgb(25 57 44 / 10%);
+    }
+
+    .type-toggle .btn-check:focus-visible + .type-option {
+        outline: 2px solid #00a36c;
+        outline-offset: 2px;
+    }
+
+    /* Footer */
+    .post-job-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 16px;
+        margin-top: 28px;
+        padding-top: 24px;
+        border-top: 1px solid #edf2ef;
+    }
+
+    .footer-note {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        color: #829087;
+        font-size: 12.5px;
+    }
+
+    .footer-dot {
+        width: 8px;
+        height: 8px;
+        background: #f5a623;
+        border-radius: 50%;
+    }
+
+    .btn-submit {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 14px 28px;
+        color: #fff;
+        background: linear-gradient(135deg, #009565, #12b57d);
+        border: 0;
+        border-radius: 12px;
+        font-size: 15px;
+        font-weight: 700;
+        box-shadow: 0 10px 22px rgb(0 149 101 / 28%);
+        cursor: pointer;
+        transition: transform .15s, box-shadow .15s;
+    }
+
+        .btn-submit:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 14px 28px rgb(0 149 101 / 34%);
+        }
+
+        .btn-submit:active {
+            transform: translateY(0);
+        }
+
+        .btn-submit:focus-visible {
+            outline: 3px solid rgb(0 163 108 / 35%);
+            outline-offset: 2px;
+        }
+
+    @@media (max-width: 575.98px) {
+        .post-job-page {
+            padding: 24px 12px 48px;
+        }
+
+        .post-job-card {
+            padding: 28px 18px 24px;
+            border-radius: 18px;
+        }
+
+            .post-job-card h1 {
+                font-size: 25px;
+            }
+
+        .form-section {
+            padding: 18px 14px;
+        }
+
+        .post-job-footer {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .btn-submit {
+            justify-content: center;
+            width: 100%;
+        }
+    }
+</style>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

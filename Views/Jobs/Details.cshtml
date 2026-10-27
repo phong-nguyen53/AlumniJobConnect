@@ -1,0 +1,479 @@
+﻿@using System.Globalization
+@model AlumniJobConnect.Models.JobPost
+
+@{
+    ViewData["Title"] = Model.Title;
+    var culture = CultureInfo.GetCultureInfo("vi-VN");
+
+    string GetSalary()
+    {
+        var currency = string.IsNullOrWhiteSpace(Model.CurrencyCode)
+            ? "VND"
+            : Model.CurrencyCode;
+
+        if (Model.SalaryMin.HasValue && Model.SalaryMax.HasValue)
+        {
+            return $"{Model.SalaryMin.Value.ToString("N0", culture)}"
+                + $" – {Model.SalaryMax.Value.ToString("N0", culture)} {currency}";
+        }
+
+        if (Model.SalaryMin.HasValue)
+            return $"Từ {Model.SalaryMin.Value.ToString("N0", culture)} {currency}";
+
+        if (Model.SalaryMax.HasValue)
+            return $"Đến {Model.SalaryMax.Value.ToString("N0", culture)} {currency}";
+
+        return "Thỏa thuận";
+    }
+
+    var employmentText = Model.EmploymentType switch
+    {
+        "Full Time" => "Toàn thời gian",
+        "Part Time" => "Bán thời gian",
+        _ => Model.EmploymentType ?? "Chưa cập nhật"
+    };
+
+    var deadlineText = Model.Deadline?.ToString("dd/MM/yyyy");
+    string deadlineStatus = "";
+    string deadlineClass = "";
+
+    if (deadlineText != null
+        && DateTime.TryParseExact(deadlineText, "dd/MM/yyyy",
+            CultureInfo.InvariantCulture, DateTimeStyles.None, out var deadlineDate))
+    {
+        var daysLeft = (deadlineDate.Date - DateTime.Today).Days;
+
+        if (daysLeft < 0)
+        {
+            deadlineStatus = "Đã hết hạn";
+            deadlineClass = "is-expired";
+        }
+        else if (daysLeft == 0)
+        {
+            deadlineStatus = "Hết hạn hôm nay";
+            deadlineClass = "is-soon";
+        }
+        else if (daysLeft <= 7)
+        {
+            deadlineStatus = $"Còn {daysLeft} ngày";
+            deadlineClass = "is-soon";
+        }
+        else
+        {
+            deadlineStatus = $"Còn {daysLeft} ngày";
+            deadlineClass = "is-open";
+        }
+    }
+
+    var categoryName = Model.JobCategory?.CategoryName;
+}
+
+<section class="job-detail-page">
+    <div class="container">
+
+        <a href="@Url.Action("jobs", "Home", new { categoryId = Model.JobCategoryId })"
+           class="job-detail-back">
+            <span aria-hidden="true">←</span> Xem việc làm cùng ngành
+        </a>
+
+        <header class="job-detail-header">
+            <div class="job-detail-top">
+                <span class="job-detail-category">
+                    @(categoryName ?? "Ngành nghề khác")
+                </span>
+
+                @if (!string.IsNullOrEmpty(deadlineStatus))
+                {
+                    <span class="job-detail-status @deadlineClass">
+                        <i class="far fa-calendar-check" aria-hidden="true"></i>
+                        @deadlineStatus
+                    </span>
+                }
+            </div>
+
+            <h1>@Model.Title</h1>
+
+            <div class="job-detail-summary">
+                <div class="summary-item">
+                    <span class="summary-icon"><i class="fa fa-money-bill-wave" aria-hidden="true"></i></span>
+                    <div>
+                        <span class="summary-label">Mức lương</span>
+                        <strong class="summary-salary">@GetSalary()</strong>
+                    </div>
+                </div>
+
+                <div class="summary-item">
+                    <span class="summary-icon"><i class="fa fa-map-marker-alt" aria-hidden="true"></i></span>
+                    <div>
+                        <span class="summary-label">Địa điểm làm việc</span>
+                        <strong>@(Model.WorkLocation ?? "Chưa cập nhật")</strong>
+                    </div>
+                </div>
+
+                <div class="summary-item">
+                    <span class="summary-icon"><i class="far fa-clock" aria-hidden="true"></i></span>
+                    <div>
+                        <span class="summary-label">Hình thức làm việc</span>
+                        <strong>@employmentText</strong>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="row g-4">
+            <div class="col-lg-8">
+                <article class="job-detail-box">
+                    <section class="detail-block">
+                        <h2>Mô tả công việc</h2>
+                        <div class="job-detail-text">@Model.JobDescription</div>
+                    </section>
+
+                    <section class="detail-block">
+                        <h2>Yêu cầu ứng viên</h2>
+                        @if (string.IsNullOrWhiteSpace(Model.Requirements))
+                        {
+                            <div class="job-detail-text is-empty">Doanh nghiệp chưa cập nhật yêu cầu.</div>
+                        }
+                        else
+                        {
+                            <div class="job-detail-text">@Model.Requirements</div>
+                        }
+                    </section>
+
+                    <section class="detail-block">
+                        <h2>Quyền lợi</h2>
+                        @if (string.IsNullOrWhiteSpace(Model.Benefits))
+                        {
+                            <div class="job-detail-text is-empty">Doanh nghiệp chưa cập nhật quyền lợi.</div>
+                        }
+                        else
+                        {
+                            <div class="job-detail-text">@Model.Benefits</div>
+                        }
+                    </section>
+                </article>
+            </div>
+
+            <div class="col-lg-4">
+                <aside class="job-detail-box job-detail-aside">
+                    <h2>Thông tin tuyển dụng</h2>
+
+                    <dl class="job-detail-facts">
+                        <div>
+                            <dt><i class="fa fa-users" aria-hidden="true"></i> Số lượng tuyển</dt>
+                            <dd>@Model.Quantity người</dd>
+                        </div>
+
+                        <div>
+                            <dt><i class="fa fa-briefcase" aria-hidden="true"></i> Ngành nghề</dt>
+                            <dd>@(categoryName ?? "Chưa cập nhật")</dd>
+                        </div>
+
+                        <div>
+                            <dt><i class="far fa-calendar-alt" aria-hidden="true"></i> Ngày đăng</dt>
+                            <dd>@Model.CreatedAt.ToString("dd/MM/yyyy")</dd>
+                        </div>
+
+                        <div>
+                            <dt><i class="far fa-hourglass" aria-hidden="true"></i> Hạn nộp hồ sơ</dt>
+                            <dd class="@deadlineClass">
+                                @(deadlineText ?? "Chưa quy định")
+                            </dd>
+                        </div>
+                    </dl>
+                </aside>
+            </div>
+        </div>
+
+    </div>
+</section>
+
+<style>
+    .job-detail-page {
+        padding: 40px 0 72px;
+        background: radial-gradient(1000px 360px at 50% -120px, #dff3e8 0%, rgb(223 243 232 / 0%) 70%), #f4f9f6;
+        font-family: "Segoe UI", Arial, sans-serif;
+    }
+
+    .job-detail-back {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 20px;
+        padding: 8px 14px;
+        color: #009565;
+        background: #fff;
+        border: 1px solid #dcebe2;
+        border-radius: 999px;
+        font-size: 13.5px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: background .15s, transform .15s;
+    }
+
+        .job-detail-back:hover {
+            color: #007a52;
+            background: #eaf8f0;
+            transform: translateX(-2px);
+        }
+
+    .job-detail-header,
+    .job-detail-box {
+        background: #fff;
+        border: 1px solid #e1ebe5;
+        border-radius: 20px;
+        box-shadow: 0 10px 30px rgb(25 57 44 / 5%);
+    }
+
+    .job-detail-box {
+        padding: 34px;
+    }
+
+    .job-detail-header {
+        position: relative;
+        margin-bottom: 24px;
+        padding: 36px 34px 32px;
+        overflow: hidden;
+    }
+
+        .job-detail-header::before {
+            content: "";
+            position: absolute;
+            inset: 0 0 auto 0;
+            height: 5px;
+            background: linear-gradient(90deg, #009565, #3ccf91);
+        }
+
+    .job-detail-top {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .job-detail-category {
+        display: inline-block;
+        padding: 7px 14px;
+        color: #008859;
+        background: #eaf8f0;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: .3px;
+    }
+
+    .job-detail-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 7px 14px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+        .job-detail-status.is-open {
+            color: #0b6b47;
+            background: #e6f6ee;
+        }
+
+        .job-detail-status.is-soon {
+            color: #a15c00;
+            background: #fff3dc;
+        }
+
+        .job-detail-status.is-expired {
+            color: #b42318;
+            background: #fde8e6;
+        }
+
+    .job-detail-page h1 {
+        margin: 18px 0 28px;
+        color: #1f3a2c;
+        font-family: inherit !important;
+        font-size: clamp(26px, 3vw, 36px);
+        font-weight: 750 !important;
+        line-height: 1.35;
+        letter-spacing: -.3px;
+        overflow-wrap: anywhere;
+    }
+
+    /* Summary */
+    .job-detail-summary {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 16px;
+        padding-top: 26px;
+        border-top: 1px solid #edf2ef;
+    }
+
+    .summary-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 14px;
+        padding: 16px;
+        background: #f8fbf9;
+        border: 1px solid #e8f0ea;
+        border-radius: 14px;
+    }
+
+    .summary-icon {
+        display: inline-flex;
+        flex: 0 0 44px;
+        align-items: center;
+        justify-content: center;
+        width: 44px;
+        height: 44px;
+        color: #fff;
+        background: linear-gradient(135deg, #009565, #2fbf86);
+        border-radius: 12px;
+        font-size: 18px;
+        box-shadow: 0 6px 14px rgb(0 149 101 / 22%);
+    }
+
+    .summary-label {
+        display: block;
+        margin-bottom: 4px;
+        color: #829087;
+        font-size: 12.5px;
+    }
+
+    .summary-item strong {
+        color: #234733;
+        font-size: 15.5px;
+        line-height: 1.4;
+        overflow-wrap: anywhere;
+    }
+
+    .summary-salary {
+        color: #008859 !important;
+        font-size: 17px !important;
+    }
+
+    /* Content */
+    .detail-block {
+        margin-bottom: 32px;
+        padding-bottom: 32px;
+        border-bottom: 1px dashed #e3ece6;
+    }
+
+        .detail-block:last-child {
+            margin-bottom: 0;
+            padding-bottom: 0;
+            border-bottom: 0;
+        }
+
+    .job-detail-page .job-detail-box h2 {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin: 0 0 16px;
+        color: #243e31;
+        font-family: inherit !important;
+        font-size: 19px;
+        font-weight: 700 !important;
+    }
+
+        .job-detail-page .job-detail-box h2::before {
+            content: "";
+            width: 5px;
+            height: 22px;
+            background: linear-gradient(180deg, #009565, #3ccf91);
+            border-radius: 4px;
+        }
+
+    .job-detail-text {
+        color: #55695c;
+        font-size: 15px;
+        line-height: 1.9;
+        white-space: pre-line;
+        overflow-wrap: anywhere;
+    }
+
+        .job-detail-text.is-empty {
+            color: #9aa8a0;
+            font-style: italic;
+        }
+
+    /* Sidebar */
+    .job-detail-aside {
+        position: sticky;
+        top: 24px;
+        padding: 28px;
+    }
+
+        .job-detail-aside h2 {
+            margin-bottom: 8px !important;
+        }
+
+    .job-detail-facts {
+        margin: 0;
+    }
+
+        .job-detail-facts > div {
+            padding: 16px 0;
+            border-bottom: 1px solid #edf2ef;
+        }
+
+            .job-detail-facts > div:last-child {
+                padding-bottom: 0;
+                border-bottom: 0;
+            }
+
+        .job-detail-facts dt {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 6px;
+            color: #829087;
+            font-size: 13px;
+            font-weight: 400;
+        }
+
+            .job-detail-facts dt i {
+                width: 16px;
+                color: #00a36c;
+                text-align: center;
+            }
+
+        .job-detail-facts dd {
+            margin: 0 0 0 24px;
+            color: #344f3e;
+            font-size: 15px;
+            font-weight: 600;
+            overflow-wrap: anywhere;
+        }
+
+            .job-detail-facts dd.is-soon {
+                color: #c26a00;
+            }
+
+            .job-detail-facts dd.is-expired {
+                color: #c0362c;
+            }
+
+    @@media (max-width: 991.98px) {
+        .job-detail-aside {
+            position: static;
+        }
+
+        .job-detail-summary {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @@media (max-width: 575.98px) {
+        .job-detail-page {
+            padding: 24px 0 48px;
+        }
+
+        .job-detail-header {
+            padding: 28px 20px 22px;
+        }
+
+        .job-detail-box {
+            padding: 22px 18px;
+            border-radius: 16px;
+        }
+    }
+</style>

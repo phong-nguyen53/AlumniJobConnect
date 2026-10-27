@@ -33,7 +33,10 @@
             {
                 var count = item.JobPosts.Count();
 
-                <article class="jc-card">
+                <a href="@Url.Action("jobs", "Home",
+                                    new { categoryId = item.JobCategoryId })"
+                                                                             class="jc-card">
+
                     <div class="jc-card-top">
                         <span class="jc-icon">
                             <i class="fa @GetIcon(item.CategoryName)"
@@ -52,7 +55,7 @@
                                             ? "Khám phá những cơ hội trong lĩnh vực này."
                                             : "Cơ hội mới sẽ được cập nhật tại đây.")
                 </p>
-            </article>
+            </a>
                         }
         </div>
 
@@ -74,6 +77,22 @@
     .jc-container {
         max-width: 1200px;
         margin: 0 auto;
+    }
+
+    .jc-grid > a.jc-card {
+        display: block;
+        height: 100%;
+        color: inherit;
+        text-decoration: none;
+    }
+
+    .jc-grid > a.jc-card:hover {
+            color: inherit;
+    }
+
+    .jc-grid > a.jc-card:focus-visible {
+            outline: 3px solid #00a36c;
+            outline-offset: 4px;
     }
 
     .jc-heading {

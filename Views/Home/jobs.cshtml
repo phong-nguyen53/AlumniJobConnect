@@ -1,5 +1,64 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
+﻿@model IEnumerable<AlumniJobConnect.Models.JobPost>
+
 @{
+    ViewData["Title"] = "Kết quả tìm việc";
+    var jobs = Model.ToList();
 }
+
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 style="font-size:28px;">Kết quả tìm việc</h1>
+            <p class="text-muted mb-0">
+                Tìm thấy @jobs.Count tin tuyển dụng
+            </p>
+        </div>
+
+        <a href="@Url.Action("Index", "Home")"
+           class="btn btn-outline-primary">
+            Tìm kiếm lại
+        </a>
+    </div>
+
+    @if (jobs.Count == 0)
+    {
+        <div class="alert alert-light border text-center p-4">
+            Không tìm thấy công việc phù hợp.
+            Hãy thử từ khóa khác hoặc bỏ bớt điều kiện lọc.
+        </div>
+    }
+
+    @foreach (var item in jobs)
+    {
+        <article class="border rounded-3 p-4 mb-3 bg-white shadow-sm">
+            <span class="text-primary small">
+                @(item.JobCategory?.CategoryName ?? "Ngành nghề khác")
+            </span>
+
+            <a href="@Url.Action("Details", "Jobs",
+                        new { id = item.JobPostId })"
+                       class="text-dark text-decoration-none">
+                          @item.Title
+             </a>
+
+            <div class="d-flex flex-wrap gap-3 text-muted small mb-3">
+                <span>@item.WorkLocation</span>
+                <span>@item.EmploymentType</span>
+                <span>Tuyển @item.Quantity người</span>
+                <span>
+                    Hạn nộp:
+                    @(item.Deadline?.ToString("dd/MM/yyyy")
+                                    ?? "Chưa quy định")
+            </span>
+        </div>
+
+            <details>
+                <summary class="text-primary">Mô tả công việc</summary>
+                <div class="mt-3"
+                     style="white-space:pre-line;">
+                    @item.JobDescription
+                </div>
+            </details>
+        </article>
+        }
+</div>

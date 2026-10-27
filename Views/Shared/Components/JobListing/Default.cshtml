@@ -136,7 +136,13 @@
                                                                 ?? "Ngành nghề khác")
                         </span>
 
-                                <h3>@item.Title</h3>
+                                <h3>
+                                    <a href="@Url.Action("Details", "Jobs",
+                                            new { id = item.JobPostId })"
+                               class="text-dark text-decoration-none">
+                                @item.Title
+                            </a>
+                        </h3>
 
                                 <div class="jl-meta">
                                     <span>
@@ -194,7 +200,7 @@
             }
         </div>
 
-        @* Chỉ doanh nghiệp được thấy nút này *@
+       
         @if (User.Identity?.IsAuthenticated == true
                 && User.IsInRole("Employer"))
         {
