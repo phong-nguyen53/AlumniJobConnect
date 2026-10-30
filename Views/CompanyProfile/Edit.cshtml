@@ -1,0 +1,475 @@
+﻿@model AlumniJobConnect.Controllers.CompanyProfileController.EditInput
+
+@{
+    ViewData["Title"] = "Chỉnh sửa hồ sơ doanh nghiệp";
+}
+
+<section class="ce-page">
+    <div class="container">
+
+        <a href="@Url.Action("MyProfile", "CompanyProfile")"
+           class="ce-back">
+            ← Quay lại hồ sơ doanh nghiệp
+        </a>
+
+        <div class="ce-layout">
+            <aside class="ce-sidebar">
+                <span class="ce-eyebrow">HỒ SƠ DOANH NGHIỆP</span>
+
+                <h1>Cập nhật thông tin doanh nghiệp</h1>
+
+                <p>
+                    Giới thiệu doanh nghiệp để sinh viên hiểu hơn
+                    về lĩnh vực hoạt động và cơ hội nghề nghiệp.
+                </p>
+
+                <div class="ce-tip">
+                    <h2>Thông tin nên có</h2>
+
+                    <ul>
+                        <li>Tên và lĩnh vực hoạt động.</li>
+                        <li>Địa chỉ, website chính thức.</li>
+                        <li>Giới thiệu môi trường làm việc.</li>
+                        <li>Cơ hội dành cho sinh viên.</li>
+                    </ul>
+                </div>
+
+                <p class="ce-sidebar-note">
+                    Thông tin được lưu sẽ xuất hiện trên
+                    trang hồ sơ doanh nghiệp.
+                </p>
+            </aside>
+
+            <div class="ce-card">
+                <div class="ce-card-heading">
+                    <h2>Thông tin doanh nghiệp</h2>
+                    <p>
+                        Các mục có dấu <span class="ce-required">*</span>
+                        là bắt buộc.
+                    </p>
+                </div>
+
+                <form action="@Url.Action("Edit", "CompanyProfile")"
+                      method="post">
+
+                    @Html.AntiForgeryToken()
+
+                    <div asp-validation-summary="All"
+                         class="ce-errors"
+                         role="alert"></div>
+
+                    <div class="ce-fields">
+                        <div class="ce-field ce-full">
+                            <label asp-for="CompanyName">
+                                Tên doanh nghiệp
+                                <span class="ce-required">*</span>
+                            </label>
+
+                            <input asp-for="CompanyName"
+                                   class="ce-input"
+                                   placeholder="Nhập tên doanh nghiệp"
+                                   autocomplete="organization"
+                                   required />
+
+                            <span asp-validation-for="CompanyName"
+                                  class="ce-field-error"></span>
+                        </div>
+
+                        <div class="ce-field">
+                            <label asp-for="TaxCode">Mã số thuế</label>
+
+                            <input asp-for="TaxCode"
+                                   class="ce-input"
+                                   placeholder="Nhập mã số thuế" />
+
+                            <span asp-validation-for="TaxCode"
+                                  class="ce-field-error"></span>
+                        </div>
+
+                        <div class="ce-field">
+                            <label asp-for="Industry">
+                                Lĩnh vực hoạt động
+                            </label>
+
+                            <input asp-for="Industry"
+                                   class="ce-input"
+                                   placeholder="Ví dụ: Công nghệ thông tin" />
+
+                            <span asp-validation-for="Industry"
+                                  class="ce-field-error"></span>
+                        </div>
+
+                        <div class="ce-field ce-full">
+                            <label asp-for="Address">
+                                Địa chỉ doanh nghiệp
+                            </label>
+
+                            <input asp-for="Address"
+                                   class="ce-input"
+                                   placeholder="Nhập địa chỉ doanh nghiệp"
+                                   autocomplete="street-address" />
+
+                            <span asp-validation-for="Address"
+                                  class="ce-field-error"></span>
+                        </div>
+
+                        <div class="ce-field ce-full">
+                            <label asp-for="Website">Website</label>
+
+                            <input asp-for="Website"
+                                   type="url"
+                                   class="ce-input"
+                                   placeholder="https://doanhnghiep.vn"
+                                   aria-describedby="ce-website-help" />
+
+                            <small id="ce-website-help" class="ce-help">
+                                Nhập đầy đủ địa chỉ bắt đầu bằng
+                                https:// hoặc http://.
+                            </small>
+
+                            <span asp-validation-for="Website"
+                                  class="ce-field-error"></span>
+                        </div>
+
+                        <div class="ce-field ce-full">
+                            <label asp-for="Description">
+                                Giới thiệu doanh nghiệp
+                            </label>
+
+                            <textarea asp-for="Description"
+                                      class="ce-input ce-textarea"
+                                      rows="9"
+                                      placeholder="Giới thiệu về doanh nghiệp, sản phẩm, môi trường làm việc và cơ hội dành cho sinh viên..."></textarea>
+
+                            <span asp-validation-for="Description"
+                                  class="ce-field-error"></span>
+                        </div>
+                    </div>
+
+                    <div class="ce-actions">
+                        <a href="@Url.Action("MyProfile", "CompanyProfile")"
+                           class="ce-cancel">
+                            Hủy thay đổi
+                        </a>
+
+                        <button type="submit" class="ce-save">
+                            Lưu hồ sơ doanh nghiệp
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</section>
+
+<style>
+    .ce-page {
+        padding: 40px 0 64px;
+        background: linear-gradient(180deg, #eff8f3, #f8fbf9);
+        font-family: "Segoe UI", Arial, sans-serif;
+    }
+
+        .ce-page * {
+            box-sizing: border-box;
+        }
+
+    .ce-back {
+        display: inline-block;
+        margin-bottom: 24px;
+        color: #00865b;
+        font-size: 14px;
+        font-weight: 600;
+        text-decoration: none;
+    }
+
+    .ce-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+        align-items: start;
+        gap: 28px;
+    }
+
+    .ce-sidebar {
+        padding: 32px;
+        color: #fff;
+        background: linear-gradient(145deg, #087c58, #009f6b);
+        border-radius: 22px;
+    }
+
+    .ce-eyebrow {
+        color: #d3f5e5;
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 1.4px;
+    }
+
+    .ce-sidebar h1 {
+        margin: 18px 0;
+        color: #fff;
+        font-family: inherit;
+        font-size: clamp(25px, 3vw, 32px);
+        font-weight: 700;
+        line-height: 1.4;
+    }
+
+    .ce-sidebar > p {
+        margin: 0;
+        color: #e0f5eb;
+        font-size: 14px;
+        line-height: 1.9;
+    }
+
+    .ce-tip {
+        margin-top: 28px;
+        padding: 20px;
+        background: rgb(255 255 255 / 10%);
+        border: 1px solid rgb(255 255 255 / 18%);
+        border-radius: 15px;
+    }
+
+        .ce-tip h2 {
+            margin: 0 0 14px;
+            color: #fff;
+            font-family: inherit;
+            font-size: 17px;
+            font-weight: 600;
+        }
+
+        .ce-tip ul {
+            margin: 0;
+            padding-left: 18px;
+            color: #e0f5eb;
+            font-size: 13px;
+            line-height: 1.9;
+        }
+
+        .ce-tip li + li {
+            margin-top: 8px;
+        }
+
+    .ce-sidebar .ce-sidebar-note {
+        margin-top: 24px;
+        font-size: 12px;
+    }
+
+    .ce-card {
+        min-width: 0;
+        padding: 32px;
+        background: #fff;
+        border: 1px solid #dfece4;
+        border-radius: 22px;
+        box-shadow: 0 10px 32px rgb(25 70 46 / 4%);
+    }
+
+    .ce-card-heading {
+        margin-bottom: 28px;
+        padding-bottom: 22px;
+        border-bottom: 1px solid #e8f0eb;
+    }
+
+        .ce-card-heading h2 {
+            margin: 0 0 10px;
+            color: #234335;
+            font-family: inherit;
+            font-size: 25px;
+            font-weight: 700;
+        }
+
+        .ce-card-heading p {
+            margin: 0;
+            color: #637b6e;
+            font-size: 13px;
+            line-height: 1.7;
+        }
+
+    .ce-required {
+        color: #c0392b;
+    }
+
+    .ce-fields {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 24px 20px;
+    }
+
+    .ce-field {
+        min-width: 0;
+    }
+
+    .ce-full {
+        grid-column: 1 / -1;
+    }
+
+    .ce-field label {
+        display: block;
+        margin-bottom: 9px;
+        color: #355342;
+        font-size: 14px;
+        font-weight: 600;
+    }
+
+    .ce-input {
+        display: block;
+        width: 100%;
+        min-width: 0;
+        padding: 13px 15px;
+        color: #294a3b;
+        background: #f9fcfa;
+        border: 1px solid #d7e6dd;
+        border-radius: 11px;
+        font-family: inherit;
+        font-size: 14px;
+        line-height: 1.6;
+        transition: border-color .2s, box-shadow .2s;
+    }
+
+        .ce-input::placeholder {
+            color: #7c9084;
+        }
+
+        .ce-input:focus {
+            background: #fff;
+            border-color: #009f6b;
+            outline: none;
+            box-shadow: 0 0 0 3px rgb(0 159 107 / 12%);
+        }
+
+    .ce-textarea {
+        min-height: 210px;
+        resize: vertical;
+    }
+
+    .ce-help {
+        display: block;
+        margin-top: 8px;
+        color: #637b6e;
+        font-size: 12px;
+        line-height: 1.7;
+    }
+
+    .ce-field-error {
+        display: block;
+        margin-top: 7px;
+        color: #b42318;
+        font-size: 12px;
+        line-height: 1.6;
+    }
+
+        .ce-field-error:empty {
+            display: none;
+        }
+
+    .ce-input.input-validation-error {
+        border-color: #d85b52;
+    }
+
+    .ce-errors.validation-summary-valid {
+        display: none;
+    }
+
+    .ce-errors.validation-summary-errors {
+        margin-bottom: 24px;
+        padding: 15px 18px;
+        color: #b42318;
+        background: #fff4f2;
+        border: 1px solid #f3c9c4;
+        border-radius: 12px;
+        font-size: 13px;
+        line-height: 1.8;
+    }
+
+    .ce-errors ul {
+        margin: 0;
+        padding-left: 18px;
+    }
+
+    .ce-actions {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 12px;
+        margin-top: 30px;
+        padding-top: 24px;
+        border-top: 1px solid #e8f0eb;
+    }
+
+    .ce-cancel,
+    .ce-save {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 13px 19px;
+        border-radius: 11px;
+        font-family: inherit;
+        font-size: 14px;
+        font-weight: 600;
+        line-height: 1.5;
+        text-decoration: none;
+        cursor: pointer;
+    }
+
+    .ce-cancel {
+        color: #496655;
+        background: #fff;
+        border: 1px solid #d7e6dd;
+    }
+
+        .ce-cancel:hover {
+            color: #294a3b;
+            background: #f0f7f3;
+        }
+
+    .ce-save {
+        color: #fff;
+        background: #009f6b;
+        border: 1px solid #009f6b;
+    }
+
+        .ce-save:hover {
+            background: #008359;
+            border-color: #008359;
+        }
+
+        .ce-page a:focus-visible,
+        .ce-save:focus-visible {
+            outline: 3px solid #82cfac;
+            outline-offset: 3px;
+        }
+
+    @@media (max-width: 991.98px) {
+        .ce-layout {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @@media (max-width: 575.98px) {
+        .ce-page {
+            padding: 28px 0 44px;
+        }
+
+        .ce-sidebar,
+        .ce-card {
+            padding: 24px 20px;
+        }
+
+        .ce-fields {
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+
+        .ce-actions {
+            flex-direction: column-reverse;
+        }
+
+        .ce-cancel,
+        .ce-save {
+            width: 100%;
+        }
+    }
+
+    @@media (prefers-reduced-motion: reduce) {
+        .ce-input {
+            transition: none;
+        }
+    }
+</style>

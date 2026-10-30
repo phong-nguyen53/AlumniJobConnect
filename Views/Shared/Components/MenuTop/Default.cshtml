@@ -10,11 +10,32 @@
             .StartsWith("Hồ sơ", StringComparison.OrdinalIgnoreCase))
         .ToList();
 
+    var isLoggedIn = User.Identity?.IsAuthenticated == true;
+
+    var displayName = string.IsNullOrWhiteSpace(User.Identity?.Name)
+        ? "Tài khoản của bạn"
+        : User.Identity!.Name;
+
     bool profileRendered = false;
 }
 
 @foreach (var item in menus)
 {
+    var menuName = (item.MenuName ?? "").Trim();
+
+    // Phần tài khoản được hiển thị riêng bên dưới.
+    if (string.Equals(menuName, "Tài khoản",
+            StringComparison.OrdinalIgnoreCase) ||
+        string.Equals(menuName, "Đăng nhập",
+            StringComparison.OrdinalIgnoreCase) ||
+        string.Equals(menuName, "Đăng ký",
+            StringComparison.OrdinalIgnoreCase) ||
+        string.Equals(menuName, "Đăng xuất",
+            StringComparison.OrdinalIgnoreCase))
+    {
+        continue;
+    }
+
     if (profileMenus.Contains(item))
     {
         if (!profileRendered)
@@ -36,12 +57,31 @@
                 </summary>
 
                 <div class="ac-profile-panel">
-                    <span class="ac-panel-title">HỒ SƠ CỦA BẠN</span>
-
-                    @foreach (var profile in profileMenus)
+                    <span class="ac-panel-title">
+                        HỒ SƠ CỦA BẠN
+                    </span>
+                    @if (User.Identity?.IsAuthenticated == true)
                     {
-                        <a href="@item.MenuUrl" class="ac-profile-link">
-                            <span>@profile.MenuName</span>
+                        @if (User.IsInRole("Employer"))
+                        {
+                            <a href="@Url.Action("MyProfile", "CompanyProfile")"
+                               class="ac-profile-link">
+                                <span>Hồ sơ doanh nghiệp</span>
+                                <span aria-hidden="true">›</span>
+                            </a>
+                        }
+                        else if (User.IsInRole("Alumni"))
+                        {
+                            <a href="@Url.Action("MyProfile", "Profile")"
+                               class="ac-profile-link">
+                                <span>Hồ sơ cá nhân</span>
+                                <span aria-hidden="true">›</span>
+                            </a>
+                        }
+
+                        <a href="@Url.Action("Candidates", "Profile")"
+                           class="ac-profile-link">
+                            <span>Hồ sơ sinh viên</span>
                             <span aria-hidden="true">›</span>
                         </a>
                     }
@@ -51,9 +91,126 @@
     }
     else
     {
-        <a href="@item.MenuUrl" class="ac-link">@item.MenuName</a>
+        <a href="@item.MenuUrl" class="ac-link">
+            @item.MenuName
+        </a>
     }
 }
+
+<!-- Tài khoản: thay đổi theo trạng thái đăng nhập -->
+<details class="ac-profile ac-account">
+    <summary class="ac-link ac-profile-toggle ac-account-toggle">
+        <span class="ac-account-icon" aria-hidden="true">
+            <i class="fa fa-user"></i>
+
+            @if (isLoggedIn)
+            {
+                <span class="ac-online-dot"></span>
+            }
+        </span>
+
+        <span class="ac-account-name">
+            @(isLoggedIn? displayName : "Tài khoản")
+        </span>
+
+        <svg width="14" height="14"
+             viewBox="0 0 16 16"
+             fill="none"
+             stroke="currentColor"
+             stroke-width="1.8"
+             aria-hidden="true">
+            <path d="m4 6 4 4 4-4" />
+        </svg>
+    </summary>
+
+    <div class="ac-profile-panel ac-account-panel">
+        @if (isLoggedIn)
+        {
+            <div class="ac-account-info">
+                <span class="ac-login-status">
+                    <span></span>
+                    Đã đăng nhập
+                </span>
+
+                <strong>@displayName</strong>
+
+                <small>
+                    @if (User.IsInRole("Admin"))
+                    {
+                        <text>Quản trị viên</text>
+                    }
+                    else if (User.IsInRole("Employer"))
+                    {
+                        <text>Tài khoản doanh nghiệp</text>
+                    }
+                    else if (User.IsInRole("Alumni"))
+                    {
+                        <text>Sinh viên / Cựu sinh viên</text>
+                    }
+                    else
+                    {
+                        <text>Thành viên</text>
+                    }
+                </small>
+            </div>
+
+            @if (User.IsInRole("Alumni"))
+            {
+                <a href="@Url.Action("MyProfile", "Profile")"
+                   class="ac-profile-link">
+                    <span>Hồ sơ của tôi</span>
+                    <span aria-hidden="true">›</span>
+                </a>
+            }
+
+            <form action="@Url.Action("Logout", "Account")"
+                  method="post"
+                  class="ac-logout-form">
+                @Html.AntiForgeryToken()
+
+                <button type="submit"
+                        class="ac-profile-link ac-logout-button">
+                    <span>
+                        <i class="fa fa-sign-out-alt me-2"
+                           aria-hidden="true"></i>
+                        Đăng xuất
+                    </span>
+
+                    <span aria-hidden="true">›</span>
+                </button>
+            </form>
+        }
+        else
+        {
+            <div class="ac-account-info">
+                <strong>Chào mừng bạn!</strong>
+                <small>Đăng nhập để sử dụng các tiện ích.</small>
+            </div>
+
+            <a href="@Url.Action("Login", "Account")"
+               class="ac-profile-link">
+                <span>
+                    <i class="fa fa-sign-in-alt me-2"
+                       aria-hidden="true"></i>
+                    Đăng nhập
+                </span>
+
+                <span aria-hidden="true">›</span>
+            </a>
+
+            <a href="@Url.Action("Register", "Account")"
+               class="ac-profile-link ac-register-link">
+                <span>
+                    <i class="fa fa-user-plus me-2"
+                       aria-hidden="true"></i>
+                    Đăng ký tài khoản
+                </span>
+
+                <span aria-hidden="true">›</span>
+            </a>
+        }
+    </div>
+</details>
 
 <style>
     .ac-header,
@@ -71,10 +228,8 @@
         font-family: "Segoe UI", Arial, sans-serif;
     }
 
-    /* Logo trái, menu phải, luôn cùng hàng */
     .ac-header-inner {
         display: flex;
-        flex-direction: row;
         flex-wrap: nowrap;
         align-items: center;
         justify-content: space-between;
@@ -134,7 +289,6 @@
 
     .ac-navigation {
         display: flex;
-        flex-direction: row;
         flex-wrap: nowrap;
         align-items: center;
         justify-content: flex-end;
@@ -185,10 +339,11 @@
         }
 
         .ac-profile-toggle svg {
+            flex-shrink: 0;
             transition: transform .2s;
         }
 
-    .ac-profile[open] .ac-profile-toggle svg {
+    .ac-profile[open] > .ac-profile-toggle svg {
         transform: rotate(180deg);
     }
 
@@ -201,7 +356,7 @@
         padding: 10px;
         background: #fff;
         border: 1px solid #e5eee8;
-        border-radius: 13px;
+        border-radius: 14px;
         box-shadow: 0 14px 35px rgb(20 50 35 / 14%);
     }
 
@@ -219,13 +374,19 @@
         align-items: center;
         justify-content: space-between;
         gap: 14px;
+        width: 100%;
         padding: 12px;
         color: #344d40;
+        background: transparent;
+        border: 0;
         border-radius: 8px;
+        font-family: inherit;
         font-size: 14px;
         font-weight: 600;
         line-height: 1.5;
+        text-align: left;
         text-decoration: none;
+        cursor: pointer;
     }
 
         .ac-profile-link:hover {
@@ -237,6 +398,119 @@
         .ac-profile-link:focus-visible {
             outline: 2px solid #00a36c;
             outline-offset: 3px;
+        }
+
+    .ac-account {
+        margin-left: 10px;
+    }
+
+    .ac-navigation .ac-account-toggle {
+        gap: 10px;
+        padding: 13px 18px;
+        color: #fff;
+        background: #00a36c;
+        border-radius: 12px;
+    }
+
+        .ac-navigation .ac-account-toggle:hover,
+        .ac-account[open] > .ac-account-toggle {
+            color: #fff;
+            background: #008859;
+        }
+
+    .ac-account-icon {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 22px;
+        height: 22px;
+        font-size: 18px;
+    }
+
+    .ac-online-dot {
+        position: absolute;
+        right: -2px;
+        bottom: -1px;
+        width: 9px;
+        height: 9px;
+        background: #b5ffd4;
+        border: 2px solid #00a36c;
+        border-radius: 50%;
+    }
+
+    .ac-account-name {
+        display: block;
+        max-width: 160px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .ac-account-panel {
+        width: 280px;
+    }
+
+    .ac-account-info {
+        display: flex;
+        flex-direction: column;
+        gap: 7px;
+        margin-bottom: 6px;
+        padding: 12px 12px 16px;
+        border-bottom: 1px solid #edf2ef;
+    }
+
+        .ac-account-info strong {
+            color: #243e31;
+            font-size: 15px;
+            overflow-wrap: anywhere;
+        }
+
+        .ac-account-info small {
+            color: #829087;
+            font-size: 12px;
+            line-height: 1.6;
+        }
+
+    .ac-login-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        color: #008859;
+        font-size: 11px;
+        font-weight: 600;
+    }
+
+        .ac-login-status > span {
+            width: 7px;
+            height: 7px;
+            background: #00a36c;
+            border-radius: 50%;
+        }
+
+    .ac-account .ac-register-link {
+        margin-top: 4px;
+        color: #008859;
+        background: #edf8f2;
+    }
+
+        .ac-account .ac-register-link:hover {
+            background: #dff3e8;
+        }
+
+    .ac-logout-form {
+        margin: 6px 0 0;
+        padding-top: 6px;
+        border-top: 1px solid #edf2ef;
+    }
+
+    .ac-logout-button {
+        color: #cf4545;
+    }
+
+        .ac-logout-button:hover {
+            color: #b83232;
+            background: #fff0f0;
         }
 
     @@media (max-width: 1199.98px) {
@@ -262,9 +536,16 @@
                 padding: 10px 8px;
                 font-size: 13px;
             }
+
+            .ac-navigation .ac-account-toggle {
+                padding: 11px 14px;
+            }
+
+        .ac-account-name {
+            max-width: 120px;
+        }
     }
 
-    /* Màn hình nhỏ: vẫn cùng hàng, vuốt ngang để xem menu */
     @@media (max-width: 991.98px) {
         .ac-header {
             position: relative;
@@ -297,40 +578,24 @@
                 display: none;
             }
 
+        .ac-navigation {
+            align-items: flex-start;
+        }
+
         .ac-profile-panel {
             position: static;
-            width: 230px;
+            width: 250px;
             margin-top: 10px;
             box-shadow: none;
         }
     }
 
-    .ac-account {
-        margin-left: 10px;
-    }
-
-    .ac-navigation .ac-account-toggle {
-        padding: 11px 16px;
-        color: #fff;
-        background: #00a36c;
-        border-radius: 9px;
-    }
-
-        .ac-navigation .ac-account-toggle:hover,
-        .ac-account[open] > .ac-account-toggle {
-            color: #fff;
-            background: #008859;
+    @@media (prefers-reduced-motion: reduce) {
+        .ac-navigation .ac-link,
+        .ac-profile-toggle svg {
+            transition: none;
         }
-
-    .ac-account .ac-register-link {
-        margin-top: 4px;
-        color: #008859;
-        background: #edf8f2;
     }
-
-        .ac-account .ac-register-link:hover {
-            background: #dff3e8;
-        }
 </style>
 
 <script>
@@ -339,16 +604,20 @@
             const navigation = document.querySelector(".ac-navigation");
 
             if (!navigation || navigation.dataset.menusReady) return;
+
             navigation.dataset.menusReady = "true";
 
-            const dropdowns = navigation.querySelectorAll("details.ac-profile");
+            const dropdowns =
+                navigation.querySelectorAll("details.ac-profile");
 
             dropdowns.forEach(dropdown => {
                 dropdown.addEventListener("toggle", () => {
                     if (!dropdown.open) return;
 
                     dropdowns.forEach(other => {
-                        if (other !== dropdown) other.open = false;
+                        if (other !== dropdown) {
+                            other.open = false;
+                        }
                     });
                 });
             });
@@ -367,14 +636,17 @@
                 dropdowns.forEach(dropdown => {
                     if (dropdown.open) {
                         dropdown.open = false;
-                        dropdown.querySelector("summary").focus();
+                        dropdown.querySelector("summary")?.focus();
                     }
                 });
             });
         }
 
         if (document.readyState === "loading") {
-            document.addEventListener("DOMContentLoaded", setupAccountMenus);
+            document.addEventListener(
+                "DOMContentLoaded",
+                setupAccountMenus
+            );
         } else {
             setupAccountMenus();
         }

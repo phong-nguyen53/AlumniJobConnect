@@ -1,11 +1,10 @@
 ﻿using AlumniJobConnect.Models;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Data.SqlClient;
-using Microsoft.EntityFrameworkCore;
-using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
 
 namespace AlumniJobConnect.Controllers;
@@ -22,39 +21,28 @@ public class AccountController : Controller
         _context = context;
         _logger = logger;
     }
+
+    // ================= ĐĂNG KÝ =================
+
     public class RegisterInput
     {
         [Required(ErrorMessage = "Vui lòng nhập họ tên.")]
-        [StringLength(150)]
         public string FullName { get; set; } = "";
 
         [Required(ErrorMessage = "Vui lòng nhập email.")]
-        [EmailAddress(ErrorMessage = "Email không hợp lệ.")]
-        [StringLength(256)]
         public string Email { get; set; } = "";
 
         [Required(ErrorMessage = "Vui lòng nhập mật khẩu.")]
-        [StringLength(
-            128,
-            MinimumLength = 10,
-            ErrorMessage = "Mật khẩu phải từ 10 đến 128 ký tự.")]
         [DataType(DataType.Password)]
         public string Password { get; set; } = "";
 
         [Required(ErrorMessage = "Vui lòng nhập lại mật khẩu.")]
-        [Compare(
-            nameof(Password),
-            ErrorMessage = "Hai mật khẩu chưa khớp.")]
         [DataType(DataType.Password)]
         public string ConfirmPassword { get; set; } = "";
 
-        [Required]
-        [RegularExpression(
-            "^(Alumni|Employer)$",
-            ErrorMessage = "Loại tài khoản không hợp lệ.")]
+        [Required(ErrorMessage = "Vui lòng chọn loại tài khoản.")]
         public string AccountType { get; set; } = "Alumni";
 
-        [StringLength(200)]
         public string? CompanyName { get; set; }
     }
 
@@ -72,10 +60,13 @@ public class AccountController : Controller
         input.Email = (input.Email ?? "").Trim().ToLowerInvariant();
         input.CompanyName = input.CompanyName?.Trim();
 
-        if (string.IsNullOrWhiteSpace(input.FullName))
+        // Chỉ được đăng ký sinh viên hoặc doanh nghiệp.
+        if (input.AccountType != "Alumni"
+            && input.AccountType != "Employer")
         {
             ModelState.AddModelError(
-                nameof(input.FullName), "Vui lòng nhập họ tên.");
+                nameof(input.AccountType),
+                "Loại tài khoản không hợp lệ.");
         }
 
         if (input.AccountType == "Employer"
@@ -87,16 +78,7 @@ public class AccountController : Controller
         }
 
         if (!ModelState.IsValid)
-            return View(input);
-
-        var emailExists = await _context.Users
-            .AnyAsync(x => x.Email == input.Email);
-
-        if (emailExists)
         {
-            ModelState.AddModelError(
-                nameof(input.Email), "Email này đã được đăng ký.");
-
             return View(input);
         }
 
@@ -105,6 +87,8 @@ public class AccountController : Controller
 
         try
         {
+            var now = DateTime.Now;
+
             var role = await _context.Roles
                 .SingleOrDefaultAsync(
                     x => x.RoleName == input.AccountType);
@@ -127,9 +111,10 @@ public class AccountController : Controller
                 FullName = input.FullName,
                 Email = input.Email,
                 IsActive = true,
-                CreatedAt = DateTime.Now
+                CreatedAt = now
             };
 
+            // Lưu mật khẩu anh nhập dưới dạng mã hóa.
             var hasher =
                 new PasswordHasher<AlumniJobConnect.Models.User>();
 
@@ -140,7 +125,7 @@ public class AccountController : Controller
             {
                 User = user,
                 Role = role,
-                AssignedAt = DateTime.Now
+                AssignedAt = now
             });
 
             if (input.AccountType == "Alumni")
@@ -148,7 +133,7 @@ public class AccountController : Controller
                 user.AlumniProfile = new AlumniProfile
                 {
                     User = user,
-                    ProfileUpdatedAt = DateTime.Now
+                    ProfileUpdatedAt = now
                 };
             }
 
@@ -170,52 +155,49 @@ public class AccountController : Controller
                         {user.UserId},
                         {input.CompanyName},
                         {"Pending"},
-                        {DateTime.Now}
+                        {now}
                     )
                     """);
             }
+
             await transaction.CommitAsync();
 
             TempData["RegisterSuccess"] =
                 "Đăng ký thành công! Vui lòng đăng nhập.";
 
-            return RedirectToAction("Login", "Account");
-        }
-        catch (DbUpdateException ex)
-            when (ex.InnerException is SqlException sql
-                && (sql.Number == 2601 || sql.Number == 2627))
-        {
-            await transaction.RollbackAsync();
-
-            ModelState.AddModelError(
-                "", "Thông tin đăng ký bị trùng. Vui lòng kiểm tra email.");
-
-            return View(input);
+            return RedirectToAction(nameof(Login));
         }
         catch (Exception ex)
         {
             await transaction.RollbackAsync();
 
-            _logger.LogError(ex, "Không thể tạo tài khoản đăng ký.");
+            _logger.LogError(ex, "Không thể đăng ký tài khoản.");
+
+            // Chỉ hiện chi tiết lỗi khi chạy trên máy phát triển.
+            var environment = HttpContext.RequestServices
+                .GetRequiredService<Microsoft.Extensions.Hosting.IHostEnvironment>();
+
+            var isDevelopment =
+                environment.EnvironmentName == "Development";
 
             ModelState.AddModelError(
-                "", "Chưa thể đăng ký. Vui lòng thử lại.");
+                "",
+                isDevelopment
+                    ? ex.GetBaseException().Message
+                    : "Chưa lưu được tài khoản. Vui lòng kiểm tra nhật ký lỗi.");
 
             return View(input);
         }
     }
 
+    // ================= ĐĂNG NHẬP =================
 
-    /// đăng nhập 
     public class LoginInput
     {
         [Required(ErrorMessage = "Vui lòng nhập email.")]
-        [EmailAddress(ErrorMessage = "Email không hợp lệ.")]
-        [StringLength(256)]
         public string Email { get; set; } = "";
 
         [Required(ErrorMessage = "Vui lòng nhập mật khẩu.")]
-        [StringLength(128)]
         [DataType(DataType.Password)]
         public string Password { get; set; } = "";
     }
@@ -231,65 +213,80 @@ public class AccountController : Controller
     public async Task<IActionResult> Login(LoginInput input)
     {
         if (!ModelState.IsValid)
+        {
             return View(input);
+        }
 
         var email = input.Email.Trim().ToLowerInvariant();
 
-        var user = await _context.Users
+        // Email được phép trùng nên kiểm tra từng tài khoản.
+        var users = await _context.Users
             .Include(x => x.UserRoles)
                 .ThenInclude(x => x.Role)
-            .SingleOrDefaultAsync(x => x.Email == email);
-
-        if (user == null || !user.IsActive)
-        {
-            ModelState.AddModelError(
-                "", "Email hoặc mật khẩu không đúng, hoặc tài khoản bị khóa.");
-
-            return View(input);
-        }
+            .Where(x => x.Email == email && x.IsActive)
+            .ToListAsync();
 
         var hasher =
             new PasswordHasher<AlumniJobConnect.Models.User>();
 
-        PasswordVerificationResult result;
+        var matches =
+            new List<AlumniJobConnect.Models.User>();
 
-        try
+        foreach (var candidate in users)
         {
-            result = hasher.VerifyHashedPassword(
-                user,
-                user.PasswordHash,
-                input.Password);
-        }
-        catch (FormatException)
-        {
-            result = PasswordVerificationResult.Failed;
+            if (string.IsNullOrWhiteSpace(candidate.PasswordHash))
+            {
+                continue;
+            }
+
+            try
+            {
+                var result = hasher.VerifyHashedPassword(
+                    candidate,
+                    candidate.PasswordHash,
+                    input.Password);
+
+                if (result != PasswordVerificationResult.Failed)
+                {
+                    matches.Add(candidate);
+                }
+            }
+            catch (FormatException)
+            {
+                // Bỏ qua dữ liệu mật khẩu không hợp lệ.
+            }
         }
 
-        if (result == PasswordVerificationResult.Failed)
+        if (matches.Count == 0)
         {
             ModelState.AddModelError(
-                "", "Email hoặc mật khẩu không đúng, hoặc tài khoản bị khóa.");
+                "",
+                "Email hoặc mật khẩu không đúng, hoặc tài khoản bị khóa.");
 
             return View(input);
         }
 
-        if (result == PasswordVerificationResult.SuccessRehashNeeded)
+        if (matches.Count > 1)
         {
-            user.PasswordHash =
-                hasher.HashPassword(user, input.Password);
+            ModelState.AddModelError(
+                "",
+                "Có nhiều tài khoản cùng email và mật khẩu. Không thể xác định tài khoản đăng nhập.");
 
-            await _context.SaveChangesAsync();
+            return View(input);
         }
 
+        var user = matches[0];
+
         var claims = new List<Claim>
-    {
-        new(ClaimTypes.NameIdentifier, user.UserId.ToString()),
-        new(ClaimTypes.Name, user.FullName),
-        new(ClaimTypes.Email, user.Email)
-    };
+        {
+            new(ClaimTypes.NameIdentifier, user.UserId.ToString()),
+            new(ClaimTypes.Name, user.FullName),
+            new(ClaimTypes.Email, user.Email)
+        };
 
         foreach (var roleName in user.UserRoles
             .Select(x => x.Role.RoleName)
+            .Where(x => !string.IsNullOrWhiteSpace(x))
             .Distinct())
         {
             claims.Add(new Claim(ClaimTypes.Role, roleName));
@@ -307,9 +304,18 @@ public class AccountController : Controller
                 IsPersistent = false
             });
 
-        // Đăng nhập thành công → trang chủ
         return RedirectToAction("Index", "Home");
     }
 
+    // ================= ĐĂNG XUẤT =================
 
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Logout()
+    {
+        await HttpContext.SignOutAsync(
+            CookieAuthenticationDefaults.AuthenticationScheme);
+
+        return RedirectToAction("Index", "Home");
+    }
 }

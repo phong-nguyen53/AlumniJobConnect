@@ -1,0 +1,623 @@
+﻿@model AlumniJobConnect.Controllers.ProfileController.ProfileInput
+
+@{
+    ViewData["Title"] = "Hồ sơ cá nhân";
+    var hasAvatar = !string.IsNullOrWhiteSpace(Model.AvatarUrl);
+}
+
+<section class="pf-page">
+    <div class="container">
+        <div class="pf-heading">
+            <div>
+                <span class="pf-eyebrow">KHÔNG GIAN CÁ NHÂN</span>
+                <h1>Hồ sơ của bạn</h1>
+                <p>Cập nhật thông tin để kết nối với cơ hội phù hợp.</p>
+            </div>
+
+            <a href="@Url.Action("Index", "Home")" class="pf-home">
+                ← Trang chủ
+            </a>
+        </div>
+
+        <div class="row g-4">
+
+            <!-- Thông tin và ảnh đại diện -->
+            <div class="col-lg-4">
+                <aside class="pf-card pf-sidebar">
+                    <div class="pf-cover"></div>
+
+                    <div class="pf-sidebar-body">
+                        <div class="pf-avatar">
+                            <img id="avatarPreview"
+                                 src="@(hasAvatar
+                                                                      ? Url.Action("Avatar", "Profile")
+                                                                      : null)"
+                                 alt="Ảnh đại diện"
+                                 hidden="@(!hasAvatar)" />
+
+                            <div id="avatarDefault"
+                                 class="pf-avatar-default"
+                                 hidden="@hasAvatar">
+                                <svg viewBox="0 0 100 100"
+                                     xmlns="http://www.w3.org/2000/svg"
+                                     aria-hidden="true">
+                                    <circle cx="50" cy="50" r="50"
+                                            fill="#e4f5ed" />
+
+                                    <circle cx="82" cy="20" r="18"
+                                            fill="#c5e9d8" />
+
+                                    <circle cx="14" cy="84" r="24"
+                                            fill="#c5e9d8" />
+
+                                    <path d="M18 100V88C18 69 32 59 50 59
+                                             C68 59 82 69 82 88V100Z"
+                                          fill="#168568" />
+
+                                    <circle cx="50" cy="38" r="20"
+                                            fill="#f3cfb0" />
+
+                                    <path d="M30 37C26 18 39 13 50 13
+                                             C65 13 75 24 70 40
+                                             L65 33C55 34 46 29 42 25
+                                             C39 31 35 35 30 37Z"
+                                          fill="#244a3e" />
+
+                                    <path d="M40 60L50 72L60 60L56 82H44Z"
+                                          fill="#fff" />
+                                </svg>
+                            </div>
+                        </div>
+
+                        <h2>@Model.FullName</h2>
+                        <p class="pf-email">@Model.Email</p>
+
+                        <span class="pf-badge">
+                            Sinh viên / Cựu sinh viên
+                        </span>
+
+                        <div class="pf-intro">
+                            <h3>Giới thiệu bản thân</h3>
+
+                            <p>
+                                @(string.IsNullOrWhiteSpace(Model.Bio)
+                                                                ? "Bạn chưa thêm giới thiệu bản thân."
+                                                                : Model.Bio)
+                            </p>
+                        </div>
+
+                        <a href="@Url.Action("jobs", "Home")"
+                           class="pf-jobs">
+                            Khám phá việc làm
+                            <span aria-hidden="true">↗</span>
+                        </a>
+                    </div>
+                </aside>
+            </div>
+
+            <!-- Form chỉnh sửa -->
+            <div class="col-lg-8">
+                <div class="pf-card pf-form-card">
+                    <div class="pf-form-heading">
+                        <h2>Thông tin cá nhân</h2>
+                        <p>Quản lý ảnh đại diện và thông tin của bạn.</p>
+                    </div>
+
+                    @if (TempData["ProfileSuccess"] is string message)
+                    {
+                        <div class="alert alert-success" role="status">
+                            @message
+                        </div>
+                    }
+
+                    <form action="@Url.Action("Index", "Profile")"
+                          method="post"
+                          enctype="multipart/form-data">
+                        @Html.AntiForgeryToken()
+
+                        <div asp-validation-summary="ModelOnly"
+                             class="text-danger mb-3"></div>
+
+                        <div class="row g-4">
+
+                            <div class="col-12">
+                                <div class="pf-upload">
+                                    <label asp-for="AvatarFile"
+                                           class="form-label">
+                                        Ảnh đại diện
+                                    </label>
+
+                                    <p class="pf-help mb-3">
+                                        Chọn ảnh JPG hoặc PNG, tối đa 2 MB.
+                                        Ảnh sẽ được lưu khi bạn bấm Lưu thay đổi.
+                                    </p>
+
+                                    <input asp-for="AvatarFile"
+                                           id="avatarFile"
+                                           type="file"
+                                           accept=".jpg,.jpeg,.png"
+                                           class="form-control" />
+
+                                    <span asp-validation-for="AvatarFile"
+                                          class="text-danger small"></span>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label asp-for="FullName" class="form-label">
+                                    Họ và tên
+                                    <span class="text-danger">*</span>
+                                </label>
+
+                                <input asp-for="FullName"
+                                       class="form-control"
+                                       autocomplete="name"
+                                       maxlength="150"
+                                       placeholder="Nhập họ và tên"
+                                       required />
+
+                                <span asp-validation-for="FullName"
+                                      class="text-danger small"></span>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="pf-email" class="form-label">
+                                    Email đăng nhập
+                                </label>
+
+                                <input id="pf-email"
+                                       type="email"
+                                       value="@Model.Email"
+                                       class="form-control"
+                                       readonly />
+
+                                <small class="pf-help">
+                                    Email không thay đổi tại đây.
+                                </small>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label asp-for="Phone" class="form-label">
+                                    Số điện thoại
+                                </label>
+
+                                <input asp-for="Phone"
+                                       type="tel"
+                                       class="form-control"
+                                       autocomplete="tel"
+                                       maxlength="20"
+                                       placeholder="Nhập số điện thoại" />
+
+                                <span asp-validation-for="Phone"
+                                      class="text-danger small"></span>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label asp-for="DateOfBirth"
+                                       class="form-label">
+                                    Ngày sinh
+                                </label>
+
+                                <input asp-for="DateOfBirth"
+                                       type="date"
+                                       asp-format="{0:yyyy-MM-dd}"
+                                       class="form-control" />
+
+                                <span asp-validation-for="DateOfBirth"
+                                      class="text-danger small"></span>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label asp-for="GraduationYear"
+                                       class="form-label">
+                                    Năm tốt nghiệp
+                                </label>
+
+                                <input asp-for="GraduationYear"
+                                       type="number"
+                                       min="1900"
+                                       max="2100"
+                                       class="form-control"
+                                       placeholder="Ví dụ: 2026" />
+
+                                <span asp-validation-for="GraduationYear"
+                                      class="text-danger small"></span>
+                            </div>
+
+                            <div class="col-12">
+                                <label asp-for="Bio" class="form-label">
+                                    Giới thiệu bản thân
+                                </label>
+
+                                <textarea asp-for="Bio"
+                                          rows="5"
+                                          maxlength="1000"
+                                          class="form-control"
+                                          placeholder="Chia sẻ kỹ năng, kinh nghiệm và định hướng nghề nghiệp của bạn..."></textarea>
+
+                                <small class="pf-help">
+                                    Tối đa 1.000 ký tự.
+                                </small>
+
+                                <span asp-validation-for="Bio"
+                                      class="text-danger small"></span>
+                            </div>
+                        </div>
+
+                        <div class="pf-actions">
+                            <span>
+                                Không chọn ảnh mới sẽ giữ ảnh hiện tại.
+                            </span>
+
+                            <button type="submit" class="pf-save">
+                                <i class="fa fa-check me-2"
+                                   aria-hidden="true"></i>
+                                Lưu thay đổi
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+<style>
+    .pf-page {
+        padding: 48px 0 64px;
+        background: #f5f8f6;
+        font-family: "Segoe UI", Arial, sans-serif;
+    }
+
+    .pf-page * {
+        box-sizing: border-box;
+    }
+
+    .pf-heading {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 28px;
+    }
+
+    .pf-eyebrow {
+        color: #008c60;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 2px;
+    }
+
+    .pf-page h1,
+    .pf-page h2,
+    .pf-page h3 {
+        color: #203e30;
+        font-family: inherit;
+    }
+
+    .pf-heading h1 {
+        margin: 10px 0;
+        font-size: 32px;
+        font-weight: 700;
+    }
+
+    .pf-heading p {
+        margin: 0;
+        color: #78877f;
+        font-size: 14px;
+        line-height: 1.7;
+    }
+
+    .pf-home {
+        padding: 10px 16px;
+        color: #52675b;
+        background: white;
+        border: 1px solid #e1eae4;
+        border-radius: 10px;
+        text-decoration: none;
+        font-size: 14px;
+    }
+
+    .pf-card {
+        background: white;
+        border: 1px solid #e3ebe6;
+        border-radius: 20px;
+        box-shadow: 0 8px 28px rgb(25 57 44 / 4%);
+    }
+
+    .pf-sidebar {
+        overflow: hidden;
+    }
+
+    .pf-cover {
+        height: 110px;
+        background:
+            radial-gradient(circle at 85% 20%, #ffffff25 0 50px, transparent 51px),
+            linear-gradient(120deg, #087f5b, #42bc89);
+    }
+
+    .pf-sidebar-body {
+        padding: 0 26px 28px;
+        text-align: center;
+    }
+
+    .pf-avatar {
+        position: relative;
+        width: 104px;
+        height: 104px;
+        margin: -52px auto 18px;
+        overflow: hidden;
+        background: #e9f7ee;
+        border: 5px solid white;
+        border-radius: 50%;
+        box-shadow: 0 6px 18px rgb(25 57 44 / 12%);
+    }
+
+    .pf-avatar img,
+    .pf-avatar-default,
+    .pf-avatar-default svg {
+        display: block;
+        width: 100%;
+        height: 100%;
+    }
+
+    .pf-avatar img {
+        object-fit: cover;
+    }
+
+    .pf-avatar [hidden] {
+        display: none !important;
+    }
+
+    .pf-sidebar h2 {
+        margin: 0 0 8px;
+        font-size: 21px;
+        overflow-wrap: anywhere;
+    }
+
+    .pf-email {
+        margin-bottom: 16px;
+        color: #829087;
+        font-size: 13px;
+        overflow-wrap: anywhere;
+    }
+
+    .pf-badge {
+        display: inline-block;
+        padding: 7px 12px;
+        color: #00865b;
+        background: #ecf8f0;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .pf-intro {
+        margin-top: 26px;
+        padding-top: 22px;
+        border-top: 1px solid #edf2ef;
+        text-align: left;
+    }
+
+    .pf-intro h3 {
+        font-size: 14px;
+        font-weight: 700;
+    }
+
+    .pf-intro p {
+        margin: 10px 0 0;
+        color: #78877f;
+        font-size: 14px;
+        line-height: 1.8;
+        white-space: pre-line;
+        overflow-wrap: anywhere;
+    }
+
+    .pf-jobs {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 24px;
+        padding: 13px 16px;
+        color: #00865b;
+        background: #f0f8f3;
+        border-radius: 10px;
+        text-decoration: none;
+        font-size: 14px;
+        font-weight: 600;
+    }
+
+    .pf-form-card {
+        padding: 30px;
+    }
+
+    .pf-form-heading {
+        margin-bottom: 25px;
+        padding-bottom: 20px;
+        border-bottom: 1px solid #edf2ef;
+    }
+
+    .pf-form-heading h2 {
+        margin: 0 0 8px;
+        font-size: 22px;
+    }
+
+    .pf-form-heading p {
+        margin: 0;
+        color: #829087;
+        font-size: 14px;
+    }
+
+    .pf-upload {
+        padding: 18px;
+        background: #f6faf8;
+        border: 1px dashed #b8d8c6;
+        border-radius: 14px;
+    }
+
+    .pf-page .form-label {
+        color: #40574a;
+        font-size: 14px;
+        font-weight: 600;
+    }
+
+    .pf-page .form-control {
+        min-height: 48px;
+        padding: 12px 14px;
+        border: 1px solid #dce7df;
+        border-radius: 10px;
+        font-family: inherit;
+        font-size: 14px;
+    }
+
+    .pf-page .form-control:focus {
+        border-color: #00a36c;
+        box-shadow: 0 0 0 3px rgb(0 163 108 / 10%);
+    }
+
+    .pf-page .form-control[readonly] {
+        color: #7d8b82;
+        background: #f5f7f6;
+    }
+
+    .pf-upload .form-control {
+        background: white;
+    }
+
+    .pf-help {
+        display: block;
+        margin-top: 7px;
+        color: #859188;
+        font-size: 12px;
+        line-height: 1.6;
+    }
+
+    .pf-actions {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        margin-top: 28px;
+        padding-top: 24px;
+        border-top: 1px solid #edf2ef;
+    }
+
+    .pf-actions > span {
+        color: #859188;
+        font-size: 12px;
+    }
+
+    .pf-save {
+        padding: 13px 22px;
+        color: white;
+        background: #00a36c;
+        border: 0;
+        border-radius: 10px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    .pf-save:hover {
+        background: #008c5e;
+    }
+
+    .pf-save:focus-visible,
+    .pf-jobs:focus-visible,
+    .pf-home:focus-visible {
+        outline: 3px solid #86d6b6;
+        outline-offset: 3px;
+    }
+
+    @@media (max-width: 575.98px) {
+        .pf-page {
+            padding: 30px 0;
+        }
+
+        .pf-form-card {
+            padding: 22px;
+        }
+
+        .pf-heading h1 {
+            font-size: 27px;
+        }
+
+        .pf-actions {
+            align-items: stretch;
+            flex-direction: column;
+        }
+
+        .pf-save {
+            width: 100%;
+        }
+    }
+</style>
+
+<script>
+    (() => {
+        const input = document.getElementById("avatarFile");
+        const preview = document.getElementById("avatarPreview");
+        const fallback = document.getElementById("avatarDefault");
+
+        const savedSrc = preview.getAttribute("src");
+        let previewUrl = null;
+
+        function showDefault() {
+            preview.hidden = true;
+            fallback.hidden = false;
+        }
+
+        function restoreSavedAvatar() {
+            if (savedSrc) {
+                preview.src = savedSrc;
+                preview.hidden = false;
+                fallback.hidden = true;
+            } else {
+                preview.removeAttribute("src");
+                showDefault();
+            }
+        }
+
+        preview.addEventListener("error", showDefault);
+
+        if (savedSrc && preview.complete &&
+            preview.naturalWidth === 0) {
+            showDefault();
+        }
+
+        input.addEventListener("change", () => {
+            input.setCustomValidity("");
+
+            if (previewUrl) {
+                URL.revokeObjectURL(previewUrl);
+                previewUrl = null;
+            }
+
+            restoreSavedAvatar();
+
+            const file = input.files[0];
+
+            if (!file) return;
+
+            if (!/\.(jpe?g|png)$/i.test(file.name) ||
+                file.size === 0 ||
+                file.size > 2 * 1024 * 1024) {
+
+                input.setCustomValidity(
+                    "Vui lòng chọn ảnh JPG hoặc PNG, tối đa 2 MB."
+                );
+
+                input.reportValidity();
+                return;
+            }
+
+            previewUrl = URL.createObjectURL(file);
+            preview.src = previewUrl;
+            preview.hidden = false;
+            fallback.hidden = true;
+        });
+    })();
+</script>

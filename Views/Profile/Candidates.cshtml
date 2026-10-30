@@ -1,0 +1,467 @@
+﻿@using System.Linq
+@model IEnumerable<AlumniJobConnect.Models.AlumniProfile>
+
+@{
+    ViewData["Title"] = "Khám phá ứng viên";
+}
+
+<section class="cv-page">
+    <div class="container">
+
+        <div class="cv-heading">
+            <div>
+                <span class="cv-eyebrow">KẾT NỐI NHÂN TÀI</span>
+                <h1>Khám phá ứng viên</h1>
+                <p>
+                    Kết nối với sinh viên và cựu sinh viên
+                    phù hợp với cơ hội nghề nghiệp.
+                </p>
+            </div>
+
+            @if (User.IsInRole("Alumni"))
+            {
+                <a href="@Url.Action("MyProfile", "Profile")"
+                   class="cv-my-profile">
+                    <i class="fa fa-user me-2" aria-hidden="true"></i>
+                    Hồ sơ của tôi
+                </a>
+            }
+        </div>
+
+        <form action="@Url.Action("Candidates", "Profile")"
+              method="get"
+              class="cv-search">
+
+            <div class="cv-search-input">
+                <i class="fa fa-search" aria-hidden="true"></i>
+
+                <input type="search"
+                       name="keyword"
+                       value="@ViewBag.Keyword"
+                       aria-label="Tìm kiếm ứng viên"
+                       placeholder="Nhập họ tên hoặc vị trí công việc..." />
+            </div>
+
+            <button type="submit">Tìm kiếm</button>
+        </form>
+
+        <div class="cv-result">
+            <span>
+                Tìm thấy <strong>@Model.Count()</strong> hồ sơ
+            </span>
+
+            <span class="cv-result-note">
+                Khám phá năng lực, kết nối cơ hội
+            </span>
+        </div>
+
+        <div class="row g-4">
+            @foreach (var item in Model)
+            {
+                <div class="col-md-6 col-xl-4">
+                    <article class="cv-card">
+                        <div class="cv-card-top">
+                            <div class="cv-avatar">
+                                <i class="fa fa-user"
+                                   aria-hidden="true"></i>
+
+                                @if (!string.IsNullOrWhiteSpace(
+                                                            item.User.AvatarUrl))
+                                {
+                                    <img src="@Url.Action("Avatar", "Profile",
+                                                                                           new { alumniId = item.AlumniId })"
+                                 alt="Ảnh đại diện của @item.User.FullName"
+                                 loading="lazy"
+                                 onerror="this.hidden = true;" />
+                                                        }
+                        </div>
+
+                        <span class="cv-badge">
+                            Sinh viên / Cựu sinh viên
+                        </span>
+                    </div>
+
+                    <h2>@item.User.FullName</h2>
+
+                    <p class="cv-position">
+                        @(string.IsNullOrWhiteSpace(item.CurrentJobTitle)
+                                                ? "Chưa cập nhật vị trí công việc"
+                                                : item.CurrentJobTitle)
+                                                                   </p>
+
+                    <p class="cv-bio">
+                        @(string.IsNullOrWhiteSpace(item.Bio)
+                                                ? "Ứng viên chưa cập nhật giới thiệu bản thân."
+                                                : item.Bio)
+                                                       </p>
+
+                    <div class="cv-graduation">
+                        <i class="fa fa-graduation-cap"
+                           aria-hidden="true"></i>
+
+                        <span>
+                            @(item.GraduationYear.HasValue
+                                                        ? $"Tốt nghiệp năm {item.GraduationYear}"
+                                                        : "Chưa cập nhật năm tốt nghiệp")
+                        </span>
+                    </div>
+
+                    <a href="@Url.Action("Details", "Profile",
+                                                            new { id = item.AlumniId })"
+                       class="cv-view">
+                        Xem hồ sơ
+                        <span aria-hidden="true">→</span>
+                    </a>
+                </article>
+            </div>
+                        }
+
+            @if (!Model.Any())
+            {
+                <div class="col-12">
+                    <div class="cv-empty">
+                        <div class="cv-empty-icon">
+                            <i class="fa fa-search" aria-hidden="true"></i>
+                        </div>
+
+                        <h2>Chưa tìm thấy hồ sơ</h2>
+
+                        <p>
+                            Hãy thử từ khóa khác hoặc quay lại
+                            khi có thêm hồ sơ được cập nhật.
+                        </p>
+
+                        <a href="@Url.Action("Candidates", "Profile")">
+                            Xem tất cả hồ sơ
+                        </a>
+                    </div>
+                </div>
+            }
+        </div>
+
+    </div>
+</section>
+
+<style>
+    .cv-page {
+        padding: 48px 0 64px;
+        background: linear-gradient(180deg, #f1f9f5, #fff);
+        font-family: "Segoe UI", Arial, sans-serif;
+    }
+
+        .cv-page * {
+            box-sizing: border-box;
+        }
+
+    .cv-heading {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+
+    .cv-eyebrow {
+        color: #008c60;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 2px;
+    }
+
+    .cv-page h1,
+    .cv-page h2 {
+        color: #243e31;
+        font-family: inherit;
+    }
+
+    .cv-heading h1 {
+        margin: 10px 0;
+        font-size: clamp(28px, 4vw, 38px);
+        font-weight: 700;
+    }
+
+    .cv-heading p {
+        max-width: 580px;
+        margin: 0;
+        color: #78877f;
+        font-size: 14px;
+        line-height: 1.8;
+    }
+
+    .cv-my-profile {
+        padding: 12px 18px;
+        color: #008c60;
+        background: #fff;
+        border: 1px solid #cfe7d9;
+        border-radius: 12px;
+        font-size: 14px;
+        font-weight: 600;
+        text-decoration: none;
+    }
+
+        .cv-my-profile:hover {
+            color: #006e49;
+            background: #eaf8f0;
+        }
+
+    .cv-search {
+        display: flex;
+        gap: 12px;
+        padding: 12px;
+        background: white;
+        border: 1px solid #e0ebe4;
+        border-radius: 16px;
+        box-shadow: 0 8px 24px rgb(25 57 44 / 4%);
+    }
+
+    .cv-search-input {
+        display: flex;
+        flex: 1;
+        align-items: center;
+        gap: 14px;
+        min-width: 0;
+        padding: 0 12px;
+        color: #91a397;
+    }
+
+        .cv-search-input input {
+            width: 100%;
+            min-width: 0;
+            padding: 12px 0;
+            color: #344d40;
+            background: transparent;
+            border: 0;
+            font-family: inherit;
+            font-size: 14px;
+        }
+
+        .cv-search-input:focus-within {
+            outline: 2px solid #00a36c;
+            outline-offset: 2px;
+            border-radius: 8px;
+        }
+
+        .cv-search-input input:focus {
+            outline: none;
+        }
+
+    .cv-search button {
+        padding: 12px 26px;
+        color: white;
+        background: #00a36c;
+        border: 0;
+        border-radius: 10px;
+        font-weight: 600;
+        white-space: nowrap;
+        cursor: pointer;
+    }
+
+        .cv-search button:hover {
+            background: #008c5e;
+        }
+
+    .cv-result {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        gap: 10px;
+        margin: 28px 0 20px;
+        color: #78877f;
+        font-size: 14px;
+    }
+
+        .cv-result strong {
+            color: #008c60;
+        }
+
+    .cv-result-note {
+        font-size: 12px;
+    }
+
+    .cv-card {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        padding: 26px;
+        background: #fff;
+        border: 1px solid #e1ece5;
+        border-radius: 20px;
+        box-shadow: 0 6px 24px rgb(25 57 44 / 3%);
+        transition: transform .2s, box-shadow .2s;
+    }
+
+        .cv-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 30px rgb(25 57 44 / 8%);
+        }
+
+    .cv-card-top {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 22px;
+    }
+
+    .cv-avatar {
+        position: relative;
+        display: grid;
+        place-items: center;
+        width: 72px;
+        height: 72px;
+        flex-shrink: 0;
+        overflow: hidden;
+        color: #008c60;
+        background: linear-gradient(135deg, #e6f7ec, #c5ead9);
+        border-radius: 20px;
+        font-size: 28px;
+    }
+
+        .cv-avatar img {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+            .cv-avatar img[hidden] {
+                display: none !important;
+            }
+
+    .cv-badge {
+        padding: 6px 10px;
+        color: #008c60;
+        background: #edf8f1;
+        border-radius: 20px;
+        font-size: 10px;
+        font-weight: 600;
+    }
+
+    .cv-card h2 {
+        margin: 0 0 8px;
+        font-size: 21px;
+        font-weight: 700;
+        overflow-wrap: anywhere;
+    }
+
+    .cv-position {
+        margin-bottom: 16px;
+        color: #008c60;
+        font-size: 13px;
+    }
+
+    .cv-bio {
+        display: -webkit-box;
+        overflow: hidden;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        margin-bottom: 20px;
+        color: #78877f;
+        font-size: 14px;
+        line-height: 1.8;
+        overflow-wrap: anywhere;
+    }
+
+    .cv-graduation {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: auto;
+        margin-bottom: 20px;
+        color: #829087;
+        font-size: 12px;
+    }
+
+    .cv-view {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 13px 16px;
+        color: #008c60;
+        background: #f0f8f3;
+        border-radius: 10px;
+        font-size: 14px;
+        font-weight: 600;
+        text-decoration: none;
+    }
+
+        .cv-view:hover {
+            color: #fff;
+            background: #00a36c;
+        }
+
+    .cv-empty {
+        padding: 60px 24px;
+        background: white;
+        border: 1px dashed #cfe0d5;
+        border-radius: 20px;
+        text-align: center;
+    }
+
+    .cv-empty-icon {
+        display: grid;
+        place-items: center;
+        width: 64px;
+        height: 64px;
+        margin: 0 auto 20px;
+        color: #009565;
+        background: #eaf8f0;
+        border-radius: 50%;
+        font-size: 24px;
+    }
+
+    .cv-empty h2 {
+        font-size: 22px;
+    }
+
+    .cv-empty p {
+        max-width: 420px;
+        margin: 12px auto 20px;
+        color: #78877f;
+        font-size: 14px;
+        line-height: 1.8;
+    }
+
+    .cv-empty a {
+        color: #008c60;
+        font-weight: 600;
+    }
+
+    .cv-my-profile:focus-visible,
+    .cv-view:focus-visible,
+    .cv-search button:focus-visible {
+        outline: 3px solid #86d6b6;
+        outline-offset: 3px;
+    }
+
+    @@media (max-width: 575.98px) {
+        .cv-page {
+            padding: 32px 0;
+        }
+
+        .cv-search {
+            flex-direction: column;
+        }
+
+            .cv-search button {
+                width: 100%;
+            }
+
+        .cv-card {
+            padding: 22px;
+        }
+    }
+
+    @@media (prefers-reduced-motion: reduce) {
+        .cv-card {
+            transition: none;
+        }
+
+            .cv-card:hover {
+                transform: none;
+            }
+    }
+</style>

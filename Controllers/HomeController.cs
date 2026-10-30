@@ -118,7 +118,7 @@ namespace AlumniJobConnect.Controllers
 
         public IActionResult Profile()
         {
-            return View();
+            return RedirectToAction("Index", "Profile");
         }
 
         public IActionResult ungtuyen()

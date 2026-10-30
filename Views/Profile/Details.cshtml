@@ -1,0 +1,412 @@
+﻿@model AlumniJobConnect.Models.AlumniProfile
+
+@{
+    ViewData["Title"] = "Hồ sơ - " + Model.User.FullName;
+    var isOwner = ViewBag.IsOwner is bool owner && owner;
+}
+
+<section class="resume-page">
+    <div class="container">
+
+        <a href="@Url.Action("Candidates", "Profile")"
+           class="resume-back">
+            ← Danh sách ứng viên
+        </a>
+
+        <article class="resume-card">
+            <div class="resume-cover"></div>
+
+            <div class="resume-body">
+                <div class="resume-heading">
+
+                    <div class="resume-avatar">
+                        <i class="fa fa-user" aria-hidden="true"></i>
+
+                        @if (!string.IsNullOrWhiteSpace(Model.User.AvatarUrl))
+                        {
+                            <img src="@Url.Action("Avatar", "Profile",
+                                                                           new { alumniId = Model.AlumniId })"
+                             alt="Ảnh đại diện của @Model.User.FullName"
+                             onerror="this.hidden = true;" />
+                                                }
+                    </div>
+
+                    <div class="resume-name">
+                        <span class="resume-badge">
+                            Sinh viên / Cựu sinh viên
+                        </span>
+
+                        <h1>@Model.User.FullName</h1>
+
+                        <p>
+                            @(string.IsNullOrWhiteSpace(Model.CurrentJobTitle)
+                                                        ? "Đang cập nhật định hướng nghề nghiệp"
+                                                        : Model.CurrentJobTitle)
+                        </p>
+                    </div>
+
+                    @if (isOwner)
+                    {
+                        <a href="@Url.Action("Index", "Profile")"
+                           class="resume-edit">
+                            <i class="fa fa-edit me-2"
+                               aria-hidden="true"></i>
+                            Chỉnh sửa hồ sơ
+                        </a>
+                    }
+                </div>
+
+                <div class="row g-4 mt-3">
+                    <div class="col-lg-8">
+
+                        <section class="resume-section">
+                            <h2>
+                                <i class="fa fa-user me-2"
+                                   aria-hidden="true"></i>
+                                Giới thiệu bản thân
+                            </h2>
+
+                            <p class="resume-bio">
+                                @(string.IsNullOrWhiteSpace(Model.Bio)
+                                                                ? "Ứng viên chưa cập nhật giới thiệu bản thân."
+                                                                : Model.Bio)
+                            </p>
+                        </section>
+
+                        <section class="resume-section">
+                            <h2>
+                                <i class="fa fa-graduation-cap me-2"
+                                   aria-hidden="true"></i>
+                                Thông tin nghề nghiệp
+                            </h2>
+
+                            <dl class="resume-facts">
+                                <div>
+                                    <dt>Năm tốt nghiệp</dt>
+                                    <dd>
+                                        @(Model.GraduationYear?.ToString()
+                                                                                ?? "Chưa cập nhật")
+                                    </dd>
+                                </div>
+
+                                <div>
+                                    <dt>Vị trí hiện tại</dt>
+                                    <dd>
+                                        @(string.IsNullOrWhiteSpace(
+                                                                                Model.CurrentJobTitle)
+                                                                                ? "Chưa cập nhật"
+                                                                                : Model.CurrentJobTitle)
+                                    </dd>
+                                </div>
+
+                                <div>
+                                    <dt>Đơn vị công tác</dt>
+                                    <dd>
+                                        @(string.IsNullOrWhiteSpace(
+                                                                                Model.CurrentCompanyName)
+                                                                                ? "Chưa cập nhật"
+                                                                                : Model.CurrentCompanyName)
+                                    </dd>
+                                </div>
+                            </dl>
+                        </section>
+                    </div>
+
+                    <div class="col-lg-4">
+                        <aside class="resume-contact">
+                            <span class="resume-contact-icon">
+                                <i class="fa fa-envelope"
+                                   aria-hidden="true"></i>
+                            </span>
+
+                            <h2>Thông tin liên hệ</h2>
+
+                            <div class="resume-contact-item">
+                                <span>Email</span>
+                                <p>@Model.User.Email</p>
+                            </div>
+
+                            <div class="resume-contact-item">
+                                <span>Số điện thoại</span>
+                                <p>
+                                    @(string.IsNullOrWhiteSpace(Model.User.Phone)
+                                                                        ? "Chưa cập nhật"
+                                                                        : Model.User.Phone)
+                                </p>
+                            </div>
+
+                            <p class="resume-note">
+                                Sử dụng thông tin liên hệ để trao đổi
+                                cơ hội nghề nghiệp với ứng viên.
+                            </p>
+                        </aside>
+                    </div>
+                </div>
+            </div>
+        </article>
+    </div>
+</section>
+
+<style>
+    .resume-page {
+        padding: 40px 0 64px;
+        background: #f5f9f7;
+        font-family: "Segoe UI", Arial, sans-serif;
+    }
+
+        .resume-page * {
+            box-sizing: border-box;
+        }
+
+    .resume-back {
+        display: inline-block;
+        margin-bottom: 24px;
+        color: #008c60;
+        font-size: 14px;
+        font-weight: 600;
+        text-decoration: none;
+    }
+
+    .resume-card {
+        overflow: hidden;
+        background: white;
+        border: 1px solid #e1ece5;
+        border-radius: 22px;
+        box-shadow: 0 8px 30px rgb(25 57 44 / 5%);
+    }
+
+    .resume-cover {
+        height: 150px;
+        background: radial-gradient(circle at 90% 20%, #ffffff20 0 90px, transparent 91px), linear-gradient(120deg, #087f5b, #49bd8d);
+    }
+
+    .resume-body {
+        padding: 0 32px 32px;
+    }
+
+    .resume-heading {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-end;
+        gap: 22px;
+        position: relative;
+        margin-top: -48px;
+    }
+
+    .resume-avatar {
+        position: relative;
+        display: grid;
+        place-items: center;
+        width: 116px;
+        height: 116px;
+        flex-shrink: 0;
+        overflow: hidden;
+        color: #008c60;
+        background: linear-gradient(135deg, #e6f7ec, #c5ead9);
+        border: 5px solid white;
+        border-radius: 50%;
+        box-shadow: 0 5px 18px rgb(25 57 44 / 10%);
+        font-size: 42px;
+    }
+
+        .resume-avatar img {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+            .resume-avatar img[hidden] {
+                display: none !important;
+            }
+
+    .resume-name {
+        flex: 1;
+        min-width: 180px;
+        padding-top: 66px;
+    }
+
+    .resume-badge {
+        display: inline-block;
+        margin-bottom: 10px;
+        padding: 5px 10px;
+        color: #008c60;
+        background: #edf8f1;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 600;
+    }
+
+    .resume-page h1,
+    .resume-page h2 {
+        color: #243e31;
+        font-family: inherit;
+    }
+
+    .resume-name h1 {
+        margin: 0 0 8px;
+        font-size: 29px;
+        font-weight: 700;
+        overflow-wrap: anywhere;
+    }
+
+    .resume-name p {
+        margin: 0;
+        color: #78877f;
+        font-size: 14px;
+        line-height: 1.7;
+    }
+
+    .resume-edit {
+        display: inline-flex;
+        align-items: center;
+        margin-bottom: 4px;
+        padding: 12px 18px;
+        color: white;
+        background: #00a36c;
+        border-radius: 10px;
+        font-size: 14px;
+        font-weight: 600;
+        text-decoration: none;
+    }
+
+        .resume-edit:hover {
+            color: white;
+            background: #008c5e;
+        }
+
+    .resume-section {
+        padding: 26px 0;
+        border-bottom: 1px solid #edf2ef;
+    }
+
+        .resume-section h2,
+        .resume-contact h2 {
+            margin-bottom: 20px;
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+            .resume-section h2 i {
+                color: #009565;
+                font-size: 17px;
+            }
+
+    .resume-bio {
+        margin: 0;
+        color: #6e8075;
+        font-size: 15px;
+        line-height: 1.9;
+        white-space: pre-line;
+        overflow-wrap: anywhere;
+    }
+
+    .resume-facts {
+        margin: 0;
+    }
+
+        .resume-facts > div {
+            display: grid;
+            grid-template-columns: 170px minmax(0, 1fr);
+            gap: 16px;
+            padding: 12px 0;
+        }
+
+        .resume-facts dt {
+            color: #40574a;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .resume-facts dd {
+            margin: 0;
+            color: #78877f;
+            font-size: 14px;
+            overflow-wrap: anywhere;
+        }
+
+    .resume-contact {
+        margin-top: 26px;
+        padding: 24px;
+        background: #f2faf5;
+        border: 1px solid #dceee3;
+        border-radius: 18px;
+    }
+
+    .resume-contact-icon {
+        display: grid;
+        place-items: center;
+        width: 44px;
+        height: 44px;
+        margin-bottom: 18px;
+        color: #009565;
+        background: #e0f3e8;
+        border-radius: 12px;
+        font-size: 19px;
+    }
+
+    .resume-contact-item {
+        margin-bottom: 20px;
+    }
+
+        .resume-contact-item > span {
+            color: #829087;
+            font-size: 12px;
+        }
+
+        .resume-contact-item p {
+            margin: 7px 0 0;
+            color: #344d40;
+            font-size: 14px;
+            overflow-wrap: anywhere;
+        }
+
+    .resume-note {
+        margin: 0;
+        padding-top: 18px;
+        color: #829087;
+        border-top: 1px solid #dceee3;
+        font-size: 12px;
+        line-height: 1.8;
+    }
+
+    .resume-back:focus-visible,
+    .resume-edit:focus-visible {
+        outline: 3px solid #86d6b6;
+        outline-offset: 3px;
+    }
+
+    @@media (max-width: 575.98px) {
+        .resume-page {
+            padding: 28px 0;
+        }
+
+        .resume-body {
+            padding: 0 20px 24px;
+        }
+
+        .resume-cover {
+            height: 120px;
+        }
+
+        .resume-heading {
+            align-items: flex-start;
+            gap: 16px;
+        }
+
+        .resume-name {
+            flex-basis: 100%;
+            padding-top: 0;
+        }
+
+            .resume-name h1 {
+                font-size: 25px;
+            }
+
+        .resume-facts > div {
+            grid-template-columns: 1fr;
+            gap: 6px;
+        }
+    }
+</style>

@@ -1,0 +1,513 @@
+﻿@model AlumniJobConnect.Models.Company
+
+@{
+    ViewData["Title"] = Model.CompanyName;
+    var isOwner = ViewBag.IsOwner is bool owner && owner;
+
+    // Chỉ cho phép liên kết website HTTP hoặc HTTPS.
+    string? websiteUrl = null;
+
+    if (Uri.TryCreate(Model.Website, UriKind.Absolute, out var websiteUri)
+        && (websiteUri.Scheme == Uri.UriSchemeHttp
+            || websiteUri.Scheme == Uri.UriSchemeHttps))
+    {
+        websiteUrl = websiteUri.AbsoluteUri;
+    }
+}
+
+<section class="cp-detail">
+    <div class="container">
+
+        <a href="@Url.Action("Index", "CompanyProfile")"
+           class="cp-back">
+            ← Danh sách doanh nghiệp
+        </a>
+
+        @if (TempData["CompanyProfileSuccess"] is string success)
+        {
+            <div class="cp-success" role="status">
+                @success
+            </div>
+        }
+
+        <article class="cp-profile">
+            <div class="cp-cover">
+                <span>KẾT NỐI DOANH NGHIỆP VÀ NHÂN TÀI</span>
+            </div>
+
+            <div class="cp-body">
+                <div class="cp-heading">
+
+                    <div class="cp-avatar" aria-hidden="true">
+                        @(string.IsNullOrWhiteSpace(Model.CompanyName)
+                                                ? "DN"
+                                                : Model.CompanyName.Trim()
+                                                .Substring(0, 1)
+                                                .ToUpperInvariant())
+                    </div>
+
+                    <div class="cp-name">
+                        <span class="cp-label">HỒ SƠ DOANH NGHIỆP</span>
+
+                        <h1>@Model.CompanyName</h1>
+
+                        <p>
+                            @(string.IsNullOrWhiteSpace(Model.Industry)
+                                                        ? "Chưa cập nhật lĩnh vực hoạt động"
+                                                        : Model.Industry)
+                        </p>
+                    </div>
+
+                    @if (isOwner)
+                    {
+                        <a href="@Url.Action("Edit", "CompanyProfile")"
+                           class="cp-edit">
+                            Chỉnh sửa hồ sơ
+                        </a>
+                    }
+                </div>
+
+                <div class="cp-grid">
+                    <div>
+                        <section class="cp-section">
+                            <h2>Giới thiệu doanh nghiệp</h2>
+
+                            <p class="cp-description">
+                                @(string.IsNullOrWhiteSpace(Model.Description)
+                                                                ? "Doanh nghiệp chưa cập nhật nội dung giới thiệu."
+                                                                : Model.Description)
+                            </p>
+                        </section>
+
+                        <section class="cp-section">
+                            <h2>Thông tin doanh nghiệp</h2>
+
+                            <dl class="cp-facts">
+                                <div>
+                                    <dt>Tên doanh nghiệp</dt>
+                                    <dd>@Model.CompanyName</dd>
+                                </div>
+
+                                <div>
+                                    <dt>Lĩnh vực hoạt động</dt>
+                                    <dd>
+                                        @(string.IsNullOrWhiteSpace(Model.Industry)
+                                                                                ? "Chưa cập nhật"
+                                                                                : Model.Industry)
+                                    </dd>
+                                </div>
+
+                                <div>
+                                    <dt>Mã số thuế</dt>
+                                    <dd>
+                                        @(string.IsNullOrWhiteSpace(Model.TaxCode)
+                                                                                ? "Chưa cập nhật"
+                                                                                : Model.TaxCode)
+                                    </dd>
+                                </div>
+
+                                <div>
+                                    <dt>Địa chỉ</dt>
+                                    <dd>
+                                        @(string.IsNullOrWhiteSpace(Model.Address)
+                                                                                ? "Chưa cập nhật"
+                                                                                : Model.Address)
+                                    </dd>
+                                </div>
+
+                                <div>
+                                    <dt>Ngày tham gia</dt>
+                                    <dd>
+                                        @Model.CreatedAt.ToString("dd/MM/yyyy")
+                                    </dd>
+                                </div>
+                            </dl>
+                        </section>
+                    </div>
+
+                    <aside class="cp-contact">
+                        <div class="cp-contact-icon" aria-hidden="true">
+                            ✉
+                        </div>
+
+                        <h2>Thông tin liên hệ</h2>
+
+                        <div class="cp-contact-item">
+                            <span>Người đại diện</span>
+                            <p>@Model.User.FullName</p>
+                        </div>
+
+                        <div class="cp-contact-item">
+                            <span>Email</span>
+                            <p>
+                                @(string.IsNullOrWhiteSpace(Model.User.Email)
+                                                                ? "Chưa cập nhật"
+                                                                : Model.User.Email)
+                            </p>
+                        </div>
+
+                        <div class="cp-contact-item">
+                            <span>Số điện thoại</span>
+                            <p>
+                                @(string.IsNullOrWhiteSpace(Model.User.Phone)
+                                                                ? "Chưa cập nhật"
+                                                                : Model.User.Phone)
+                            </p>
+                        </div>
+
+                        <div class="cp-contact-item">
+                            <span>Website</span>
+
+                            @if (websiteUrl != null)
+                            {
+                                <p>
+                                    <a href="@websiteUrl"
+                                       target="_blank"
+                                       rel="noopener noreferrer">
+                                        @Model.Website
+                                        <span aria-hidden="true">↗</span>
+                                    </a>
+                                </p>
+                            }
+                            else
+                            {
+                                <p>
+                                    @(string.IsNullOrWhiteSpace(Model.Website)
+                                                                    ? "Chưa cập nhật"
+                                                                    : Model.Website)
+                            </p>
+                                                        }
+                        </div>
+
+                        @if (string.Equals(
+                                                Model.VerificationStatus,
+                                                "Verified",
+                                                StringComparison.OrdinalIgnoreCase))
+                        {
+                            <div class="cp-verified">
+                                ✓ Doanh nghiệp đã được xác minh
+                            </div>
+                        }
+
+                        <p class="cp-note">
+                            Liên hệ doanh nghiệp để tìm hiểu
+                            cơ hội thực tập và việc làm.
+                        </p>
+                    </aside>
+                </div>
+            </div>
+        </article>
+    </div>
+</section>
+
+<style>
+    .cp-detail {
+        padding: 40px 0 64px;
+        background: #f2f8f5;
+        font-family: "Segoe UI", Arial, sans-serif;
+    }
+
+        .cp-detail * {
+            box-sizing: border-box;
+        }
+
+    .cp-back {
+        display: inline-block;
+        margin-bottom: 22px;
+        color: #00865b;
+        font-size: 14px;
+        font-weight: 600;
+        text-decoration: none;
+    }
+
+    .cp-success {
+        margin-bottom: 20px;
+        padding: 15px 18px;
+        color: #176343;
+        background: #e2f5e9;
+        border: 1px solid #bfe4cf;
+        border-radius: 12px;
+    }
+
+    .cp-profile {
+        overflow: hidden;
+        background: #fff;
+        border: 1px solid #dfece4;
+        border-radius: 24px;
+        box-shadow: 0 10px 36px rgb(25 70 46 / 5%);
+    }
+
+    .cp-cover {
+        display: flex;
+        align-items: flex-start;
+        justify-content: flex-end;
+        min-height: 155px;
+        padding: 28px 32px 60px;
+        background: radial-gradient( circle at 85% 10%, #ffffff18 0 110px, transparent 111px), linear-gradient(120deg, #087c58, #22ae7a);
+    }
+
+        .cp-cover span {
+            color: #fff;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 1.5px;
+            text-align: right;
+        }
+
+    .cp-body {
+        padding: 0 32px 32px;
+    }
+
+    .cp-heading {
+        position: relative;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-end;
+        gap: 24px;
+        margin-top: -45px;
+    }
+
+    .cp-avatar {
+        display: grid;
+        place-items: center;
+        flex-shrink: 0;
+        width: 112px;
+        height: 112px;
+        color: #00865b;
+        background: #def4e8;
+        border: 5px solid #fff;
+        border-radius: 24px;
+        box-shadow: 0 5px 20px rgb(25 70 46 / 10%);
+        font-size: 44px;
+        font-weight: 700;
+    }
+
+    .cp-name {
+        flex: 1;
+        min-width: 200px;
+        padding-top: 64px;
+    }
+
+    .cp-label {
+        color: #00865b;
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 1.2px;
+    }
+
+    .cp-detail h1,
+    .cp-detail h2 {
+        color: #234335;
+        font-family: inherit;
+    }
+
+    .cp-name h1 {
+        margin: 10px 0;
+        font-size: clamp(25px, 3vw, 34px);
+        font-weight: 700;
+        line-height: 1.35;
+        overflow-wrap: anywhere;
+    }
+
+    .cp-name p {
+        margin: 0;
+        color: #607b6d;
+        font-size: 14px;
+        line-height: 1.7;
+        overflow-wrap: anywhere;
+    }
+
+    .cp-edit {
+        display: inline-flex;
+        justify-content: center;
+        margin-bottom: 4px;
+        padding: 13px 19px;
+        color: #fff;
+        background: #009f6b;
+        border-radius: 11px;
+        font-size: 14px;
+        font-weight: 600;
+        text-decoration: none;
+    }
+
+        .cp-edit:hover {
+            color: #fff;
+            background: #008359;
+        }
+
+    .cp-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+        align-items: start;
+        gap: 32px;
+        margin-top: 30px;
+    }
+
+    .cp-section {
+        padding: 24px 0;
+        border-bottom: 1px solid #e8f0eb;
+    }
+
+        .cp-section h2,
+        .cp-contact h2 {
+            margin: 0 0 20px;
+            font-size: 21px;
+            font-weight: 700;
+        }
+
+    .cp-description {
+        margin: 0;
+        color: #60786b;
+        font-size: 15px;
+        line-height: 1.9;
+        white-space: pre-line;
+        overflow-wrap: anywhere;
+    }
+
+    .cp-facts {
+        margin: 0;
+    }
+
+        .cp-facts > div {
+            display: grid;
+            grid-template-columns: 160px minmax(0, 1fr);
+            gap: 18px;
+            padding: 13px 0;
+        }
+
+        .cp-facts dt {
+            color: #365544;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .cp-facts dd {
+            margin: 0;
+            color: #60786b;
+            font-size: 14px;
+            line-height: 1.7;
+            overflow-wrap: anywhere;
+        }
+
+    .cp-contact {
+        margin-top: 24px;
+        padding: 25px;
+        background: #f0f9f4;
+        border: 1px solid #d9ece0;
+        border-radius: 18px;
+    }
+
+    .cp-contact-icon {
+        display: grid;
+        place-items: center;
+        width: 46px;
+        height: 46px;
+        margin-bottom: 18px;
+        color: #00865b;
+        background: #dcf2e5;
+        border-radius: 13px;
+        font-size: 24px;
+    }
+
+    .cp-contact-item {
+        margin-bottom: 20px;
+    }
+
+        .cp-contact-item > span {
+            color: #667e70;
+            font-size: 12px;
+        }
+
+        .cp-contact-item p {
+            margin: 6px 0 0;
+            color: #304f3e;
+            font-size: 14px;
+            line-height: 1.7;
+            overflow-wrap: anywhere;
+        }
+
+        .cp-contact-item a {
+            color: #00865b;
+            text-decoration: underline;
+            text-underline-offset: 3px;
+        }
+
+    .cp-verified {
+        margin-bottom: 20px;
+        padding: 11px;
+        color: #176343;
+        background: #def2e6;
+        border-radius: 9px;
+        font-size: 12px;
+        line-height: 1.7;
+    }
+
+    .cp-note {
+        margin: 0;
+        padding-top: 18px;
+        color: #667e70;
+        border-top: 1px solid #d9e9df;
+        font-size: 12px;
+        line-height: 1.8;
+    }
+
+    .cp-detail a:focus-visible {
+        outline: 3px solid #82cfac;
+        outline-offset: 3px;
+    }
+
+    @@media (max-width: 991.98px) {
+        .cp-grid {
+            grid-template-columns: 1fr;
+            gap: 0;
+        }
+
+        .cp-contact {
+            margin-top: 28px;
+        }
+    }
+
+    @@media (max-width: 575.98px) {
+        .cp-detail {
+            padding: 28px 0 44px;
+        }
+
+        .cp-cover {
+            min-height: 130px;
+            padding: 22px 20px 60px;
+        }
+
+            .cp-cover span {
+                font-size: 9px;
+                letter-spacing: 1px;
+            }
+
+        .cp-body {
+            padding: 0 20px 24px;
+        }
+
+        .cp-heading {
+            align-items: flex-start;
+            gap: 16px;
+        }
+
+        .cp-name {
+            flex-basis: 100%;
+            min-width: 0;
+            padding-top: 0;
+        }
+
+        .cp-edit {
+            width: 100%;
+        }
+
+        .cp-facts > div {
+            grid-template-columns: 1fr;
+            gap: 6px;
+        }
+
+        .cp-contact {
+            padding: 22px;
+        }
+    }
+</style>

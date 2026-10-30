@@ -1,0 +1,493 @@
+﻿@using System.Linq
+@model IEnumerable<AlumniJobConnect.Models.Company>
+
+@{
+    ViewData["Title"] = "Khám phá doanh nghiệp";
+}
+
+<section class="company-page">
+    <div class="container">
+
+        <div class="company-heading">
+            <div>
+                <span class="company-eyebrow">
+                    KẾT NỐI CƠ HỘI NGHỀ NGHIỆP
+                </span>
+
+                <h1>Khám phá doanh nghiệp</h1>
+
+                <p>
+                    Tìm hiểu doanh nghiệp, lĩnh vực hoạt động
+                    và môi trường làm việc phù hợp với bạn.
+                </p>
+            </div>
+
+            @if (User.IsInRole("Employer"))
+            {
+                <a href="@Url.Action("MyProfile", "CompanyProfile")"
+                   class="company-my-profile">
+                    Hồ sơ doanh nghiệp của tôi
+                </a>
+            }
+        </div>
+
+        <form action="@Url.Action("Index", "CompanyProfile")"
+              method="get"
+              class="company-search">
+
+            <label class="company-search-field">
+                <span class="company-search-icon"
+                      aria-hidden="true">⌕</span>
+
+                <input type="search"
+                       name="keyword"
+                       value="@ViewBag.Keyword"
+                       aria-label="Tìm doanh nghiệp"
+                       placeholder="Tên doanh nghiệp, lĩnh vực hoặc địa chỉ..." />
+            </label>
+
+            <button type="submit">Tìm kiếm</button>
+        </form>
+
+        <div class="company-results">
+            <span>
+                Tìm thấy <strong>@Model.Count()</strong> doanh nghiệp
+            </span>
+
+            @if (!string.IsNullOrWhiteSpace((string?)ViewBag.Keyword))
+            {
+                <a href="@Url.Action("Index", "CompanyProfile")">
+                    Xóa tìm kiếm
+                </a>
+            }
+        </div>
+
+        <div class="company-grid">
+            @foreach (var item in Model)
+            {
+                <article class="company-card">
+                    <div class="company-card-top">
+                        <div class="company-symbol" aria-hidden="true">
+                            @(string.IsNullOrWhiteSpace(item.CompanyName)
+                                                    ? "DN"
+                                                    : item.CompanyName.Trim()
+                                                    .Substring(0, 1)
+                                                    .ToUpperInvariant())
+                    </div>
+
+                    @if (string.Equals(
+                                        item.VerificationStatus,
+                                        "Verified",
+                                        StringComparison.OrdinalIgnoreCase))
+                        {
+                            <span class="company-badge">
+                                Đã xác minh
+                            </span>
+                        }
+                </div>
+
+                <h2>@item.CompanyName</h2>
+
+                <p class="company-industry">
+                    @(string.IsNullOrWhiteSpace(item.Industry)
+                                        ? "Chưa cập nhật lĩnh vực"
+                                        : item.Industry)
+                                                    </p>
+
+                <p class="company-description">
+                    @(string.IsNullOrWhiteSpace(item.Description)
+                                        ? "Doanh nghiệp chưa cập nhật giới thiệu."
+                                        : item.Description)
+                                                       </p>
+
+                <div class="company-address">
+                    <span class="company-address-label">Địa chỉ</span>
+
+                    <span>
+                        @(string.IsNullOrWhiteSpace(item.Address)
+                                                ? "Chưa cập nhật"
+                                                : item.Address)
+                    </span>
+                </div>
+
+                <a href="@Url.Action("Details", "CompanyProfile",
+                                                    new { id = item.CompanyId })"
+                   class="company-view">
+                    <span>Xem hồ sơ doanh nghiệp</span>
+                    <span aria-hidden="true">→</span>
+                </a>
+            </article>
+                        }
+        </div>
+
+        @if (!Model.Any())
+        {
+            <div class="company-empty">
+                <div class="company-empty-symbol" aria-hidden="true">
+                    ⌕
+                </div>
+
+                <h2>Chưa tìm thấy doanh nghiệp</h2>
+
+                <p>
+                    Thử tìm bằng tên, lĩnh vực hoặc địa chỉ khác.
+                    Nếu chưa có doanh nghiệp, danh sách sẽ xuất hiện
+                    khi tài khoản doanh nghiệp được tạo.
+                </p>
+
+                <a href="@Url.Action("Index", "CompanyProfile")">
+                    Xem tất cả doanh nghiệp
+                </a>
+            </div>
+        }
+    </div>
+</section>
+
+<style>
+    .company-page {
+        padding: 48px 0 64px;
+        background: linear-gradient(180deg, #eff9f4, #ffffff);
+        font-family: "Segoe UI", Arial, sans-serif;
+    }
+
+        .company-page * {
+            box-sizing: border-box;
+        }
+
+    .company-heading {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 24px;
+        margin-bottom: 30px;
+    }
+
+    .company-eyebrow {
+        color: #008c60;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 1.6px;
+    }
+
+    .company-page h1,
+    .company-page h2 {
+        color: #203f33;
+        font-family: inherit;
+    }
+
+    .company-heading h1 {
+        margin: 12px 0;
+        font-size: clamp(28px, 4vw, 40px);
+        font-weight: 700;
+    }
+
+    .company-heading p {
+        max-width: 620px;
+        margin: 0;
+        color: #637b6f;
+        font-size: 14px;
+        line-height: 1.8;
+    }
+
+    .company-my-profile {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 13px 18px;
+        color: #008c60;
+        background: #fff;
+        border: 1px solid #cce7d9;
+        border-radius: 12px;
+        font-size: 14px;
+        font-weight: 600;
+        text-decoration: none;
+    }
+
+        .company-my-profile:hover {
+            color: #006d4b;
+            background: #e8f7ef;
+        }
+
+    .company-search {
+        display: flex;
+        gap: 12px;
+        padding: 12px;
+        background: #fff;
+        border: 1px solid #dcebe2;
+        border-radius: 16px;
+        box-shadow: 0 8px 28px rgb(28 72 49 / 4%);
+    }
+
+    .company-search-field {
+        display: flex;
+        flex: 1;
+        align-items: center;
+        gap: 12px;
+        min-width: 0;
+        margin: 0;
+        padding: 0 14px;
+    }
+
+    .company-search-icon {
+        color: #759385;
+        font-size: 29px;
+        line-height: 1;
+    }
+
+    .company-search input {
+        width: 100%;
+        min-width: 0;
+        padding: 14px 0;
+        color: #294a3b;
+        background: transparent;
+        border: none;
+        font-family: inherit;
+        font-size: 14px;
+    }
+
+    .company-search-field:focus-within {
+        outline: 2px solid #00a36c;
+        outline-offset: 2px;
+        border-radius: 8px;
+    }
+
+    .company-search input:focus {
+        outline: none;
+    }
+
+    .company-search button {
+        padding: 13px 26px;
+        color: #fff;
+        background: #009f6b;
+        border: none;
+        border-radius: 11px;
+        font-family: inherit;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+        .company-search button:hover {
+            background: #00845a;
+        }
+
+    .company-results {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        gap: 12px;
+        margin: 26px 0 20px;
+        color: #657d70;
+        font-size: 14px;
+    }
+
+        .company-results strong,
+        .company-results a {
+            color: #00865b;
+        }
+
+    .company-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 24px;
+    }
+
+    .company-card {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+        padding: 26px;
+        background: #fff;
+        border: 1px solid #dfece4;
+        border-radius: 20px;
+        box-shadow: 0 5px 22px rgb(28 72 49 / 3%);
+        transition: transform .2s, box-shadow .2s;
+    }
+
+        .company-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 30px rgb(28 72 49 / 8%);
+        }
+
+    .company-card-top {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 22px;
+    }
+
+    .company-symbol {
+        display: grid;
+        place-items: center;
+        width: 72px;
+        height: 72px;
+        color: #00865b;
+        background: linear-gradient(135deg, #e4f7ed, #c9eddb);
+        border-radius: 20px;
+        font-size: 30px;
+        font-weight: 700;
+    }
+
+    .company-badge {
+        padding: 6px 10px;
+        color: #007e55;
+        background: #eaf8f0;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 600;
+    }
+
+    .company-card h2 {
+        margin: 0 0 10px;
+        font-size: 21px;
+        font-weight: 700;
+        line-height: 1.4;
+        overflow-wrap: anywhere;
+    }
+
+    .company-industry {
+        margin: 0 0 16px;
+        color: #00865b;
+        font-size: 13px;
+        line-height: 1.6;
+        overflow-wrap: anywhere;
+    }
+
+    .company-description {
+        display: -webkit-box;
+        overflow: hidden;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        margin: 0 0 22px;
+        color: #657d70;
+        font-size: 14px;
+        line-height: 1.8;
+        overflow-wrap: anywhere;
+    }
+
+    .company-address {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        margin-top: auto;
+        margin-bottom: 22px;
+        color: #536e60;
+        font-size: 13px;
+        line-height: 1.7;
+        overflow-wrap: anywhere;
+    }
+
+    .company-address-label {
+        color: #789083;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .company-view {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 13px 15px;
+        color: #00865b;
+        background: #eef8f2;
+        border-radius: 11px;
+        font-size: 13px;
+        font-weight: 600;
+        text-decoration: none;
+    }
+
+        .company-view:hover {
+            color: #fff;
+            background: #009f6b;
+        }
+
+    .company-empty {
+        padding: 52px 24px;
+        background: #fff;
+        border: 1px dashed #cbded2;
+        border-radius: 20px;
+        text-align: center;
+    }
+
+    .company-empty-symbol {
+        display: grid;
+        place-items: center;
+        width: 64px;
+        height: 64px;
+        margin: 0 auto 18px;
+        color: #00865b;
+        background: #eaf8f0;
+        border-radius: 50%;
+        font-size: 36px;
+    }
+
+    .company-empty h2 {
+        font-size: 23px;
+        font-weight: 700;
+    }
+
+    .company-empty p {
+        max-width: 480px;
+        margin: 14px auto 20px;
+        color: #657d70;
+        font-size: 14px;
+        line-height: 1.8;
+    }
+
+    .company-empty a {
+        color: #00865b;
+        font-weight: 600;
+    }
+
+    .company-page a:focus-visible,
+    .company-search button:focus-visible {
+        outline: 3px solid #82cfac;
+        outline-offset: 3px;
+    }
+
+    @@media (max-width: 991.98px) {
+        .company-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+
+    @@media (max-width: 575.98px) {
+        .company-page {
+            padding: 32px 0 44px;
+        }
+
+        .company-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .company-search {
+            flex-direction: column;
+        }
+
+            .company-search button {
+                width: 100%;
+            }
+
+        .company-card {
+            padding: 22px;
+        }
+
+        .company-my-profile {
+            width: 100%;
+        }
+    }
+
+    @@media (prefers-reduced-motion: reduce) {
+        .company-card {
+            transition: none;
+        }
+
+            .company-card:hover {
+                transform: none;
+            }
+    }
+</style>
