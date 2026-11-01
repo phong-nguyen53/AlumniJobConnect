@@ -1,0 +1,363 @@
+﻿@using System.Linq
+@model IEnumerable<AlumniJobConnect.Models.Application>
+
+@{
+    ViewData["Title"] = "Hồ sơ ứng tuyển nhận được";
+}
+
+<section class="received-page">
+    <div class="container">
+
+        <a href="@Url.Action("MyProfile", "CompanyProfile")"
+           class="received-back">
+            ← Hồ sơ doanh nghiệp của tôi
+        </a>
+
+        <div class="received-heading">
+            <div>
+                <span class="received-label">TUYỂN DỤNG NHÂN TÀI</span>
+                <h1>Hồ sơ ứng tuyển</h1>
+                <p>
+                    Xem thông tin ứng viên và tải CV gửi đến doanh nghiệp.
+                </p>
+            </div>
+
+            <span class="received-count">
+                @Model.Count() đơn ứng tuyển
+            </span>
+        </div>
+
+        @if (!Model.Any())
+        {
+            <div class="received-empty">
+                <h2>Chưa có đơn ứng tuyển</h2>
+                <p>
+                    Khi sinh viên gửi CV vào tin tuyển dụng của bạn,
+                    hồ sơ sẽ xuất hiện tại đây.
+                </p>
+            </div>
+        }
+        else
+        {
+            <div class="received-list">
+                @foreach (var item in Model)
+                {
+                    <article class="received-card">
+                        <div class="received-card-heading">
+                            <div>
+                                <h2>@item.Alumni.User.FullName</h2>
+                                <p class="received-job">
+                                    Ứng tuyển: @item.JobPost.Title
+                                </p>
+                            </div>
+
+                            <span class="received-status">
+                                @item.ApplicationStatus.StatusName
+                            </span>
+                        </div>
+
+                        <dl class="received-info">
+                            <div>
+                                <dt>Email</dt>
+                                <dd>@item.Alumni.User.Email</dd>
+                            </div>
+
+                            <div>
+                                <dt>Số điện thoại</dt>
+                                <dd>
+                                    @(string.IsNullOrWhiteSpace(
+                                                                item.Alumni.User.Phone)
+                                                                ? "Chưa cập nhật"
+                                                                : item.Alumni.User.Phone)
+                                                                                     </dd>
+                                                                                 </div>
+
+                            <div>
+                                <dt>Ngày gửi</dt>
+                                <dd>
+                                    @item.AppliedAt.ToString("dd/MM/yyyy HH:mm")
+                                </dd>
+                            </div>
+                        </dl>
+
+                        <div class="received-letter">
+                            <h3>Lời giới thiệu</h3>
+
+                            <p>
+                                @(string.IsNullOrWhiteSpace(item.CoverLetter)
+                                                        ? "Ứng viên không gửi lời giới thiệu."
+                                                        : item.CoverLetter)
+                    </p>
+                </div>
+
+                        <div class="received-actions">
+                            <a href="@Url.Action("Details", "Profile",
+                                                                        new { id = item.AlumniId })"
+                       class="received-profile">
+                        Xem hồ sơ sinh viên
+                    </a>
+
+                    @if (!string.IsNullOrWhiteSpace(item.Cvurl))
+                            {
+                                <a href="@Url.Action("DownloadCv", "Applications",
+                                                                                new { id = item.ApplicationId })"
+                       class="received-download">
+                        Tải CV
+                    </a>
+                                        }
+                            else
+                            {
+                                <span class="received-no-file">
+                                    Không có file CV
+                                </span>
+                            }
+                        </div>
+                    </article>
+                }
+            </div>
+        }
+    </div>
+</section>
+
+<style>
+    .received-page {
+        padding: 40px 0 64px;
+        background: #f2f8f5;
+        font-family: "Segoe UI", Arial, sans-serif;
+    }
+
+        .received-page * {
+            box-sizing: border-box;
+        }
+
+    .received-back {
+        display: inline-block;
+        margin-bottom: 26px;
+        color: #00865b;
+        font-size: 14px;
+        text-decoration: none;
+    }
+
+    .received-heading {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+        margin-bottom: 28px;
+    }
+
+    .received-label {
+        color: #00865b;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 1.5px;
+    }
+
+    .received-heading h1 {
+        margin: 12px 0;
+        color: #234335;
+        font-family: inherit;
+        font-size: clamp(28px, 4vw, 38px);
+        font-weight: 700;
+    }
+
+    .received-heading p {
+        margin: 0;
+        color: #60796b;
+        font-size: 14px;
+        line-height: 1.8;
+    }
+
+    .received-count {
+        padding: 11px 16px;
+        color: #00865b;
+        background: #e1f3e9;
+        border-radius: 12px;
+        font-size: 14px;
+        font-weight: 600;
+    }
+
+    .received-list {
+        display: grid;
+        gap: 22px;
+    }
+
+    .received-card {
+        min-width: 0;
+        padding: 28px;
+        background: #fff;
+        border: 1px solid #dcebe2;
+        border-radius: 20px;
+        box-shadow: 0 7px 24px rgb(25 70 46 / 4%);
+    }
+
+    .received-card-heading {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 16px;
+    }
+
+    .received-card h2 {
+        margin: 0 0 8px;
+        color: #234335;
+        font-family: inherit;
+        font-size: 23px;
+        font-weight: 700;
+        overflow-wrap: anywhere;
+    }
+
+    .received-job {
+        margin: 0;
+        color: #00865b;
+        font-size: 14px;
+        line-height: 1.7;
+        overflow-wrap: anywhere;
+    }
+
+    .received-status {
+        padding: 7px 12px;
+        color: #176343;
+        background: #eaf7ef;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .received-info {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 20px;
+        margin: 24px 0;
+        padding: 20px 0;
+        border-top: 1px solid #edf2ef;
+        border-bottom: 1px solid #edf2ef;
+    }
+
+        .received-info dt {
+            margin-bottom: 7px;
+            color: #60796b;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .received-info dd {
+            margin: 0;
+            color: #355342;
+            font-size: 14px;
+            line-height: 1.7;
+            overflow-wrap: anywhere;
+        }
+
+    .received-letter h3 {
+        margin: 0 0 10px;
+        color: #355342;
+        font-family: inherit;
+        font-size: 15px;
+        font-weight: 600;
+    }
+
+    .received-letter p {
+        margin: 0;
+        color: #60796b;
+        font-size: 14px;
+        line-height: 1.9;
+        white-space: pre-line;
+        overflow-wrap: anywhere;
+    }
+
+    .received-actions {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        align-items: center;
+        gap: 12px;
+        margin-top: 24px;
+    }
+
+    .received-profile,
+    .received-download {
+        display: inline-flex;
+        justify-content: center;
+        padding: 12px 18px;
+        border-radius: 10px;
+        font-size: 14px;
+        font-weight: 600;
+        text-decoration: none;
+    }
+
+    .received-profile {
+        color: #00865b;
+        background: #eef8f2;
+    }
+
+        .received-profile:hover {
+            color: #006b49;
+            background: #dff1e7;
+        }
+
+    .received-download {
+        color: #fff;
+        background: #009f6b;
+    }
+
+        .received-download:hover {
+            color: #fff;
+            background: #008359;
+        }
+
+    .received-no-file {
+        color: #60796b;
+        font-size: 13px;
+    }
+
+    .received-empty {
+        padding: 55px 24px;
+        background: #fff;
+        border: 1px dashed #cbded2;
+        border-radius: 20px;
+        text-align: center;
+    }
+
+        .received-empty h2 {
+            color: #234335;
+            font-family: inherit;
+            font-size: 23px;
+        }
+
+        .received-empty p {
+            max-width: 480px;
+            margin: 14px auto 0;
+            color: #60796b;
+            line-height: 1.8;
+        }
+
+    .received-page a:focus-visible {
+        outline: 3px solid #82cfac;
+        outline-offset: 3px;
+    }
+
+    @@media (max-width: 767.98px) {
+        .received-info {
+            grid-template-columns: 1fr;
+            gap: 16px;
+        }
+    }
+
+    @@media (max-width: 575.98px) {
+        .received-page {
+            padding: 28px 0 44px;
+        }
+
+        .received-card {
+            padding: 22px;
+        }
+
+        .received-actions {
+            flex-direction: column;
+            align-items: stretch;
+        }
+    }
+</style>

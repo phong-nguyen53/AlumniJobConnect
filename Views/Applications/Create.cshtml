@@ -1,0 +1,390 @@
+﻿@using AlumniJobConnect.Models
+@using System.Linq
+@model AlumniJobConnect.Controllers.ApplicationsController.ApplyInput
+
+@{
+    ViewData["Title"] = "Gửi CV ứng tuyển";
+
+    var jobs = ViewBag.Jobs as IEnumerable<JobPost>
+        ?? Enumerable.Empty<JobPost>();
+
+    var hasJobs = jobs.Any();
+}
+
+<section class="apply-page">
+    <div class="container">
+        <div class="apply-card">
+
+            <a href="@Url.Action("Details", "CompanyProfile",
+                                        new { id = Model.CompanyId })"
+               class="apply-back">
+                ← Quay lại hồ sơ doanh nghiệp
+            </a>
+
+            <span class="apply-label">CƠ HỘI NGHỀ NGHIỆP</span>
+
+            <h1>Gửi CV ứng tuyển</h1>
+
+            <p class="apply-company">@ViewBag.CompanyName</p>
+
+            @if (!hasJobs)
+            {
+                <div class="apply-empty" role="status">
+                    Doanh nghiệp hiện chưa có vị trí tuyển dụng
+                    đang mở để nhận CV.
+                </div>
+            }
+            else
+            {
+                <form action="@Url.Action("Create", "Applications")"
+                      method="post"
+                      enctype="multipart/form-data">
+
+                    @Html.AntiForgeryToken()
+
+                    <input asp-for="CompanyId" type="hidden" />
+
+                    <div asp-validation-summary="All"
+                         class="apply-errors"
+                         role="alert"></div>
+
+                    <div class="apply-field">
+                        <label asp-for="JobPostId">
+                            Vị trí ứng tuyển
+                            <span>*</span>
+                        </label>
+
+                        <select asp-for="JobPostId"
+                                class="apply-input"
+                                required>
+                            <option value="">Chọn vị trí muốn ứng tuyển</option>
+
+                            @foreach (var job in jobs)
+                            {
+                                <option value="@job.JobPostId">
+                                    @job.Title
+                                </option>
+                            }
+                        </select>
+
+                        <span asp-validation-for="JobPostId"
+                              class="apply-field-error"></span>
+                    </div>
+
+                    <div class="apply-field">
+                        <label asp-for="CvFile">
+                            CV của bạn
+                            <span>*</span>
+                        </label>
+
+                        <div class="apply-upload">
+                            <strong>Tải file CV của bạn</strong>
+
+                            <p>
+                                Chấp nhận mọi định dạng file:
+                                Word, PDF, ảnh, Excel, ZIP…
+                                Dung lượng tối đa 5 MB.
+                            </p>
+
+                            <input asp-for="CvFile"
+                                   type="file"
+                                   aria-describedby="apply-cv-help"
+                                   required />
+                        </div>
+
+                        <small id="apply-cv-help">
+                            Nếu gửi chưa thành công, bạn cần chọn lại file CV.
+                        </small>
+
+                        <span asp-validation-for="CvFile"
+                              class="apply-field-error"></span>
+                    </div>
+
+                    <div class="apply-field">
+                        <label asp-for="CoverLetter">
+                            Lời giới thiệu
+                        </label>
+
+                        <textarea asp-for="CoverLetter"
+                                  class="apply-input"
+                                  rows="7"
+                                  maxlength="4000"
+                                  placeholder="Giới thiệu ngắn về kỹ năng, kinh nghiệm và lý do bạn muốn ứng tuyển..."></textarea>
+
+                        <small>Không bắt buộc, tối đa 4.000 ký tự.</small>
+
+                        <span asp-validation-for="CoverLetter"
+                              class="apply-field-error"></span>
+                    </div>
+
+                    <div class="apply-note">
+                        Khi bấm gửi, CV và lời giới thiệu của bạn sẽ được
+                        chuyển đến doanh nghiệp của vị trí đã chọn.
+                    </div>
+
+                    <div class="apply-actions">
+                        <a href="@Url.Action("Details", "CompanyProfile",
+                                                                new { id = Model.CompanyId })"
+                       class="apply-cancel">
+                        Quay lại
+                    </a>
+
+                        <button type="submit" class="apply-submit">
+                            Gửi CV ứng tuyển
+                        </button>
+                    </div>
+                </form>
+                        }
+        </div>
+    </div>
+</section>
+
+<style>
+    .apply-page {
+        padding: 48px 0 64px;
+        background: linear-gradient(180deg, #eef8f3, #f8fbf9);
+        font-family: "Segoe UI", Arial, sans-serif;
+    }
+
+        .apply-page * {
+            box-sizing: border-box;
+        }
+
+    .apply-card {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 36px;
+        background: #fff;
+        border: 1px solid #dcebe2;
+        border-radius: 22px;
+        box-shadow: 0 12px 36px rgb(25 70 46 / 5%);
+    }
+
+    .apply-back {
+        display: block;
+        width: fit-content;
+        margin-bottom: 28px;
+        color: #00865b;
+        font-size: 14px;
+        text-decoration: none;
+    }
+
+    .apply-label {
+        color: #00865b;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 1.5px;
+    }
+
+    .apply-card h1 {
+        margin: 12px 0;
+        color: #234335;
+        font-family: inherit;
+        font-size: clamp(27px, 4vw, 35px);
+        font-weight: 700;
+    }
+
+    .apply-company {
+        margin-bottom: 30px;
+        color: #60796b;
+        font-size: 16px;
+        overflow-wrap: anywhere;
+    }
+
+    .apply-field {
+        margin-bottom: 24px;
+    }
+
+        .apply-field label {
+            display: block;
+            margin-bottom: 10px;
+            color: #355342;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+            .apply-field label > span {
+                color: #b42318;
+            }
+
+    .apply-input {
+        display: block;
+        width: 100%;
+        padding: 13px 15px;
+        color: #294a3b;
+        background: #f9fcfa;
+        border: 1px solid #d7e6dd;
+        border-radius: 11px;
+        font-family: inherit;
+        font-size: 14px;
+        line-height: 1.7;
+    }
+
+        .apply-input:focus {
+            border-color: #009f6b;
+            outline: none;
+            box-shadow: 0 0 0 3px rgb(0 159 107 / 12%);
+        }
+
+    textarea.apply-input {
+        min-height: 180px;
+        resize: vertical;
+    }
+
+    .apply-upload {
+        padding: 24px;
+        background: #f2faf6;
+        border: 1px dashed #92cbb0;
+        border-radius: 14px;
+    }
+
+        .apply-upload strong {
+            color: #355342;
+            font-size: 14px;
+        }
+
+        .apply-upload p {
+            margin: 8px 0 18px;
+            color: #60796b;
+            font-size: 13px;
+        }
+
+        .apply-upload input {
+            display: block;
+            width: 100%;
+            color: #355342;
+            font-family: inherit;
+            font-size: 13px;
+        }
+
+            .apply-upload input::file-selector-button {
+                margin-right: 12px;
+                padding: 10px 14px;
+                color: #00865b;
+                background: #fff;
+                border: 1px solid #c5e2d2;
+                border-radius: 8px;
+                cursor: pointer;
+            }
+
+    .apply-field small {
+        display: block;
+        margin-top: 9px;
+        color: #60796b;
+        font-size: 12px;
+        line-height: 1.7;
+    }
+
+    .apply-field-error {
+        display: block;
+        margin-top: 7px;
+        color: #b42318;
+        font-size: 12px;
+    }
+
+        .apply-field-error:empty,
+        .apply-errors.validation-summary-valid {
+            display: none;
+        }
+
+    .apply-errors.validation-summary-errors {
+        margin-bottom: 24px;
+        padding: 15px 18px;
+        color: #b42318;
+        background: #fff4f2;
+        border: 1px solid #f3c9c4;
+        border-radius: 12px;
+        font-size: 13px;
+        line-height: 1.8;
+    }
+
+    .apply-errors ul {
+        margin: 0;
+        padding-left: 18px;
+    }
+
+    .apply-note,
+    .apply-empty {
+        padding: 16px 18px;
+        color: #42634f;
+        background: #eef8f2;
+        border: 1px solid #d8ebdf;
+        border-radius: 12px;
+        font-size: 13px;
+        line-height: 1.8;
+    }
+
+    .apply-actions {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 12px;
+        margin-top: 26px;
+    }
+
+    .apply-cancel,
+    .apply-submit {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 13px 20px;
+        border-radius: 11px;
+        font-family: inherit;
+        font-size: 14px;
+        font-weight: 600;
+        text-decoration: none;
+        cursor: pointer;
+    }
+
+    .apply-cancel {
+        color: #496655;
+        background: #fff;
+        border: 1px solid #d7e6dd;
+    }
+
+    .apply-submit {
+        color: #fff;
+        background: #009f6b;
+        border: 1px solid #009f6b;
+    }
+
+        .apply-submit:hover {
+            background: #008359;
+            border-color: #008359;
+        }
+
+    .apply-cancel:hover {
+        color: #294a3b;
+        background: #f0f7f3;
+    }
+
+    .apply-page a:focus-visible,
+    .apply-page button:focus-visible,
+    .apply-upload input:focus-visible {
+        outline: 3px solid #82cfac;
+        outline-offset: 3px;
+    }
+
+    @@media (max-width: 575.98px) {
+        .apply-page {
+            padding: 28px 0 44px;
+        }
+
+        .apply-card {
+            padding: 24px 20px;
+        }
+
+        .apply-upload {
+            padding: 18px;
+        }
+
+        .apply-actions {
+            flex-direction: column-reverse;
+        }
+
+        .apply-cancel,
+        .apply-submit {
+            width: 100%;
+        }
+    }
+</style>

@@ -64,7 +64,21 @@
                            class="cp-edit">
                             Chỉnh sửa hồ sơ
                         </a>
+
+                        <a href="@Url.Action("Received", "Applications")"
+                           class="cp-edit">
+                            Hồ sơ ứng tuyển nhận được
+                        </a>
                     }
+
+                    @if (User.IsInRole("Alumni"))
+                    {
+                        <a href="@Url.Action("Create", "Applications",
+                                            new { companyId = Model.CompanyId })"
+                       class="cp-edit">
+                        Gửi CV ứng tuyển
+                    </a>
+                     }
                 </div>
 
                 <div class="cp-grid">

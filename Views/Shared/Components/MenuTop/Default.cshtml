@@ -62,11 +62,12 @@
                     </span>
                     @if (User.Identity?.IsAuthenticated == true)
                     {
-                        @if (User.IsInRole("Employer"))
+                    
+                        if (User.IsInRole("Employer"))
                         {
                             <a href="@Url.Action("MyProfile", "CompanyProfile")"
                                class="ac-profile-link">
-                                <span>Hồ sơ doanh nghiệp</span>
+                                <span>Hồ sơ của tôi</span>
                                 <span aria-hidden="true">›</span>
                             </a>
                         }
@@ -74,14 +75,21 @@
                         {
                             <a href="@Url.Action("MyProfile", "Profile")"
                                class="ac-profile-link">
-                                <span>Hồ sơ cá nhân</span>
+                                <span>Hồ sơ của tôi</span>
                                 <span aria-hidden="true">›</span>
                             </a>
                         }
 
+                     
                         <a href="@Url.Action("Candidates", "Profile")"
                            class="ac-profile-link">
                             <span>Hồ sơ sinh viên</span>
+                            <span aria-hidden="true">›</span>
+                        </a>
+
+                        <a href="@Url.Action("Index", "CompanyProfile")"
+                           class="ac-profile-link">
+                            <span>Hồ sơ doanh nghiệp</span>
                             <span aria-hidden="true">›</span>
                         </a>
                     }
