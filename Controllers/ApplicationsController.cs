@@ -346,10 +346,44 @@ public class ApplicationsController : Controller
             .OrderByDescending(x => x.AppliedAt)
             .ToListAsync();
 
+        ViewBag.StatusOptions = await EmployerStatuses()
+            .AsNoTracking()
+            .OrderBy(x => x.SortOrder)
+            .ToListAsync();
+
         return View(applications);
     }
 
     // ================= TẢI FILE CV =================
+
+
+
+    [HttpGet]
+    [Authorize(Roles = "Alumni")]
+    public async Task<IActionResult> MyApplications()
+    {
+        if (GetCurrentUserId() is not int userId ||
+            !await CurrentUserIsActiveAsync())
+        {
+            return Forbid();
+        }
+
+        var applications = await _context
+            .Set<AlumniJobConnect.Models.Application>()
+            .AsNoTracking()
+            .Where(x => x.Alumni.UserId == userId)
+            .Include(x => x.JobPost)
+                .ThenInclude(x => x.Company)
+            .Include(x => x.ApplicationStatus)
+            .OrderByDescending(x => x.AppliedAt)
+            .ThenByDescending(x => x.ApplicationId)
+            .ToListAsync();
+
+        return View(applications);
+    }
+
+
+
 
     [HttpGet]
     public async Task<IActionResult> DownloadCv(int id)
@@ -427,5 +461,79 @@ public class ApplicationsController : Controller
             path,
             "application/octet-stream",
             $"CV-ung-tuyen-{id}{extension}");
+    }
+
+
+    private IQueryable<ApplicationStatus> EmployerStatuses()
+    {
+        return _context.Set<ApplicationStatus>().Where(x =>
+            x.StatusCode == "REVIEWING" ||
+            x.StatusCode == "INTERVIEW" ||
+            x.StatusCode == "ACCEPTED" ||
+            x.StatusCode == "REJECTED");
+    }
+
+    [HttpPost]
+    [Authorize(Roles = "Employer")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> UpdateStatus(
+        int applicationId,
+        int statusId)
+    {
+        if (!await CurrentUserIsActiveAsync() ||
+            GetCurrentUserId() is not int userId)
+        {
+            return Forbid();
+        }
+
+        var application = await _context
+            .Set<AlumniJobConnect.Models.Application>()
+            .SingleOrDefaultAsync(x =>
+                x.ApplicationId == applicationId &&
+                x.JobPost.Company.UserId == userId);
+
+        if (application == null)
+        {
+            return NotFound();
+        }
+
+        var validStatus = await EmployerStatuses()
+            .AnyAsync(x => x.ApplicationStatusId == statusId);
+
+        if (!validStatus)
+        {
+            TempData["ApplicationStatusError"] =
+                "Vui lòng chọn trạng thái xét tuyển hợp lệ.";
+
+            return RedirectToAction(nameof(Received));
+        }
+
+        if (application.ApplicationStatusId != statusId)
+        {
+            application.ApplicationStatusId = statusId;
+            application.UpdatedAt = DateTime.Now;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateException ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "Không thể cập nhật trạng thái đơn {ApplicationId}.",
+                    applicationId);
+
+                TempData["ApplicationStatusError"] =
+                    "Chưa lưu được trạng thái. Vui lòng thử lại.";
+
+                return RedirectToAction(nameof(Received));
+            }
+        }
+
+        TempData["ApplicationStatusSuccess"] =
+            "Đã lưu trạng thái xét tuyển.";
+
+        return RedirectToAction(nameof(Received));
     }
 }

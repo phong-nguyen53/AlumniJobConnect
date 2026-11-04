@@ -171,6 +171,15 @@
                 </a>
             }
 
+            @if (User.IsInRole("Alumni"))
+            {
+                <a href="@Url.Action("MyApplications", "Applications")"
+                   class="ac-profile-link">
+                    <span>Đơn ứng tuyển của tôi</span>
+                    <span aria-hidden="true">›</span>
+                </a>
+            }
+
             <form action="@Url.Action("Logout", "Account")"
                   method="post"
                   class="ac-logout-form">

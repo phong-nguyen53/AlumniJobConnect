@@ -3,6 +3,9 @@
 
 @{
     ViewData["Title"] = "Hồ sơ ứng tuyển nhận được";
+    var statusOptions = ViewBag.StatusOptions
+        as IEnumerable<AlumniJobConnect.Models.ApplicationStatus>
+        ?? Enumerable.Empty<AlumniJobConnect.Models.ApplicationStatus>();
 }
 
 <section class="received-page">
@@ -26,6 +29,16 @@
                 @Model.Count() đơn ứng tuyển
             </span>
         </div>
+
+        @if (TempData["ApplicationStatusSuccess"] is string success)
+        {
+            <div class="alert alert-success" role="status">@success</div>
+        }
+
+        @if (TempData["ApplicationStatusError"] is string error)
+        {
+            <div class="alert alert-danger" role="alert">@error</div>
+        }
 
         @if (!Model.Any())
         {
@@ -90,9 +103,37 @@
                     </p>
                 </div>
 
+                        <form action="@Url.Action("UpdateStatus", "Applications")"
+                              method="post" class="mt-4">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="applicationId" value="@item.ApplicationId" />
+
+                            <label for="status-@item.ApplicationId" class="form-label">
+                                Trạng thái xét tuyển
+                            </label>
+
+                            <div class="d-flex flex-wrap gap-2">
+                                <select id="status-@item.ApplicationId"
+                                        name="statusId" class="form-select w-auto" required>
+                                    <option value="">Chọn trạng thái</option>
+                            @foreach (var status in statusOptions)
+                                    {
+                                        <option value="@status.ApplicationStatusId"
+                                                selected="@(status.ApplicationStatusId == item.ApplicationStatusId ? "selected" : null)">
+                                            @status.StatusName
+                                        </option>
+                                    }
+                                </select>
+
+                                <button type="submit" class="btn btn-success">
+                                    Lưu trạng thái
+                                </button>
+                            </div>
+                        </form>
+
                         <div class="received-actions">
                             <a href="@Url.Action("Details", "Profile",
-                                                                        new { id = item.AlumniId })"
+                                                                                                       new { id = item.AlumniId })"
                        class="received-profile">
                         Xem hồ sơ sinh viên
                     </a>
@@ -100,7 +141,7 @@
                     @if (!string.IsNullOrWhiteSpace(item.Cvurl))
                             {
                                 <a href="@Url.Action("DownloadCv", "Applications",
-                                                                                new { id = item.ApplicationId })"
+                                                                                                                   new { id = item.ApplicationId })"
                        class="received-download">
                         Tải CV
                     </a>
