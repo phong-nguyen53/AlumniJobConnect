@@ -2,9 +2,10 @@
 
 @{
     ViewData["Title"] = Model.CompanyName;
-    var isOwner = ViewBag.IsOwner is bool owner && owner;
 
-    // Chỉ cho phép liên kết website HTTP hoặc HTTPS.
+    var isOwner = ViewBag.IsOwner is bool owner && owner;
+    var openJobCount = ViewBag.OpenJobCount is int count ? count : 0;
+
     string? websiteUrl = null;
 
     if (Uri.TryCreate(Model.Website, UriKind.Absolute, out var websiteUri)
@@ -37,7 +38,6 @@
 
             <div class="cp-body">
                 <div class="cp-heading">
-
                     <div class="cp-avatar" aria-hidden="true">
                         @(string.IsNullOrWhiteSpace(Model.CompanyName)
                                                 ? "DN"
@@ -51,6 +51,19 @@
 
                         <h1>@Model.CompanyName</h1>
 
+                        @if (openJobCount > 0)
+                        {
+                            <div class="cp-hiring cp-hiring-open">
+                                ● Đang tuyển dụng · @openJobCount tin đang mở
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="cp-hiring cp-hiring-closed">
+                                Hiện chưa có tin tuyển dụng đang mở
+                            </div>
+                        }
+
                         <p>
                             @(string.IsNullOrWhiteSpace(Model.Industry)
                                                         ? "Chưa cập nhật lĩnh vực hoạt động"
@@ -58,27 +71,37 @@
                         </p>
                     </div>
 
-                    @if (isOwner)
-                    {
-                        <a href="@Url.Action("Edit", "CompanyProfile")"
-                           class="cp-edit">
-                            Chỉnh sửa hồ sơ
-                        </a>
+                    <div class="cp-actions">
+                        @if (isOwner)
+                        {
+                            <a href="@Url.Action("Edit", "CompanyProfile")"
+                               class="cp-button cp-button-secondary">
+                                Chỉnh sửa hồ sơ
+                            </a>
 
-                        <a href="@Url.Action("Received", "Applications")"
-                           class="cp-edit">
-                            Hồ sơ ứng tuyển nhận được
-                        </a>
-                    }
+                            <a href="@Url.Action("Received", "Applications")"
+                               class="cp-button cp-button-primary">
+                                Hồ sơ ứng tuyển nhận được
+                            </a>
+                        }
 
-                    @if (User.IsInRole("Alumni"))
-                    {
-                        <a href="@Url.Action("Create", "Applications",
-                                            new { companyId = Model.CompanyId })"
-                       class="cp-edit">
-                        Gửi CV ứng tuyển
-                    </a>
-                     }
+                        @if (User.IsInRole("Alumni"))
+                        {
+                            @if (openJobCount > 0)
+                            {
+                                <a href="@Url.Action("Create", "Applications",
+                                                                                new { companyId = Model.CompanyId })"
+                           class="cp-button cp-button-primary">
+                            Xem vị trí và gửi CV
+                        </a>
+                                                }
+
+                            <a href="@Url.Action("MyApplications", "Applications")"
+                               class="cp-button cp-button-secondary">
+                                Xem đơn đã gửi
+                            </a>
+                        }
+                    </div>
                 </div>
 
                 <div class="cp-grid">
@@ -130,6 +153,11 @@
                                 </div>
 
                                 <div>
+                                    <dt>Tin tuyển dụng đang mở</dt>
+                                    <dd>@openJobCount tin</dd>
+                                </div>
+
+                                <div>
                                     <dt>Ngày tham gia</dt>
                                     <dd>
                                         @Model.CreatedAt.ToString("dd/MM/yyyy")
@@ -140,9 +168,7 @@
                     </div>
 
                     <aside class="cp-contact">
-                        <div class="cp-contact-icon" aria-hidden="true">
-                            ✉
-                        </div>
+                        <div class="cp-contact-icon" aria-hidden="true">✉</div>
 
                         <h2>Thông tin liên hệ</h2>
 
@@ -171,26 +197,22 @@
 
                         <div class="cp-contact-item">
                             <span>Website</span>
-
-                            @if (websiteUrl != null)
-                            {
-                                <p>
+                            <p>
+                                @if (websiteUrl != null)
+                                {
                                     <a href="@websiteUrl"
                                        target="_blank"
                                        rel="noopener noreferrer">
-                                        @Model.Website
-                                        <span aria-hidden="true">↗</span>
+                                        @Model.Website ↗
                                     </a>
-                                </p>
-                            }
-                            else
-                            {
-                                <p>
+                                }
+                                else
+                                {
                                     @(string.IsNullOrWhiteSpace(Model.Website)
                                                                     ? "Chưa cập nhật"
                                                                     : Model.Website)
+                                                                }
                             </p>
-                                                        }
                         </div>
 
                         @if (string.Equals(
@@ -236,7 +258,7 @@
 
     .cp-success {
         margin-bottom: 20px;
-        padding: 15px 18px;
+        padding: 16px 20px;
         color: #176343;
         background: #e2f5e9;
         border: 1px solid #bfe4cf;
@@ -253,11 +275,10 @@
 
     .cp-cover {
         display: flex;
-        align-items: flex-start;
         justify-content: flex-end;
         min-height: 155px;
-        padding: 28px 32px 60px;
-        background: radial-gradient( circle at 85% 10%, #ffffff18 0 110px, transparent 111px), linear-gradient(120deg, #087c58, #22ae7a);
+        padding: 28px 32px 65px;
+        background: radial-gradient(circle at 85% 10%, #ffffff18 0 110px, transparent 111px), linear-gradient(120deg, #087c58, #22ae7a);
     }
 
         .cp-cover span {
@@ -331,22 +352,71 @@
         overflow-wrap: anywhere;
     }
 
-    .cp-edit {
-        display: inline-flex;
-        justify-content: center;
-        margin-bottom: 4px;
-        padding: 13px 19px;
-        color: #fff;
-        background: #009f6b;
-        border-radius: 11px;
-        font-size: 14px;
+    .cp-hiring {
+        display: inline-block;
+        margin: 4px 0 12px;
+        padding: 8px 13px;
+        border: 1px solid;
+        border-radius: 20px;
+        font-size: 12px;
         font-weight: 600;
+        line-height: 1.6;
+    }
+
+    .cp-hiring-open {
+        color: #087443;
+        background: #dff5e8;
+        border-color: #b8e2ca;
+    }
+
+    .cp-hiring-closed {
+        color: #596b61;
+        background: #edf1ee;
+        border-color: #d8e0da;
+    }
+
+    .cp-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        max-width: 100%;
+        margin-top: 10px;
+    }
+
+    .cp-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 13px 18px;
+        border: 1px solid;
+        border-radius: 11px;
+        font-size: 13px;
+        font-weight: 600;
+        text-align: center;
         text-decoration: none;
     }
 
-        .cp-edit:hover {
+    .cp-button-primary {
+        color: #fff;
+        background: #009f6b;
+        border-color: #009f6b;
+    }
+
+        .cp-button-primary:hover {
             color: #fff;
             background: #008359;
+            border-color: #008359;
+        }
+
+    .cp-button-secondary {
+        color: #00865b;
+        background: #fff;
+        border-color: #cce5d6;
+    }
+
+        .cp-button-secondary:hover {
+            color: #006b49;
+            background: #eef8f2;
         }
 
     .cp-grid {
@@ -384,7 +454,7 @@
 
         .cp-facts > div {
             display: grid;
-            grid-template-columns: 160px minmax(0, 1fr);
+            grid-template-columns: 170px minmax(0, 1fr);
             gap: 18px;
             padding: 13px 0;
         }
@@ -453,7 +523,6 @@
         background: #def2e6;
         border-radius: 9px;
         font-size: 12px;
-        line-height: 1.7;
     }
 
     .cp-note {
@@ -476,8 +545,8 @@
             gap: 0;
         }
 
-        .cp-contact {
-            margin-top: 28px;
+        .cp-actions {
+            flex-basis: 100%;
         }
     }
 
@@ -493,7 +562,6 @@
 
             .cp-cover span {
                 font-size: 9px;
-                letter-spacing: 1px;
             }
 
         .cp-body {
@@ -511,7 +579,7 @@
             padding-top: 0;
         }
 
-        .cp-edit {
+        .cp-button {
             width: 100%;
         }
 

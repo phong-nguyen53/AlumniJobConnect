@@ -23,6 +23,18 @@ public partial class Application
 
     public string? EmployerNote { get; set; }
 
+    public DateTime? InterviewAt { get; set; }
+
+    public string? InterviewLocation { get; set; }
+
+    public string? InterviewNote { get; set; }
+
+    public string? InterviewResponse { get; set; }
+
+    public string? InterviewDeclineReason { get; set; }
+
+    public DateTime? InterviewRespondedAt { get; set; }
+
     public virtual AlumniProfile Alumni { get; set; } = null!;
 
     public virtual ApplicationStatus ApplicationStatus { get; set; } = null!;

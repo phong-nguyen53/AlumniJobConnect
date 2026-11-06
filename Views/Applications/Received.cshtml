@@ -2,403 +2,1103 @@
 @model IEnumerable<AlumniJobConnect.Models.Application>
 
 @{
-    ViewData["Title"] = "Hồ sơ ứng tuyển nhận được";
-    var statusOptions = ViewBag.StatusOptions
+    ViewData["Title"] = "Hồ sơ ứng tuyển";
+    var applications = Model.OrderByDescending(x => x.AppliedAt)
+        .ThenByDescending(x => x.ApplicationId).ToList();
+    var statusOptions = (ViewBag.StatusOptions
         as IEnumerable<AlumniJobConnect.Models.ApplicationStatus>
-        ?? Enumerable.Empty<AlumniJobConnect.Models.ApplicationStatus>();
+        ?? Enumerable.Empty<AlumniJobConnect.Models.ApplicationStatus>()).ToList();
+
+    string StatusClass(string? code) => code switch
+    {
+        "INTERVIEW" => "rx-blue",
+        "ACCEPTED" => "rx-green",
+        "REJECTED" => "rx-red",
+        "REVIEWING" => "rx-amber",
+        _ => "rx-neutral"
+    };
+
+    int CountBy(string? code) => applications.Count(a => a.ApplicationStatus?.StatusCode == code);
 }
 
-<section class="received-page">
+<section class="rx-page">
     <div class="container">
+        <a class="rx-back" href="@Url.Action("MyProfile", "CompanyProfile")">← Hồ sơ doanh nghiệp</a>
 
-        <a href="@Url.Action("MyProfile", "CompanyProfile")"
-           class="received-back">
-            ← Hồ sơ doanh nghiệp của tôi
-        </a>
-
-        <div class="received-heading">
-            <div>
-                <span class="received-label">TUYỂN DỤNG NHÂN TÀI</span>
+        <header class="rx-hero">
+            <div class="rx-hero-text">
+                <span class="rx-eyebrow">QUẢN LÝ ỨNG VIÊN</span>
                 <h1>Hồ sơ ứng tuyển</h1>
-                <p>
-                    Xem thông tin ứng viên và tải CV gửi đến doanh nghiệp.
-                </p>
+                <p>Xem CV, xét tuyển và hẹn lịch phỏng vấn tại một nơi.</p>
             </div>
-
-            <span class="received-count">
-                @Model.Count() đơn ứng tuyển
-            </span>
-        </div>
+            <div class="rx-stats">
+                <div class="rx-stat rx-stat-main"><strong>@applications.Count</strong><span>hồ sơ nhận được</span></div>
+                <div class="rx-stat"><strong>@CountBy("REVIEWING")</strong><span>đang xem xét</span></div>
+                <div class="rx-stat"><strong>@CountBy("INTERVIEW")</strong><span>phỏng vấn</span></div>
+                <div class="rx-stat"><strong>@CountBy("ACCEPTED")</strong><span>đã nhận</span></div>
+            </div>
+        </header>
 
         @if (TempData["ApplicationStatusSuccess"] is string success)
         {
-            <div class="alert alert-success" role="status">@success</div>
+            <div class="rx-alert rx-alert-ok" role="status"><span aria-hidden="true">✓</span>@success</div>
         }
-
         @if (TempData["ApplicationStatusError"] is string error)
         {
-            <div class="alert alert-danger" role="alert">@error</div>
+            <div class="rx-alert rx-alert-err" role="alert"><span aria-hidden="true">!</span>@error</div>
         }
 
-        @if (!Model.Any())
+        @if (applications.Count > 0)
         {
-            <div class="received-empty">
-                <h2>Chưa có đơn ứng tuyển</h2>
-                <p>
-                    Khi sinh viên gửi CV vào tin tuyển dụng của bạn,
-                    hồ sơ sẽ xuất hiện tại đây.
-                </p>
+            <div class="rx-toolbar">
+                <div class="rx-search">
+                    <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" d="M9 15.5a6.5 6.5 0 1 1 0-13 6.5 6.5 0 0 1 0 13Zm5-1.5 4 4" /></svg>
+                    <input id="rx-search" type="search" placeholder="Tìm theo tên ứng viên, email hoặc vị trí…" autocomplete="off" />
+                </div>
+                <div class="rx-chips" role="group" aria-label="Lọc theo trạng thái">
+                    <button type="button" class="rx-chip is-active" data-filter="ALL">Tất cả <b>@applications.Count</b></button>
+                    @foreach (var s in statusOptions)
+                    {
+                        <button type="button" class="rx-chip" data-filter="@s.StatusCode">@s.StatusName <b>@CountBy(s.StatusCode)</b></button>
+                    }
+                </div>
+            </div>
+            <div class="rx-list-heading">
+                <strong>Danh sách ứng viên</strong>
+                <span id="rx-visible-count">↓ Mới gửi nhất ở trên</span>
             </div>
         }
-        else
+
+        @if (applications.Count == 0)
         {
-            <div class="received-list">
-                @foreach (var item in Model)
-                {
-                    <article class="received-card">
-                        <div class="received-card-heading">
-                            <div>
-                                <h2>@item.Alumni.User.FullName</h2>
-                                <p class="received-job">
-                                    Ứng tuyển: @item.JobPost.Title
-                                </p>
-                            </div>
+            <div class="rx-empty">
+                <div class="rx-empty-icon" aria-hidden="true">📭</div>
+                <h2>Chưa có hồ sơ ứng tuyển</h2>
+                <p>Hồ sơ sẽ xuất hiện khi sinh viên gửi CV vào tin tuyển dụng của bạn.</p>
+            </div>
+        }
 
-                            <span class="received-status">
-                                @item.ApplicationStatus.StatusName
-                            </span>
+        @foreach (var item in applications)
+        {
+            var name = item.Alumni?.User?.FullName ?? "Ứng viên";
+            var initial = string.IsNullOrWhiteSpace(name) ? "?" : name.Trim().Substring(0, 1).ToUpperInvariant();
+            var code = item.ApplicationStatus?.StatusCode ?? "NONE";
+            <article class="rx-card rx-accent-@StatusClass(item.ApplicationStatus?.StatusCode)"
+                     id="application-@item.ApplicationId"
+                     data-status="@code"
+                     data-search="@((name + " " + item.Alumni?.User?.Email + " " + item.JobPost?.Title).ToLowerInvariant())">
+                <div class="rx-card-top">
+                    <div class="rx-person">
+                        <div class="rx-avatar" aria-hidden="true">@initial</div>
+                        <div class="rx-person-info">
+                            <h2>@name</h2>
+                            <p><span aria-hidden="true">💼</span> @item.JobPost?.Title</p>
                         </div>
-
-                        <dl class="received-info">
-                            <div>
-                                <dt>Email</dt>
-                                <dd>@item.Alumni.User.Email</dd>
-                            </div>
-
-                            <div>
-                                <dt>Số điện thoại</dt>
-                                <dd>
-                                    @(string.IsNullOrWhiteSpace(
-                                                                item.Alumni.User.Phone)
-                                                                ? "Chưa cập nhật"
-                                                                : item.Alumni.User.Phone)
-                                                                                     </dd>
-                                                                                 </div>
-
-                            <div>
-                                <dt>Ngày gửi</dt>
-                                <dd>
-                                    @item.AppliedAt.ToString("dd/MM/yyyy HH:mm")
-                                </dd>
-                            </div>
-                        </dl>
-
-                        <div class="received-letter">
-                            <h3>Lời giới thiệu</h3>
-
-                            <p>
-                                @(string.IsNullOrWhiteSpace(item.CoverLetter)
-                                                        ? "Ứng viên không gửi lời giới thiệu."
-                                                        : item.CoverLetter)
-                    </p>
+                    </div>
+                    <div class="rx-card-meta">
+                        <span class="rx-status @StatusClass(item.ApplicationStatus?.StatusCode)">
+                            <i aria-hidden="true"></i>@(item.ApplicationStatus?.StatusName ?? "Chưa cập nhật")
+                        </span>
+                        <time datetime="@item.AppliedAt.ToString("yyyy-MM-ddTHH:mm:ss")">
+                            Gửi lúc <strong>@item.AppliedAt.ToString("HH:mm")</strong>
+                            <span> · @item.AppliedAt.ToString("dd/MM/yyyy")</span>
+                        </time>
+                    </div>
                 </div>
 
-                        <form action="@Url.Action("UpdateStatus", "Applications")"
-                              method="post" class="mt-4">
-                            @Html.AntiForgeryToken()
-                            <input type="hidden" name="applicationId" value="@item.ApplicationId" />
-
-                            <label for="status-@item.ApplicationId" class="form-label">
-                                Trạng thái xét tuyển
-                            </label>
-
-                            <div class="d-flex flex-wrap gap-2">
-                                <select id="status-@item.ApplicationId"
-                                        name="statusId" class="form-select w-auto" required>
-                                    <option value="">Chọn trạng thái</option>
-                            @foreach (var status in statusOptions)
-                                    {
-                                        <option value="@status.ApplicationStatusId"
-                                                selected="@(status.ApplicationStatusId == item.ApplicationStatusId ? "selected" : null)">
-                                            @status.StatusName
-                                        </option>
-                                    }
-                                </select>
-
-                                <button type="submit" class="btn btn-success">
-                                    Lưu trạng thái
-                                </button>
-                            </div>
-                        </form>
-
-                        <div class="received-actions">
-                            <a href="@Url.Action("Details", "Profile",
-                                                                                                       new { id = item.AlumniId })"
-                       class="received-profile">
-                        Xem hồ sơ sinh viên
-                    </a>
-
-                    @if (!string.IsNullOrWhiteSpace(item.Cvurl))
-                            {
-                                <a href="@Url.Action("DownloadCv", "Applications",
-                                                                                                                   new { id = item.ApplicationId })"
-                       class="received-download">
-                        Tải CV
-                    </a>
-                                        }
-                            else
-                            {
-                                <span class="received-no-file">
-                                    Không có file CV
-                                </span>
-                            }
+                <div class="rx-content">
+                    <div class="rx-candidate">
+                        <dl class="rx-contact">
+                            <div><dt>Email</dt><dd>@item.Alumni?.User?.Email</dd></div>
+                            <div><dt>Số điện thoại</dt><dd>@(string.IsNullOrWhiteSpace(item.Alumni?.User?.Phone) ? "Chưa cập nhật" : item.Alumni?.User?.Phone)</dd></div>
+                        </dl>
+                        <div class="rx-letter">
+                            <h3>Lời giới thiệu</h3>
+                            <p>@(string.IsNullOrWhiteSpace(item.CoverLetter) ? "Ứng viên không gửi lời giới thiệu." : item.CoverLetter.Trim())</p>
                         </div>
-                    </article>
-                }
-            </div>
+                        @if (item.ApplicationStatus?.StatusCode == "INTERVIEW")
+                        {
+                            <div class="rx-response">
+                                <h3>Phản hồi lịch phỏng vấn</h3>
+                                @if (item.InterviewResponse == "ACCEPTED")
+                                {
+                                    <strong class="rx-response-accepted">✓ Ứng viên đã đồng ý tham gia</strong>
+                                }
+                                else if (item.InterviewResponse == "DECLINED")
+                                {
+                                    <strong class="rx-response-declined">Ứng viên đã từ chối</strong>
+                                    <div class="rx-reason">
+                                        <span>Lý do từ chối</span>
+                                        <p>@item.InterviewDeclineReason</p>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <span class="rx-response-pending">Đang chờ ứng viên phản hồi</span>
+                                }
+                                @if (item.InterviewRespondedAt.HasValue)
+                                {
+                                    <small>Phản hồi lúc @item.InterviewRespondedAt.Value.ToString("HH:mm · dd/MM/yyyy")</small>
+                                }
+                            </div>
+                        }
+                        <div class="rx-actions">
+                            @if (!string.IsNullOrWhiteSpace(item.Cvurl))
+                            {
+                                <a class="rx-button rx-primary" href="@Url.Action("DownloadCv", "Applications", new { id = item.ApplicationId })">↓ Tải CV</a>
+                            }
+                            <a class="rx-button rx-secondary" href="@Url.Action("Details", "Profile", new { id = item.AlumniId })">Xem hồ sơ sinh viên ↗</a>
+                        </div>
+                    </div>
+
+                    <form action="@Url.Action("UpdateStatus", "Applications")" method="post" class="rx-review">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="applicationId" value="@item.ApplicationId" />
+                        <div class="rx-review-title"><h3>Xét tuyển hồ sơ</h3><span>#@item.ApplicationId</span></div>
+                        <label for="status-@item.ApplicationId">Trạng thái xét tuyển</label>
+                        <select id="status-@item.ApplicationId" name="statusId"
+                                class="js-status-select" required
+                                aria-controls="interview-fields-@item.ApplicationId" aria-expanded="false">
+                            <option value="">Chọn trạng thái</option>
+                            @foreach (var status in statusOptions)
+                            {
+                                <option value="@status.ApplicationStatusId"
+                                        data-code="@status.StatusCode"
+                                        selected="@(status.ApplicationStatusId == item.ApplicationStatusId ? "selected" : null)">@status.StatusName</option>
+                            }
+                        </select>
+                        <div class="js-interview-fields rx-interview" id="interview-fields-@item.ApplicationId" hidden>
+                            <h4>📅 Lịch phỏng vấn</h4>
+                            <p class="rx-help">Thông tin này sẽ hiển thị cho ứng viên sau khi lưu. Đổi lịch, địa điểm hoặc ghi chú sẽ yêu cầu ứng viên xác nhận lại.</p>
+                            <label for="interview-at-@item.ApplicationId">Ngày giờ · Giờ Việt Nam <span>*</span></label>
+                            <input id="interview-at-@item.ApplicationId" name="interviewAt"
+                                   type="datetime-local" class="js-interview-date"
+                                   value="@(item.InterviewAt?.ToString("yyyy-MM-ddTHH:mm"))" />
+                            <p class="rx-date-preview" aria-live="polite"></p>
+                            <label for="interview-location-@item.ApplicationId">Địa điểm hoặc link họp <span>*</span></label>
+                            <input id="interview-location-@item.ApplicationId" name="interviewLocation"
+                                   value="@item.InterviewLocation" maxlength="500"
+                                   placeholder="Địa chỉ công ty hoặc link họp trực tuyến" />
+                            <label for="interview-note-@item.ApplicationId">Ghi chú cho ứng viên</label>
+                            <textarea id="interview-note-@item.ApplicationId" name="interviewNote"
+                                      rows="3" maxlength="1000"
+                                      placeholder="Nội dung cần chuẩn bị…">@item.InterviewNote</textarea>
+                        </div>
+                        <button class="rx-button rx-primary rx-save" type="submit">Lưu cập nhật</button>
+                    </form>
+                </div>
+            </article>
         }
+
+        <div class="rx-empty rx-no-result" id="rx-no-result" hidden>
+            <div class="rx-empty-icon" aria-hidden="true">🔍</div>
+            <h2>Không tìm thấy hồ sơ phù hợp</h2>
+            <p>Thử đổi từ khóa hoặc chọn trạng thái khác.</p>
+        </div>
     </div>
 </section>
 
 <style>
-    .received-page {
-        padding: 40px 0 64px;
-        background: #f2f8f5;
-        font-family: "Segoe UI", Arial, sans-serif;
+    .rx-page {
+        --g900: #0f3d2b;
+        --g700: #0b6b4a;
+        --g600: #0a8a5f;
+        --g500: #10a572;
+        --g100: #dff3e8;
+        --g50: #f2f9f5;
+        --ink: #1f3b2e;
+        --mute: #6f8579;
+        --line: #e3ede7;
+        padding: 28px 0 72px;
+        background: radial-gradient(900px 340px at 85% -80px,#d3efe0 0,transparent 70%),#f4f9f6;
+        font-family: "Segoe UI",system-ui,Arial,sans-serif;
+        color: var(--ink)
     }
 
-        .received-page * {
-            box-sizing: border-box;
+        .rx-page * {
+            box-sizing: border-box
         }
 
-    .received-back {
+    .rx-back {
         display: inline-block;
-        margin-bottom: 26px;
-        color: #00865b;
-        font-size: 14px;
+        color: var(--g700);
+        font-size: 13px;
+        font-weight: 600;
         text-decoration: none;
+        padding: 6px 0
     }
 
-    .received-heading {
+        .rx-back:hover {
+            color: var(--g900);
+            text-decoration: underline
+        }
+
+    /* Hero */
+    .rx-hero {
         display: flex;
-        flex-wrap: wrap;
-        align-items: center;
         justify-content: space-between;
-        gap: 20px;
-        margin-bottom: 28px;
+        align-items: center;
+        gap: 28px;
+        margin: 14px 0 26px;
+        padding: 30px 34px;
+        border-radius: 22px;
+        background: linear-gradient(135deg,#0b6b4a 0,#0a8a5f 55%,#27b887 100%);
+        color: #fff;
+        box-shadow: 0 14px 36px #0b6b4a30;
+        position: relative;
+        overflow: hidden
     }
 
-    .received-label {
-        color: #00865b;
+        .rx-hero::after {
+            content: "";
+            position: absolute;
+            right: -70px;
+            top: -90px;
+            width: 300px;
+            height: 300px;
+            border-radius: 50%;
+            background: #ffffff14;
+            pointer-events: none
+        }
+
+    .rx-hero-text {
+        position: relative;
+        z-index: 1
+    }
+
+    .rx-eyebrow {
         font-size: 11px;
         font-weight: 700;
-        letter-spacing: 1.5px;
+        letter-spacing: 2px;
+        color: #bff0d9
     }
 
-    .received-heading h1 {
-        margin: 12px 0;
-        color: #234335;
+    .rx-hero h1 {
         font-family: inherit;
-        font-size: clamp(28px, 4vw, 38px);
-        font-weight: 700;
+        font-size: clamp(28px,3.2vw,40px);
+        font-weight: 800;
+        margin: 8px 0 6px;
+        color: #fff;
+        letter-spacing: -.5px
     }
 
-    .received-heading p {
+    .rx-hero p {
         margin: 0;
-        color: #60796b;
-        font-size: 14px;
-        line-height: 1.8;
+        color: #d8f5e8;
+        font-size: 14.5px
     }
 
-    .received-count {
-        padding: 11px 16px;
-        color: #00865b;
-        background: #e1f3e9;
+    .rx-stats {
+        display: grid;
+        grid-template-columns: repeat(4,auto);
+        gap: 10px;
+        position: relative;
+        z-index: 1
+    }
+
+    .rx-stat {
+        background: #ffffff1f;
+        border: 1px solid #ffffff33;
+        backdrop-filter: blur(4px);
+        border-radius: 14px;
+        padding: 12px 16px;
+        text-align: center;
+        min-width: 92px
+    }
+
+        .rx-stat strong {
+            display: block;
+            font-size: 24px;
+            font-weight: 800;
+            line-height: 1.1
+        }
+
+        .rx-stat span {
+            display: block;
+            font-size: 11.5px;
+            color: #d3f3e4;
+            margin-top: 3px;
+            white-space: nowrap
+        }
+
+    .rx-stat-main {
+        background: #fff;
+        color: var(--g700)
+    }
+
+        .rx-stat-main span {
+            color: var(--mute)
+        }
+
+    /* Alerts */
+    .rx-alert {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 13px 16px;
         border-radius: 12px;
         font-size: 14px;
-        font-weight: 600;
+        margin-bottom: 18px;
+        border: 1px solid
     }
 
-    .received-list {
-        display: grid;
-        gap: 22px;
+        .rx-alert span {
+            display: grid;
+            place-items: center;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            font-size: 12px;
+            font-weight: 800;
+            color: #fff;
+            flex-shrink: 0
+        }
+
+    .rx-alert-ok {
+        background: #e6f7ee;
+        border-color: #bfe6d0;
+        color: #17633f
     }
 
-    .received-card {
-        min-width: 0;
-        padding: 28px;
+        .rx-alert-ok span {
+            background: var(--g500)
+        }
+
+    .rx-alert-err {
+        background: #fff0f0;
+        border-color: #f3c9c9;
+        color: #9b3333
+    }
+
+        .rx-alert-err span {
+            background: #d65a5a
+        }
+
+    /* Toolbar */
+    .rx-toolbar {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
         background: #fff;
-        border: 1px solid #dcebe2;
-        border-radius: 20px;
-        box-shadow: 0 7px 24px rgb(25 70 46 / 4%);
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        padding: 14px;
+        margin-bottom: 18px;
+        box-shadow: 0 3px 14px #1f4d3a0a
     }
 
-    .received-card-heading {
+    .rx-search {
+        position: relative;
+        color: var(--mute)
+    }
+
+        .rx-search svg {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%)
+        }
+
+        .rx-search input {
+            width: 100%;
+            border: 1px solid var(--line);
+            background: var(--g50);
+            border-radius: 11px;
+            padding: 12px 14px 12px 40px;
+            font: 14px "Segoe UI",Arial,sans-serif;
+            color: var(--ink)
+        }
+
+            .rx-search input:focus {
+                outline: 2px solid #8fd6b4;
+                outline-offset: 1px;
+                background: #fff
+            }
+
+    .rx-chips {
         display: flex;
         flex-wrap: wrap;
-        align-items: flex-start;
+        gap: 8px
+    }
+
+    .rx-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        border: 1px solid var(--line);
+        background: #fff;
+        color: #4a6556;
+        border-radius: 999px;
+        padding: 7px 13px;
+        font: 600 12.5px "Segoe UI",Arial,sans-serif;
+        cursor: pointer;
+        transition: .15s
+    }
+
+        .rx-chip b {
+            background: var(--g100);
+            color: var(--g700);
+            border-radius: 999px;
+            padding: 1px 8px;
+            font-size: 11.5px
+        }
+
+        .rx-chip:hover {
+            border-color: #b9dcc9;
+            background: var(--g50)
+        }
+
+        .rx-chip.is-active {
+            background: var(--g600);
+            border-color: var(--g600);
+            color: #fff
+        }
+
+            .rx-chip.is-active b {
+                background: #ffffff30;
+                color: #fff
+            }
+
+    .rx-list-heading {
+        display: flex;
         justify-content: space-between;
         gap: 16px;
+        margin: 4px 2px 14px;
+        font-size: 14px
     }
 
-    .received-card h2 {
-        margin: 0 0 8px;
-        color: #234335;
-        font-family: inherit;
-        font-size: 23px;
-        font-weight: 700;
-        overflow-wrap: anywhere;
-    }
-
-    .received-job {
-        margin: 0;
-        color: #00865b;
-        font-size: 14px;
-        line-height: 1.7;
-        overflow-wrap: anywhere;
-    }
-
-    .received-status {
-        padding: 7px 12px;
-        color: #176343;
-        background: #eaf7ef;
-        border-radius: 20px;
-        font-size: 12px;
-        font-weight: 600;
-    }
-
-    .received-info {
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 20px;
-        margin: 24px 0;
-        padding: 20px 0;
-        border-top: 1px solid #edf2ef;
-        border-bottom: 1px solid #edf2ef;
-    }
-
-        .received-info dt {
-            margin-bottom: 7px;
-            color: #60796b;
+        .rx-list-heading span {
             font-size: 12px;
-            font-weight: 500;
+            color: var(--mute)
         }
 
-        .received-info dd {
-            margin: 0;
-            color: #355342;
-            font-size: 14px;
-            line-height: 1.7;
-            overflow-wrap: anywhere;
+    /* Card */
+    .rx-card {
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 20px;
+        box-shadow: 0 6px 24px #1f4d3a0d;
+        margin-bottom: 20px;
+        overflow: hidden;
+        position: relative;
+        transition: box-shadow .2s,transform .2s
+    }
+
+        .rx-card::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 5px;
+            background: #c9d6ce
         }
 
-    .received-letter h3 {
-        margin: 0 0 10px;
-        color: #355342;
+        .rx-card:hover {
+            box-shadow: 0 12px 32px #1f4d3a1a;
+            transform: translateY(-1px)
+        }
+
+    .rx-accent-rx-blue::before {
+        background: #4a9be0
+    }
+
+    .rx-accent-rx-green::before {
+        background: #24b47e
+    }
+
+    .rx-accent-rx-red::before {
+        background: #e07070
+    }
+
+    .rx-accent-rx-amber::before {
+        background: #f0b13c
+    }
+
+    .rx-card[hidden] {
+        display: none !important
+    }
+
+    .rx-card-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 18px;
+        padding: 22px 26px 20px 30px;
+        border-bottom: 1px solid #eef3f0
+    }
+
+    .rx-person {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        min-width: 0
+    }
+
+    .rx-avatar {
+        width: 52px;
+        height: 52px;
+        border-radius: 16px;
+        background: linear-gradient(135deg,#c9efdc,#9fdcc0);
+        display: grid;
+        place-items: center;
+        font-size: 21px;
+        font-weight: 800;
+        color: var(--g700);
+        flex-shrink: 0
+    }
+
+    .rx-person h2 {
         font-family: inherit;
-        font-size: 15px;
-        font-weight: 600;
-    }
-
-    .received-letter p {
-        margin: 0;
-        color: #60796b;
-        font-size: 14px;
-        line-height: 1.9;
-        white-space: pre-line;
+        font-size: 19px;
+        font-weight: 700;
+        margin: 0 0 5px;
         overflow-wrap: anywhere;
+        color: #173a29
     }
 
-    .received-actions {
+    .rx-person p {
+        color: var(--g700);
+        font-size: 13px;
+        font-weight: 600;
+        margin: 0;
+        overflow-wrap: anywhere
+    }
+
+    .rx-card-meta {
+        display: flex;
+        align-items: flex-end;
+        flex-direction: column;
+        gap: 9px;
+        flex-shrink: 0
+    }
+
+        .rx-card-meta time {
+            font-size: 12px;
+            color: var(--mute)
+        }
+
+            .rx-card-meta time strong {
+                color: #3b5a49
+            }
+
+    .rx-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 6px 12px;
+        border-radius: 30px;
+        font-size: 12px;
+        font-weight: 650
+    }
+
+        .rx-status i {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: currentColor
+        }
+
+    .rx-blue {
+        background: #e4f1ff;
+        color: #256796
+    }
+
+    .rx-green {
+        background: #e0f6ea;
+        color: #14704a
+    }
+
+    .rx-red {
+        background: #ffecec;
+        color: #a63f3f
+    }
+
+    .rx-amber {
+        background: #fff1d4;
+        color: #8f6212
+    }
+
+    .rx-neutral {
+        background: #edf2ef;
+        color: #5f7166
+    }
+
+    /* Content */
+    .rx-content {
+        display: grid;
+        grid-template-columns: minmax(0,1.15fr) minmax(0,1fr)
+    }
+
+    .rx-candidate {
+        padding: 24px 26px 24px 30px;
+        display: flex;
+        flex-direction: column
+    }
+
+    .rx-contact {
+        display: grid;
+        grid-template-columns: 1.2fr 1fr;
+        gap: 14px;
+        margin: 0 0 20px;
+        padding: 14px 16px;
+        background: var(--g50);
+        border: 1px solid #e4efe8;
+        border-radius: 12px
+    }
+
+        .rx-contact dt {
+            font-size: 11px;
+            color: #7d9186;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: .6px;
+            margin-bottom: 4px
+        }
+
+        .rx-contact dd {
+            font-size: 13.5px;
+            margin: 0;
+            overflow-wrap: anywhere;
+            font-weight: 550
+        }
+
+    .rx-letter h3, .rx-review-title h3 {
+        font-family: inherit;
+        font-size: 14px;
+        font-weight: 700;
+        margin: 0 0 10px;
+        color: #1b4130
+    }
+
+    .rx-letter p {
+        font-size: 13.5px;
+        line-height: 1.8;
+        color: #5d7467;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+        margin: 0;
+        padding-left: 14px;
+        border-left: 3px solid #cfe8da
+    }
+
+    .rx-actions {
         display: flex;
         flex-wrap: wrap;
-        justify-content: flex-end;
-        align-items: center;
-        gap: 12px;
-        margin-top: 24px;
+        gap: 10px;
+        margin-top: auto;
+        padding-top: 24px
     }
 
-    .received-profile,
-    .received-download {
+    .rx-button {
         display: inline-flex;
+        align-items: center;
         justify-content: center;
-        padding: 12px 18px;
+        padding: 11px 17px;
+        border: 1px solid transparent;
         border-radius: 10px;
-        font-size: 14px;
-        font-weight: 600;
+        font: 600 13px "Segoe UI",Arial,sans-serif;
         text-decoration: none;
+        cursor: pointer;
+        transition: .15s
     }
 
-    .received-profile {
-        color: #00865b;
-        background: #eef8f2;
-    }
-
-        .received-profile:hover {
-            color: #006b49;
-            background: #dff1e7;
-        }
-
-    .received-download {
+    .rx-primary {
+        background: var(--g600);
         color: #fff;
-        background: #009f6b;
+        box-shadow: 0 4px 12px #0a8a5f33
     }
 
-        .received-download:hover {
+        .rx-primary:hover {
+            background: var(--g700);
             color: #fff;
-            background: #008359;
+            transform: translateY(-1px)
         }
 
-    .received-no-file {
-        color: #60796b;
-        font-size: 13px;
-    }
-
-    .received-empty {
-        padding: 55px 24px;
+    .rx-secondary {
         background: #fff;
-        border: 1px dashed #cbded2;
-        border-radius: 20px;
-        text-align: center;
+        border-color: #d4e5da;
+        color: #34614b
     }
 
-        .received-empty h2 {
-            color: #234335;
+        .rx-secondary:hover {
+            background: var(--g50);
+            color: #15553a;
+            border-color: #b9dcc9
+        }
+
+    /* Review form */
+    .rx-review {
+        padding: 24px 26px;
+        background: linear-gradient(180deg,#fafdfb,#f4faf6);
+        border-left: 1px solid #eaf1ec
+    }
+
+    .rx-review-title {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 8px
+    }
+
+        .rx-review-title span {
+            font-size: 11px;
+            color: #8fa096;
+            background: #fff;
+            border: 1px solid var(--line);
+            border-radius: 6px;
+            padding: 2px 8px
+        }
+
+    .rx-review label {
+        display: block;
+        font-size: 12px;
+        font-weight: 650;
+        color: #4b6858;
+        margin: 14px 0 7px
+    }
+
+        .rx-review label span {
+            color: #d16a59
+        }
+
+    .rx-review select, .rx-review input:not([type=hidden]), .rx-review textarea {
+        width: 100%;
+        min-width: 0;
+        border: 1px solid #d5e4db;
+        border-radius: 10px;
+        background: #fff;
+        padding: 11px 12px;
+        font: 13.5px "Segoe UI",Arial,sans-serif;
+        color: var(--ink);
+        transition: border-color .15s
+    }
+
+    .rx-review textarea {
+        resize: vertical;
+        min-height: 82px
+    }
+
+        .rx-review input:focus, .rx-review select:focus, .rx-review textarea:focus {
+            outline: 2px solid #8fd6b4;
+            outline-offset: 1px;
+            border-color: #8fd6b4
+        }
+
+        .rx-review input:disabled, .rx-review textarea:disabled {
+            opacity: .6
+        }
+
+    .rx-interview {
+        margin-top: 18px;
+        padding: 16px;
+        background: #e9f6ef;
+        border: 1px solid #cfe7da;
+        border-radius: 14px;
+        animation: rxFade .25s ease
+    }
+
+        .rx-interview h4 {
             font-family: inherit;
-            font-size: 23px;
+            font-size: 14px;
+            font-weight: 700;
+            margin: 0 0 6px;
+            color: #17533a
         }
 
-        .received-empty p {
-            max-width: 480px;
-            margin: 14px auto 0;
-            color: #60796b;
-            line-height: 1.8;
-        }
-
-    .received-page a:focus-visible {
-        outline: 3px solid #82cfac;
-        outline-offset: 3px;
+    .rx-help {
+        font-size: 11.5px;
+        line-height: 1.6;
+        color: #6b8577;
+        margin: 0
     }
 
-    @@media (max-width: 767.98px) {
-        .received-info {
-            grid-template-columns: 1fr;
-            gap: 16px;
+    .rx-date-preview {
+        font-size: 12px;
+        color: var(--g700);
+        font-weight: 600;
+        margin: 7px 0 0
+    }
+
+    .rx-save {
+        margin-top: 18px;
+        width: 100%;
+        padding: 13px
+    }
+
+    .js-interview-fields[hidden] {
+        display: none !important
+    }
+
+    /* Empty */
+    .rx-empty {
+        text-align: center;
+        background: #fff;
+        border: 1.5px dashed #c8dfd2;
+        border-radius: 20px;
+        padding: 56px 20px
+    }
+
+        .rx-empty[hidden] {
+            display: none !important
+        }
+
+    .rx-empty-icon {
+        font-size: 38px;
+        margin-bottom: 6px
+    }
+
+    .rx-empty h2 {
+        font-size: 21px;
+        font-weight: 700;
+        margin: 6px 0
+    }
+
+    .rx-empty p {
+        color: var(--mute);
+        font-size: 14px;
+        margin: 0
+    }
+
+    .rx-page a:focus-visible, .rx-page button:focus-visible {
+        outline: 3px solid #8fd6b4;
+        outline-offset: 3px
+    }
+
+    @@keyframes rxFade {
+        from {
+            opacity: 0;
+            transform: translateY(-4px)
+        }
+
+        to {
+            opacity: 1;
+            transform: none
         }
     }
 
-    @@media (max-width: 575.98px) {
-        .received-page {
-            padding: 28px 0 44px;
+    @@media (prefers-reduced-motion:reduce) {
+        .rx-card, .rx-interview, .rx-button, .rx-chip {
+            transition: none;
+            animation: none
         }
+    }
 
-        .received-card {
-            padding: 22px;
-        }
-
-        .received-actions {
+    @@media(max-width:991.98px) {
+        .rx-hero {
             flex-direction: column;
-            align-items: stretch;
+            align-items: flex-start;
+            padding: 26px
+        }
+
+        .rx-stats {
+            width: 100%;
+            grid-template-columns: repeat(4,1fr)
+        }
+
+        .rx-content {
+            grid-template-columns: 1fr
+        }
+
+        .rx-review {
+            border-left: 0;
+            border-top: 1px solid #eaf1ec
         }
     }
+
+    @@media(max-width:575.98px) {
+        .rx-hero {
+            padding: 22px 18px;
+            border-radius: 18px
+        }
+
+        .rx-stats {
+            grid-template-columns: repeat(2,1fr)
+        }
+
+        .rx-card-top {
+            align-items: flex-start;
+            flex-direction: column;
+            padding: 18px 18px 16px 22px
+        }
+
+        .rx-card-meta {
+            width: 100%;
+            align-items: center;
+            flex-direction: row;
+            flex-wrap: wrap;
+            justify-content: space-between
+        }
+
+        .rx-candidate, .rx-review {
+            padding: 18px 18px 18px 22px
+        }
+
+        .rx-contact {
+            grid-template-columns: 1fr
+        }
+
+        .rx-list-heading {
+            flex-wrap: wrap
+        }
+
+        .rx-actions .rx-button {
+            flex: 1
+        }
+    }
+</style>
+
+<script>
+    (() => {
+        function setupInterviewForms() {
+            document.querySelectorAll(".js-status-select").forEach(select => {
+                const form = select.closest("form");
+                const fields = form?.querySelector(".js-interview-fields");
+
+                if (!fields) return;
+
+                function updateFields() {
+                    const selectedOption = select.options[select.selectedIndex];
+                    const isInterview = selectedOption?.dataset.code === "INTERVIEW";
+
+                    fields.hidden = !isInterview;
+                    select.setAttribute("aria-expanded", String(isInterview));
+
+                    fields.querySelectorAll("input, textarea").forEach(input => {
+                        input.disabled = !isInterview;
+                        input.required = isInterview &&
+                            (input.name === "interviewAt" ||
+                             input.name === "interviewLocation");
+                    });
+                }
+
+                select.addEventListener("change", updateFields);
+                updateFields();
+            });
+        }
+
+        if (document.readyState === "loading") {
+            document.addEventListener("DOMContentLoaded", setupInterviewForms);
+        } else {
+            setupInterviewForms();
+        }
+    })();
+</script>
+<script>
+    document.querySelectorAll(".js-interview-date").forEach(input => {
+        const preview = input.parentElement.querySelector(".rx-date-preview");
+        function showDate() {
+            if (!input.value) { preview.textContent = "Chọn ngày và giờ để đặt lịch."; return; }
+            // Dùng các thành phần nhập trực tiếp, không đổi múi giờ.
+            const parts = input.value.split("T");
+            const date = parts[0].split("-");
+            const time = parts[1]?.slice(0, 5) || "";
+            preview.textContent = "Lịch hẹn: " + time + " · " + date[2] + "/" + date[1] + "/" + date[0];
+        }
+        input.addEventListener("input", showDate);
+        showDate();
+    });
+</script>
+<script>
+    (() => {
+        const cards = Array.from(document.querySelectorAll(".rx-card"));
+        const search = document.getElementById("rx-search");
+        const chips = Array.from(document.querySelectorAll(".rx-chip"));
+        const counter = document.getElementById("rx-visible-count");
+        const noResult = document.getElementById("rx-no-result");
+        if (!search || cards.length === 0) return;
+
+        let filter = "ALL";
+
+        function normalize(s) {
+            return (s || "").toLowerCase().normalize("NFC").trim();
+        }
+
+        function apply() {
+            const q = normalize(search.value);
+            let visible = 0;
+            cards.forEach(card => {
+                const okStatus = filter === "ALL" || card.dataset.status === filter;
+                const okText = !q || (card.dataset.search || "").includes(q);
+                const show = okStatus && okText;
+                card.hidden = !show;
+                if (show) visible++;
+            });
+            if (counter) {
+                counter.textContent = (q || filter !== "ALL")
+                    ? "Hiển thị " + visible + "/" + cards.length + " hồ sơ"
+                    : "↓ Mới gửi nhất ở trên";
+            }
+            if (noResult) noResult.hidden = visible !== 0;
+        }
+
+        chips.forEach(chip => chip.addEventListener("click", () => {
+            filter = chip.dataset.filter;
+            chips.forEach(c => c.classList.toggle("is-active", c === chip));
+            apply();
+        }));
+        search.addEventListener("input", apply);
+    })();
+</script>
+
+<style>
+
+    .rx-response {
+        margin-top: 22px;
+        border: 1px solid #dce9e0;
+        background: #f6faf7;
+        padding: 16px;
+        border-radius: 12px
+    }
+
+        .rx-response h3 {
+            font: 650 14px "Segoe UI",Arial,sans-serif;
+            margin: 0 0 12px
+        }
+
+        .rx-response strong, .rx-response-pending {
+            font-size: 13px
+        }
+
+    .rx-response-accepted {
+        color: #16804b
+    }
+
+    .rx-response-declined {
+        color: #b04740
+    }
+
+    .rx-response-pending {
+        color: #907128
+    }
+
+    .rx-response small {
+        display: block;
+        color: #829084;
+        font-size: 11px;
+        margin-top: 12px
+    }
+
+    .rx-reason {
+        margin-top: 12px;
+        padding: 12px;
+        border-radius: 8px;
+        background: #fff0ed
+    }
+
+        .rx-reason span {
+            font-size: 11px;
+            color: #975d55
+        }
+
+        .rx-reason p {
+            font-size: 13px;
+            line-height: 1.7;
+            color: #7d443e;
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+            margin: 5px 0 0
+        }
+
 </style>

@@ -1,5 +1,8 @@
 ﻿@using System
 @using System.Linq
+@using System.Security.Claims
+@using Microsoft.EntityFrameworkCore
+@inject AlumniJobConnect.Models.AlumniJobConnectContext NotificationDb
 @model IEnumerable<AlumniJobConnect.Models.Menu>
 
 @{
@@ -17,6 +20,28 @@
         : User.Identity!.Name;
 
     bool profileRendered = false;
+    var unreadCount = 0;
+    var recentNotifications =
+        new System.Collections.Generic.List<AlumniJobConnect.Models.Notification>();
+
+    if (isLoggedIn &&
+        int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var notificationUserId) &&
+        await NotificationDb.Users.AsNoTracking()
+            .AnyAsync(x => x.UserId == notificationUserId && x.IsActive))
+    {
+        var ownNotifications = NotificationDb
+            .Set<AlumniJobConnect.Models.Notification>()
+            .AsNoTracking()
+            .Where(x => x.UserId == notificationUserId);
+
+        unreadCount = await ownNotifications.CountAsync(x => !x.IsRead);
+
+        recentNotifications = await ownNotifications
+            .OrderByDescending(x => x.CreatedAt)
+            .ThenByDescending(x => x.NotificationId)
+            .Take(10)
+            .ToListAsync();
+    }
 }
 
 @foreach (var item in menus)
@@ -62,7 +87,7 @@
                     </span>
                     @if (User.Identity?.IsAuthenticated == true)
                     {
-                    
+
                         if (User.IsInRole("Employer"))
                         {
                             <a href="@Url.Action("MyProfile", "CompanyProfile")"
@@ -80,7 +105,7 @@
                             </a>
                         }
 
-                     
+
                         <a href="@Url.Action("Candidates", "Profile")"
                            class="ac-profile-link">
                             <span>Hồ sơ sinh viên</span>
@@ -103,6 +128,63 @@
             @item.MenuName
         </a>
     }
+}
+
+@if (isLoggedIn)
+{
+    <details class="ac-profile ac-notifications">
+        <summary class="ac-link ac-profile-toggle ac-bell"
+                 aria-label="Thông báo: @unreadCount chưa đọc">
+            <span aria-hidden="true">🔔</span>
+            @if (unreadCount > 0)
+            {
+                <span class="ac-bell-count">
+                    @(unreadCount > 99 ? "99+" : unreadCount.ToString())
+                </span>
+            }
+        </summary>
+
+        <div class="ac-profile-panel ac-notification-panel">
+            <div class="ac-notification-heading">
+                <strong>Thông báo</strong>
+                <small>@unreadCount chưa đọc</small>
+            </div>
+
+            @if (recentNotifications.Count == 0)
+            {
+                <p class="ac-notification-empty">Bạn chưa có thông báo.</p>
+            }
+            else
+            {
+                <p class="ac-notification-hint">Hiển thị 10 thông báo gần nhất.</p>
+                <div class="ac-notification-list">
+                    @foreach (var notification in recentNotifications)
+                    {
+                        <form action="@Url.Action("Open", "Notifications")"
+                              method="post" class="ac-notification-form">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id"
+                                   value="@notification.NotificationId" />
+                            <button type="submit"
+                                    class="ac-notification-item @(notification.IsRead ? "" : "is-unread")">
+                                <span class="ac-notification-title">
+                                    @notification.Title
+                                    @if (!notification.IsRead)
+                                    {
+                                        <span class="ac-unread-label">Chưa đọc</span>
+                                    }
+                                </span>
+                                <span class="ac-notification-message">@notification.Message</span>
+                                <time datetime="@notification.CreatedAt.ToString("yyyy-MM-ddTHH:mm:ss")">
+                                    @notification.CreatedAt.ToString("dd/MM/yyyy HH:mm")
+                                </time>
+                            </button>
+                        </form>
+                    }
+                </div>
+            }
+        </div>
+    </details>
 }
 
 <!-- Tài khoản: thay đổi theo trạng thái đăng nhập -->
@@ -230,6 +312,115 @@
 </details>
 
 <style>
+    .ac-bell {
+        position: relative;
+        min-width: 44px;
+        min-height: 44px;
+    }
+
+        .ac-bell > span:first-child {
+            font-size: 22px;
+        }
+
+    .ac-bell-count {
+        position: absolute;
+        top: 0;
+        right: 0;
+        padding: 2px 5px;
+        min-width: 18px;
+        border-radius: 20px;
+        color: white;
+        background: #d83d4a;
+        font-size: 10px;
+        font-weight: 700;
+    }
+
+    .ac-notifications .ac-notification-panel {
+        width: min(360px, calc(100vw - 32px));
+        padding: 12px;
+    }
+
+    .ac-notification-heading {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        padding: 8px;
+        color: #193d30;
+    }
+
+        .ac-notification-heading small {
+            color: #008859;
+            font-size: 12px;
+        }
+
+    .ac-notification-list {
+        max-height: 400px;
+        overflow-y: auto;
+    }
+
+    .ac-notification-form {
+        margin: 0 0 6px;
+    }
+
+    .ac-notification-item {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        width: 100%;
+        border: 0;
+        border-radius: 9px;
+        padding: 12px;
+        background: #f8faf9;
+        color: #344d40;
+        text-align: left;
+        font-family: inherit;
+        white-space: normal;
+        cursor: pointer;
+        overflow-wrap: anywhere;
+    }
+
+        .ac-notification-item.is-unread {
+            background: #eaf8f0;
+        }
+
+        .ac-notification-item:hover {
+            background: #dff3e8;
+        }
+
+        .ac-notification-item:focus-visible {
+            outline: 2px solid #008859;
+            outline-offset: -2px;
+        }
+
+    .ac-notification-title {
+        font-size: 14px;
+        font-weight: 700;
+    }
+
+    .ac-notification-message {
+        font-size: 13px;
+        line-height: 1.6;
+    }
+
+    .ac-notification-item time {
+        color: #728378;
+        font-size: 11px;
+    }
+
+    .ac-unread-label {
+        color: #008859;
+        font-size: 10px;
+        margin-left: 4px;
+    }
+
+    .ac-notification-empty, .ac-notification-hint {
+        padding: 8px;
+        margin: 0;
+        font-size: 12px;
+        color: #728378;
+    }
+
     .ac-header,
     .ac-header * {
         box-sizing: border-box;

@@ -281,10 +281,23 @@ public class ApplicationsController : Controller
                     AppliedAt = DateTime.Now
                 };
 
-            _context
-                .Set<AlumniJobConnect.Models.Application>()
+            // Đưa đơn mới vào danh sách cần lưu của EF Core.
+            _context.Set<AlumniJobConnect.Models.Application>()
                 .Add(application);
 
+            // Thông báo cho đúng tài khoản sở hữu doanh nghiệp.
+            _context.Set<Notification>().Add(new Notification
+            {
+                UserId = company.UserId,
+                Title = "Có hồ sơ ứng tuyển mới",
+                Message = $"Bạn vừa nhận được hồ sơ ứng tuyển vào vị trí: {job.Title}.",
+                NotificationType = "APPLICATION",
+                RelatedUrl = Url.Action("Received", "Applications"),
+                IsRead = false,
+                CreatedAt = DateTime.Now
+            });
+
+            // Lưu đơn và thông báo cùng một lần.
             await _context.SaveChangesAsync();
         }
         catch (Exception ex)
@@ -344,6 +357,7 @@ public class ApplicationsController : Controller
             .Where(x =>
                 x.JobPost.Company.UserId == userId.Value)
             .OrderByDescending(x => x.AppliedAt)
+            .ThenByDescending(x => x.ApplicationId)
             .ToListAsync();
 
         ViewBag.StatusOptions = await EmployerStatuses()
@@ -476,16 +490,21 @@ public class ApplicationsController : Controller
     [HttpPost]
     [Authorize(Roles = "Employer")]
     [ValidateAntiForgeryToken]
+
     public async Task<IActionResult> UpdateStatus(
-        int applicationId,
-        int statusId)
+    int applicationId,
+    int statusId,
+    DateTime? interviewAt,
+    string? interviewLocation,
+    string? interviewNote)
     {
-        if (!await CurrentUserIsActiveAsync() ||
-            GetCurrentUserId() is not int userId)
+        if (GetCurrentUserId() is not int userId ||
+            !await CurrentUserIsActiveAsync())
         {
             return Forbid();
         }
 
+        // Chỉ được cập nhật đơn gửi đến công ty của mình.
         var application = await _context
             .Set<AlumniJobConnect.Models.Application>()
             .SingleOrDefaultAsync(x =>
@@ -494,13 +513,15 @@ public class ApplicationsController : Controller
 
         if (application == null)
         {
-            return NotFound();
+            return NotFound("Không tìm thấy đơn ứng tuyển.");
         }
 
-        var validStatus = await EmployerStatuses()
-            .AnyAsync(x => x.ApplicationStatusId == statusId);
+        var status = await EmployerStatuses()
+            .AsNoTracking()
+            .SingleOrDefaultAsync(x =>
+                x.ApplicationStatusId == statusId);
 
-        if (!validStatus)
+        if (status == null)
         {
             TempData["ApplicationStatusError"] =
                 "Vui lòng chọn trạng thái xét tuyển hợp lệ.";
@@ -508,32 +529,229 @@ public class ApplicationsController : Controller
             return RedirectToAction(nameof(Received));
         }
 
-        if (application.ApplicationStatusId != statusId)
+        if (status.StatusCode == "INTERVIEW")
         {
-            application.ApplicationStatusId = statusId;
-            application.UpdatedAt = DateTime.Now;
+            interviewLocation = interviewLocation?.Trim();
+            interviewNote = interviewNote?.Trim();
 
-            try
+            if (!ModelState.IsValid ||
+                !interviewAt.HasValue ||
+                string.IsNullOrWhiteSpace(interviewLocation))
             {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateException ex)
-            {
-                _logger.LogError(
-                    ex,
-                    "Không thể cập nhật trạng thái đơn {ApplicationId}.",
-                    applicationId);
-
                 TempData["ApplicationStatusError"] =
-                    "Chưa lưu được trạng thái. Vui lòng thử lại.";
+                    "Vui lòng nhập ngày giờ và địa điểm hoặc link phỏng vấn.";
 
                 return RedirectToAction(nameof(Received));
             }
+
+            if (interviewLocation.Length > 500 ||
+                (interviewNote?.Length ?? 0) > 1000)
+            {
+                TempData["ApplicationStatusError"] =
+                    "Địa điểm hoặc link tối đa 500 ký tự, ghi chú tối đa 1.000 ký tự.";
+
+                return RedirectToAction(nameof(Received));
+            }
+
+            // Đổi lịch hoặc gửi lời mời mới thì cần ứng viên xác nhận lại.
+            var needsNewResponse =
+                application.ApplicationStatusId != statusId ||
+                application.InterviewAt != interviewAt.Value ||
+                application.InterviewLocation != interviewLocation ||
+                application.InterviewNote !=
+                    (string.IsNullOrWhiteSpace(interviewNote) ? null : interviewNote);
+
+            if (needsNewResponse)
+            {
+                application.InterviewResponse = null;
+                application.InterviewDeclineReason = null;
+                application.InterviewRespondedAt = null;
+            }
+
+            application.InterviewAt = interviewAt.Value;
+            application.InterviewLocation = interviewLocation;
+
+            application.InterviewNote =
+                string.IsNullOrWhiteSpace(interviewNote)
+                    ? null
+                    : interviewNote;
         }
 
-        TempData["ApplicationStatusSuccess"] =
-            "Đã lưu trạng thái xét tuyển.";
+        application.ApplicationStatusId = statusId;
+        application.UpdatedAt = DateTime.Now;
+
+        try
+        {
+            // Tìm tài khoản sinh viên nhận thông báo.
+            var recipientUserId = await _context.AlumniProfiles
+                .Where(x => x.AlumniId == application.AlumniId)
+                .Select(x => (int?)x.UserId)
+                .SingleOrDefaultAsync();
+
+            if (!recipientUserId.HasValue)
+            {
+                TempData["ApplicationStatusError"] = "Không tìm thấy tài khoản sinh viên.";
+
+                return RedirectToAction(nameof(Received));
+            }
+
+            var isInterview = status.StatusCode == "INTERVIEW";
+
+            var message = isInterview
+                ? "Doanh nghiệp đã cập nhật lời mời phỏng vấn của bạn."
+                : $"Đơn ứng tuyển của bạn được cập nhật thành: {status.StatusName}.";
+
+            if (isInterview && application.InterviewAt.HasValue)
+            {
+                message += " Lịch phỏng vấn: "
+                    + application.InterviewAt.Value.ToString("dd/MM/yyyy HH:mm")
+                    + ".";
+            }
+
+            _context.Notifications.Add(new Notification
+            {
+                UserId = recipientUserId.Value,
+                Title = isInterview
+                    ? "Thông báo phỏng vấn"
+                    : "Cập nhật đơn ứng tuyển",
+                Message = message,
+                NotificationType = "APPLICATION",
+                RelatedUrl = Url.Action(
+                    "MyApplications",
+                    "Applications"),
+                IsRead = false,
+                CreatedAt = DateTime.Now
+            });
+
+            // Lưu trạng thái đơn và thông báo cùng một lần.
+            await _context.SaveChangesAsync();
+
+            TempData["ApplicationStatusSuccess"] =
+                status.StatusCode == "INTERVIEW"
+                    ? "Đã lưu lịch phỏng vấn."
+                    : "Đã lưu trạng thái xét tuyển.";
+        }
+        catch (DbUpdateException ex)
+        {
+            _logger.LogError(
+                ex,
+                "Không thể cập nhật đơn {ApplicationId}.",
+                applicationId);
+
+            TempData["ApplicationStatusError"] =
+                "Chưa lưu được thay đổi. Vui lòng thử lại.";
+        }
 
         return RedirectToAction(nameof(Received));
+    }
+
+    // ================= SINH VIÊN PHẢN HỒI PHỎNG VẤN =================
+
+    [HttpPost]
+    [Authorize(Roles = "Alumni")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> RespondInterview(
+        int applicationId,
+        string? response,
+        string? declineReason)
+    {
+        if (GetCurrentUserId() is not int userId ||
+            !await CurrentUserIsActiveAsync())
+        {
+            return Forbid();
+        }
+
+        var application = await _context
+            .Set<AlumniJobConnect.Models.Application>()
+            .Include(x => x.ApplicationStatus)
+            .Include(x => x.JobPost)
+                .ThenInclude(x => x.Company)
+            .SingleOrDefaultAsync(x =>
+                x.ApplicationId == applicationId &&
+                x.Alumni.UserId == userId);
+
+        if (application == null)
+            return NotFound("Không tìm thấy đơn ứng tuyển.");
+
+        if (application.ApplicationStatus.StatusCode != "INTERVIEW" ||
+            !application.InterviewAt.HasValue)
+        {
+            TempData["InterviewResponseError"] =
+                "Đơn này chưa có lịch phỏng vấn để phản hồi.";
+            return RedirectToAction(nameof(MyApplications));
+        }
+
+        if (!string.IsNullOrWhiteSpace(application.InterviewResponse))
+        {
+            TempData["InterviewResponseError"] =
+                "Bạn đã phản hồi lịch phỏng vấn này.";
+            return RedirectToAction(nameof(MyApplications));
+        }
+
+        response = response?.Trim().ToUpperInvariant();
+        declineReason = declineReason?.Trim();
+
+        if (response != "ACCEPTED" && response != "DECLINED")
+        {
+            TempData["InterviewResponseError"] =
+                "Vui lòng chọn đồng ý hoặc từ chối.";
+            return RedirectToAction(nameof(MyApplications));
+        }
+
+        if (response == "DECLINED" &&
+            string.IsNullOrWhiteSpace(declineReason))
+        {
+            TempData["InterviewResponseError"] =
+                "Vui lòng nhập lý do từ chối phỏng vấn.";
+            return RedirectToAction(nameof(MyApplications));
+        }
+
+        if (response == "DECLINED" && declineReason!.Length > 1000)
+        {
+            TempData["InterviewResponseError"] =
+                "Lý do từ chối không được quá 1.000 ký tự.";
+            return RedirectToAction(nameof(MyApplications));
+        }
+
+        var accepted = response == "ACCEPTED";
+        var now = DateTime.Now;
+        application.InterviewResponse = response;
+        application.InterviewDeclineReason = accepted ? null : declineReason;
+        application.InterviewRespondedAt = now;
+        application.UpdatedAt = now;
+
+        // Không thay đổi trạng thái xét tuyển khi ứng viên phản hồi.
+        _context.Set<Notification>().Add(new Notification
+        {
+            UserId = application.JobPost.Company.UserId,
+            Title = accepted
+                ? "Ứng viên xác nhận phỏng vấn"
+                : "Ứng viên từ chối phỏng vấn",
+            Message = accepted
+                ? $"Ứng viên đã đồng ý phỏng vấn vị trí: {application.JobPost.Title}."
+                : $"Ứng viên đã từ chối phỏng vấn vị trí: {application.JobPost.Title}. Xem lý do trong hồ sơ ứng tuyển.",
+            NotificationType = "INTERVIEW_RESPONSE",
+            RelatedUrl = Url.Action("Received", "Applications"),
+            IsRead = false,
+            CreatedAt = now
+        });
+
+        try
+        {
+            await _context.SaveChangesAsync();
+            TempData["InterviewResponseSuccess"] = accepted
+                ? "Bạn đã xác nhận tham gia phỏng vấn."
+                : "Đã gửi lý do từ chối đến doanh nghiệp.";
+        }
+        catch (DbUpdateException ex)
+        {
+            _logger.LogError(ex,
+                "Không thể lưu phản hồi phỏng vấn cho đơn {ApplicationId}.",
+                applicationId);
+            TempData["InterviewResponseError"] =
+                "Chưa lưu được phản hồi. Vui lòng thử lại.";
+        }
+
+        return RedirectToAction(nameof(MyApplications));
     }
 }

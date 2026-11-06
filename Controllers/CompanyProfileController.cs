@@ -128,6 +128,17 @@ public class CompanyProfileController : Controller
             User.IsInRole("Employer") &&
             GetCurrentUserId() == company.UserId;
 
+        var today = DateOnly.FromDateTime(
+        DateTime.UtcNow.AddHours(7));
+
+        ViewBag.OpenJobCount = await _context.JobPosts
+            .AsNoTracking()
+            .CountAsync(x =>
+                x.CompanyId == company.CompanyId &&
+                x.IsPublished &&
+                x.ApprovalStatus == "Approved" &&
+                (!x.Deadline.HasValue ||
+                 x.Deadline.Value >= today));
         return View(company);
     }
 

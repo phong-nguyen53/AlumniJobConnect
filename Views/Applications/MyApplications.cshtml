@@ -1,49 +1,50 @@
-﻿@using System.Linq
+﻿@using System
+@using System.Linq
 @model IEnumerable<AlumniJobConnect.Models.Application>
 
 @{
     ViewData["Title"] = "Đơn ứng tuyển của tôi";
+    var applications = Model.OrderByDescending(x => x.AppliedAt)
+        .ThenByDescending(x => x.ApplicationId).ToList();
 
-    // Chọn màu badge theo trạng thái
-    string GetStatusClass(string? statusName)
+    string GetStatusClass(string? statusCode)
     {
-        var s = (statusName ?? string.Empty).Trim().ToLowerInvariant();
-
-        if (s.Contains("chấp nhận") || s.Contains("trúng tuyển") || s.Contains("đạt") || s.Contains("accepted") || s.Contains("hired"))
-            return "status-success";
-        if (s.Contains("từ chối") || s.Contains("không đạt") || s.Contains("rejected"))
-            return "status-danger";
-        if (s.Contains("phỏng vấn") || s.Contains("interview"))
-            return "status-info";
-        if (s.Contains("xem xét") || s.Contains("đang xử lý") || s.Contains("review"))
-            return "status-warning";
-
-        return "status-secondary";
+        return (statusCode ?? "").Trim().ToUpperInvariant() switch
+        {
+            "ACCEPTED" => "status-success",
+            "REJECTED" => "status-danger",
+            "INTERVIEW" => "status-info",
+            "REVIEWING" => "status-warning",
+            _ => "status-secondary"
+        };
     }
 }
 
 <style>
     .app-hero {
-        background: linear-gradient(135deg, #198754 0%, #20c997 100%);
+        background: linear-gradient(135deg, #198754, #20c997);
         color: #fff;
         border-radius: 1rem;
-        padding: 2rem 2rem;
+        padding: 2rem;
     }
 
-        .app-hero .count-pill {
-            background: rgba(255, 255, 255, .2);
-            border-radius: 50rem;
-            padding: .35rem .9rem;
-            font-weight: 600;
-            backdrop-filter: blur(4px);
+        .app-hero h1 {
+            color: #fff;
         }
+
+    .count-pill {
+        background: rgba(255, 255, 255, .2);
+        border-radius: 50rem;
+        padding: .35rem .9rem;
+        font-weight: 600;
+    }
 
     .app-card {
         border: 0;
         border-radius: 1rem;
-        transition: transform .2s ease, box-shadow .2s ease;
         overflow: hidden;
         position: relative;
+        transition: transform .2s ease, box-shadow .2s ease;
     }
 
         .app-card::before {
@@ -78,7 +79,8 @@
     .job-title {
         font-size: 1.1rem;
         font-weight: 600;
-        line-height: 1.3;
+        line-height: 1.4;
+        overflow-wrap: anywhere;
     }
 
     .meta-row {
@@ -129,6 +131,35 @@
         color: #495057;
     }
 
+    .interview-box {
+        background: #eef8f2;
+        border: 1px solid #cce5d6;
+        border-radius: .85rem;
+        padding: 1.25rem;
+        margin-bottom: 1.5rem;
+        overflow-wrap: anywhere;
+    }
+
+    .interview-title {
+        color: #146c43;
+        font-size: 1.05rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+    }
+
+    .interview-label {
+        display: block;
+        color: #52665c;
+        font-size: .85rem;
+        margin-bottom: .3rem;
+    }
+
+    .interview-value {
+        color: #203d30;
+        font-weight: 500;
+        white-space: pre-wrap;
+    }
+
     .empty-state {
         text-align: center;
         padding: 3.5rem 1rem;
@@ -137,87 +168,253 @@
         border-radius: 1rem;
     }
 
-        .empty-state .empty-icon {
-            font-size: 3.5rem;
-            line-height: 1;
-            margin-bottom: 1rem;
-        }
+    .empty-icon {
+        font-size: 3.5rem;
+        line-height: 1;
+        margin-bottom: 1rem;
+    }
 </style>
 
 <section class="container py-5">
 
-    <!-- Header -->
     <div class="app-hero shadow-sm mb-4">
         <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
             <div>
-                <h1 class="h2 fw-bold mb-1">📄 Đơn ứng tuyển của tôi</h1>
-                <p class="mb-0 opacity-75">
-                    Theo dõi trạng thái các hồ sơ bạn đã gửi.
+                <h1 class="h2 fw-bold mb-2">
+                    📄 Đơn ứng tuyển của tôi
+                </h1>
+
+                <p class="mb-0">
+                    Theo dõi trạng thái hồ sơ và lịch phỏng vấn của bạn.
                 </p>
             </div>
+
             <span class="count-pill">
-                @Model.Count() đơn
+                @applications.Count đơn
             </span>
         </div>
     </div>
 
-    @if (!Model.Any())
+    @if (TempData["InterviewResponseSuccess"] is string responseSuccess)
+    {
+        <div class="alert alert-success" role="status">@responseSuccess</div>
+    }
+    @if (TempData["InterviewResponseError"] is string responseError)
+    {
+        <div class="alert alert-danger" role="alert">@responseError</div>
+    }
+
+    @if (applications.Count == 0)
     {
         <div class="empty-state" role="status">
             <div class="empty-icon">📭</div>
-            <h2 class="h5 mb-2">Bạn chưa gửi đơn ứng tuyển nào</h2>
+
+            <h2 class="h5 mb-2">
+                Bạn chưa gửi đơn ứng tuyển nào
+            </h2>
+
             <p class="text-muted mb-4">
                 Hãy khám phá các doanh nghiệp và gửi hồ sơ đầu tiên của bạn.
             </p>
+
             <a href="@Url.Action("Index", "CompanyProfile")"
                class="btn btn-success btn-lg px-4">
-                🔍 Khám phá doanh nghiệp
+                Khám phá doanh nghiệp
             </a>
         </div>
     }
     else
     {
         <div class="row g-4">
-            @foreach (var item in Model)
+            @foreach (var item in applications)
             {
-                var companyName = item.JobPost.Company.CompanyName ?? "";
+                var companyName =
+                item.JobPost?.Company?.CompanyName ?? "Doanh nghiệp";
+
                 var initial = string.IsNullOrWhiteSpace(companyName)
                 ? "?"
-                : companyName.Trim().Substring(0, 1).ToUpper();
+                : companyName.Trim().Substring(0, 1).ToUpperInvariant();
+
+                var statusCode =
+                (item.ApplicationStatus?.StatusCode ?? "")
+                .Trim()
+                .ToUpperInvariant();
+
+                var statusName =
+                item.ApplicationStatus?.StatusName ?? "Chưa cập nhật";
+
+                var isInterview = statusCode == "INTERVIEW";
+
+                // Chỉ tạo liên kết bấm được với địa chỉ HTTP hoặc HTTPS.
+                Uri? meetingUri = null;
+
+                var isMeetingLink =
+                Uri.TryCreate(
+                item.InterviewLocation?.Trim(),
+                UriKind.Absolute,
+                out meetingUri)
+                && meetingUri != null
+                && (meetingUri.Scheme == Uri.UriSchemeHttp
+                || meetingUri.Scheme == Uri.UriSchemeHttps);
 
                 <div class="col-12 col-md-6">
                     <article class="card app-card h-100 shadow-sm">
-                        <div class="card-body p-4 ps-4">
+                        <div class="card-body p-4 d-flex flex-column">
 
-                            <!-- Tiêu đề + công ty -->
                             <div class="d-flex align-items-start gap-3 mb-3">
-                                <div class="company-avatar" aria-hidden="true">@initial</div>
+                                <div class="company-avatar" aria-hidden="true">
+                                    @initial
+                                </div>
+
                                 <div class="flex-grow-1">
-                                    <h2 class="job-title mb-1">@item.JobPost.Title</h2>
-                                    <div class="meta-row">🏢 @companyName</div>
+                                    <h2 class="job-title mb-1">
+                                        @(item.JobPost?.Title ?? "Vị trí ứng tuyển")
+                                    </h2>
+
+                                    <div class="meta-row">
+                                        🏢 @companyName
+                                    </div>
                                 </div>
                             </div>
 
                             <hr class="my-3 opacity-25" />
 
-                            <!-- Thông tin -->
                             <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
                                 <div class="meta-row">
-                                    🗓️ <span class="fw-semibold text-dark">Ngày gửi:</span>
+                                    <span class="fw-semibold text-dark">
+                                        Ngày gửi:
+                                    </span>
                                     @item.AppliedAt.ToString("dd/MM/yyyy HH:mm")
                                 </div>
 
-                                <span class="status-badge @GetStatusClass(item.ApplicationStatus?.StatusName)">
-                                    @item.ApplicationStatus?.StatusName
+                                <span class="status-badge @GetStatusClass(statusCode)">
+                                    @statusName
                                 </span>
                             </div>
 
-                            <!-- Hành động -->
-                            <div class="d-flex flex-wrap gap-2">
-                                <a href="@Url.Action("Details", "CompanyProfile", new { id = item.JobPost.CompanyId })"
-                                   class="btn btn-success btn-sm px-3">
-                                    Xem doanh nghiệp
-                                </a>
+                            @if (isInterview)
+                            {
+                                <div class="interview-box">
+                                    <h3 class="interview-title">
+                                        📅 Thông tin phỏng vấn
+                                    </h3>
+
+                                    <div class="mb-3">
+                                        <span class="interview-label">
+                                            Ngày giờ phỏng vấn — giờ Việt Nam
+                                        </span>
+
+                                        @if (item.InterviewAt.HasValue)
+                                        {
+                                            <div class="interview-value">@item.InterviewAt.Value.ToString("dd/MM/yyyy HH:mm")</div>
+                                        }
+                                        else
+                                        {
+                                            <div class="text-muted">
+                                                Doanh nghiệp chưa cập nhật ngày giờ.
+                                            </div>
+                                        }
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <span class="interview-label">
+                                            Địa điểm hoặc link họp
+                                        </span>
+
+                                        @if (string.IsNullOrWhiteSpace(item.InterviewLocation))
+                                        {
+                                            <div class="text-muted">
+                                                Doanh nghiệp chưa cập nhật địa điểm.
+                                            </div>
+                                        }
+                                        else if (isMeetingLink)
+                                        {
+                                            <a href="@(meetingUri!.AbsoluteUri)"
+                                               target="_blank"
+                                               rel="noopener noreferrer">
+                                                @item.InterviewLocation
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            <div class="interview-value">@item.InterviewLocation</div>
+                                        }
+                                    </div>
+
+                                    @if (!string.IsNullOrWhiteSpace(item.InterviewNote))
+                                    {
+                                        <div>
+                                            <span class="interview-label">
+                                                Ghi chú từ doanh nghiệp
+                                            </span>
+
+                                            <div class="interview-value">@item.InterviewNote</div>
+                                        </div>
+                                    }
+                                    @if (item.InterviewResponse == "ACCEPTED")
+                                    {
+                                        <div class="ma-feedback ma-accepted">
+                                            <strong>✓ Bạn đã đồng ý tham gia</strong>
+                                            @if (item.InterviewRespondedAt.HasValue)
+                                            {
+                                                <small>Phản hồi lúc @item.InterviewRespondedAt.Value.ToString("HH:mm · dd/MM/yyyy")</small>
+                                            }
+                                        </div>
+                                    }
+                                    else if (item.InterviewResponse == "DECLINED")
+                                    {
+                                        <div class="ma-feedback ma-declined">
+                                            <strong>Bạn đã từ chối phỏng vấn</strong>
+                                            <p class="ma-text">@item.InterviewDeclineReason</p>
+                                            @if (item.InterviewRespondedAt.HasValue)
+                                            {
+                                                <small>Phản hồi lúc @item.InterviewRespondedAt.Value.ToString("HH:mm · dd/MM/yyyy")</small>
+                                            }
+                                        </div>
+                                    }
+                                    else if (item.InterviewAt.HasValue && string.IsNullOrWhiteSpace(item.InterviewResponse))
+                                    {
+                                        <p class="ma-hint">Vui lòng phản hồi để doanh nghiệp biết bạn có tham gia.</p>
+                                        <div class="ma-response-actions">
+                                            <form action="@Url.Action("RespondInterview", "Applications")" method="post">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="applicationId" value="@item.ApplicationId" />
+                                                <input type="hidden" name="response" value="ACCEPTED" />
+                                                <button type="submit" class="ma-button ma-primary">✓ Đồng ý tham gia</button>
+                                            </form>
+                                            <button type="button" class="ma-button ma-outline js-decline-toggle"
+                                                    aria-expanded="false" aria-controls="decline-@item.ApplicationId">
+                                                Từ chối
+                                            </button>
+                                        </div>
+                                        <form action="@Url.Action("RespondInterview", "Applications")" method="post"
+                                              id="decline-@item.ApplicationId" class="ma-decline-form" hidden>
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="applicationId" value="@item.ApplicationId" />
+                                            <input type="hidden" name="response" value="DECLINED" />
+                                            <label for="reason-@item.ApplicationId">Lý do từ chối <span>*</span></label>
+                                            <textarea id="reason-@item.ApplicationId" name="declineReason"
+                                                      maxlength="1000" rows="3" required disabled
+                                                      placeholder="Nhập lý do để doanh nghiệp biết…"></textarea>
+                                            <small>Tối đa 1.000 ký tự. Lý do sẽ được gửi cho doanh nghiệp.</small>
+                                            <div class="ma-response-actions">
+                                                <button type="submit" class="ma-button ma-danger">Gửi lời từ chối</button>
+                                                <button type="button" class="ma-button ma-outline js-decline-cancel">Hủy</button>
+                                            </div>
+                                        </form>
+                                    }
+
+                                </div>
+                            }
+
+                            <div class="d-flex flex-wrap gap-2 mt-auto">
+                                @if (item.JobPost != null)
+                                {
+                                    <a href="@Url.Action("Details", "CompanyProfile", new { id = item.JobPost.CompanyId })"
+                                       class="btn btn-success btn-sm px-3">
+                                        Xem doanh nghiệp
+                                    </a>
+                                }
 
                                 @if (!string.IsNullOrWhiteSpace(item.Cvurl))
                                 {
@@ -227,6 +424,7 @@
                                     </a>
                                 }
                             </div>
+
                         </div>
                     </article>
                 </div>
@@ -234,3 +432,160 @@
         </div>
     }
 </section>
+<style>
+    .ma-response-actions, .ma-footer {
+        display: flex;
+        gap: 9px;
+        flex-wrap: wrap
+    }
+
+        .ma-response-actions form {
+            margin: 0
+        }
+
+    .ma-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid transparent;
+        border-radius: 9px;
+        padding: 10px 13px;
+        font: 600 12px "Segoe UI",Arial,sans-serif;
+        cursor: pointer;
+        text-decoration: none
+    }
+
+    .ma-primary {
+        background: #009f6b;
+        color: #fff
+    }
+
+        .ma-primary:hover {
+            background: #008359;
+            color: white
+        }
+
+    .ma-outline {
+        background: white;
+        color: #40634f;
+        border-color: #d4e4da
+    }
+
+        .ma-outline:hover {
+            background: #e7f3ec;
+            color: #176243
+        }
+
+    .ma-danger {
+        background: #bc4949;
+        color: #fff
+    }
+
+        .ma-danger:hover {
+            background: #a53636;
+            color: white
+        }
+
+    .ma-footer {
+        margin-top: 20px
+    }
+
+    .ma-feedback {
+        margin-top: 18px;
+        padding: 13px;
+        border-radius: 9px;
+        font-size: 13px
+    }
+
+        .ma-feedback small {
+            display: block;
+            margin-top: 8px;
+            font-size: 11px
+        }
+
+        .ma-feedback p {
+            margin: 8px 0
+        }
+
+    .ma-accepted {
+        background: #dff2e5;
+        color: #196640
+    }
+
+    .ma-declined {
+        background: #fff0ed;
+        color: #94463e
+    }
+
+    .ma-decline-form {
+        margin-top: 16px;
+        padding-top: 16px;
+        border-top: 1px solid #d8e6dd
+    }
+
+        .ma-decline-form[hidden] {
+            display: none !important
+        }
+
+        .ma-decline-form label {
+            font-size: 12px;
+            font-weight: 600;
+            display: block;
+            margin-bottom: 8px
+        }
+
+            .ma-decline-form label span {
+                color: #bd4949
+            }
+
+        .ma-decline-form textarea {
+            display: block;
+            width: 100%;
+            border: 1px solid #d3e1d8;
+            border-radius: 9px;
+            padding: 12px;
+            font: 13px "Segoe UI",Arial,sans-serif;
+            resize: vertical
+        }
+
+        .ma-decline-form small {
+            display: block;
+            font-size: 11px;
+            color: #7d8d81;
+            margin: 8px 0 12px
+        }
+
+    .ma-page :is(a,button,textarea):focus-visible {
+        outline: 2px solid #6bc69b;
+        outline-offset: 3px
+    }
+
+</style>
+<script>
+    (() => {
+        document.querySelectorAll(".js-decline-toggle").forEach(toggle => {
+            const form = document.getElementById(toggle.getAttribute("aria-controls"));
+            if (!form) return;
+            const reason = form.querySelector("textarea");
+            function setOpen(open) {
+                form.hidden = !open;
+                reason.disabled = !open;
+                toggle.setAttribute("aria-expanded", String(open));
+                if (open) reason.focus();
+            }
+            toggle.addEventListener("click", () => setOpen(form.hidden));
+            form.querySelector(".js-decline-cancel").addEventListener("click", () => {
+                setOpen(false);
+                toggle.focus();
+            });
+            form.addEventListener("submit", event => {
+                if (!reason.value.trim()) {
+                    event.preventDefault();
+                    reason.setCustomValidity("Vui lòng nhập lý do từ chối.");
+                    reason.reportValidity();
+                }
+            });
+            reason.addEventListener("input", () => reason.setCustomValidity(""));
+        });
+    })();
+</script>
