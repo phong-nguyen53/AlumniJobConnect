@@ -1,0 +1,112 @@
+﻿@model System.Collections.Generic.IReadOnlyList<AlumniJobConnect.Models.JobPost>
+
+@{
+    Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "Quản lý tin tuyển dụng";
+}
+
+<div class="container-fluid py-4">
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-4">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+                <div>
+                    <h1 class="h4 fw-bold mb-1">Quản lý tin tuyển dụng</h1>
+                    <p class="text-muted mb-0">
+                        Xem các tin do doanh nghiệp đăng và duyệt những tin đang chờ.
+                    </p>
+                </div>
+
+                <span class="badge bg-primary rounded-pill px-3 py-2">
+                    @Model.Count tin tuyển dụng
+                </span>
+            </div>
+
+            @if (TempData["JobPostSuccess"] is string successMessage)
+            {
+                <div class="alert alert-success" role="status">
+                    @successMessage
+                </div>
+            }
+
+            @if (TempData["JobPostError"] is string errorMessage)
+            {
+                <div class="alert alert-warning" role="alert">
+                    @errorMessage
+                </div>
+            }
+
+            @if (Model.Count == 0)
+            {
+                <div class="alert alert-light border mb-0" role="status">
+                    Chưa có tin tuyển dụng nào.
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th scope="col">Mã tin</th>
+                                <th scope="col">Vị trí tuyển dụng</th>
+                                <th scope="col">Doanh nghiệp</th>
+                                <th scope="col">Ngày đăng</th>
+                                <th scope="col">Trạng thái duyệt</th>
+                                <th scope="col">Cài đặt hiển thị</th>
+                                <th scope="col">Xem xhi tiết</th>
+                                <th scope="col">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var job in Model)
+                            {
+                                var (statusText, badgeClass) = job.ApprovalStatus switch
+                                {
+                                    "Pending" => ("Chờ duyệt", "bg-warning text-dark"),
+                                    "Approved" => ("Đã duyệt", "bg-success"),
+                                    "Rejected" => ("Đã từ chối", "bg-danger"),
+                                    _ => (job.ApprovalStatus ?? "Chưa xác định", "bg-secondary")
+                                };
+
+                                <tr>
+                                    <td>#@job.JobPostId</td>
+                                    <td class="fw-semibold">@job.Title</td>
+                                    <td>@(job.Company?.CompanyName ?? "Chưa có thông tin")</td>
+                                    <td class="text-nowrap">
+                                        @job.CreatedAt.ToString("dd/MM/yyyy HH:mm")
+                                    </td>
+                                    <td>
+                                        <span class="badge @badgeClass">@statusText</span>
+                                    </td>
+                                    <td>@(job.IsPublished ? "Đã bật" : "Đã tắt")</td>
+                                    <td>
+                                        <div class="d-flex flex-wrap align-items-center gap-2">
+                                            <a class="btn btn-outline-primary btn-sm text-nowrap"
+                                               href="@Url.RouteUrl("AdminJobPostDetails", new { id = job.JobPostId })">
+                                                Xem chi tiết
+                                            </a>
+
+                                            @if (job.ApprovalStatus == "Pending")
+                                            {
+                                                <form method="post"
+                                                      action="@Url.RouteUrl("AdminApproveJobPost", new { id = job.JobPostId })"
+                                                      class="m-0"
+                                                      onsubmit="return confirm('Bạn muốn duyệt tin tuyển dụng này?');">
+                                                    @Html.AntiForgeryToken()
+                                                    <button type="submit" class="btn btn-success btn-sm text-nowrap">
+                                                        Duyệt tin
+                                                    </button>
+                                                </form>
+                                            }
+                                        </div>
+                                    </td>
+                                  
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+</div>

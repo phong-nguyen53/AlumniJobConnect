@@ -293,18 +293,25 @@ public class AccountController : Controller
         }
 
         var identity = new ClaimsIdentity(
-            claims,
-            CookieAuthenticationDefaults.AuthenticationScheme);
+     claims,
+     CookieAuthenticationDefaults.AuthenticationScheme);
+
+        var principal = new ClaimsPrincipal(identity);
 
         await HttpContext.SignInAsync(
             CookieAuthenticationDefaults.AuthenticationScheme,
-            new ClaimsPrincipal(identity),
+            principal,
             new AuthenticationProperties
             {
                 IsPersistent = false
             });
 
-        return RedirectToAction("Index", "Home");
+        if (principal.IsInRole("Admin"))
+        {
+            return RedirectToAction("Index", "Home", new { area = "Admin" });
+        }
+
+        return RedirectToAction("Index", "Home", new { area = "" });
     }
 
     // ================= ĐĂNG XUẤT =================

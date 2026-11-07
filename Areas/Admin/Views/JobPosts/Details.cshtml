@@ -1,0 +1,72 @@
+﻿@model AlumniJobConnect.Models.JobPost
+
+@{
+    Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "Chi tiết tin tuyển dụng";
+
+    var (statusText, badgeClass) = Model.ApprovalStatus switch
+    {
+        "Pending" => ("Chờ duyệt", "bg-warning text-dark"),
+        "Approved" => ("Đã duyệt", "bg-success"),
+        "Rejected" => ("Đã từ chối", "bg-danger"),
+        _ => (Model.ApprovalStatus ?? "Chưa xác định", "bg-secondary")
+    };
+}
+
+<div class="container-fluid py-4">
+    <a class="btn btn-outline-secondary btn-sm mb-3"
+       href="@Url.RouteUrl("AdminJobPosts")">
+        ← Về danh sách tin
+    </a>
+
+    <article class="card border-0 shadow-sm">
+        <div class="card-body p-4">
+            <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
+                <div>
+                    <p class="small text-muted mb-1">Tin #@Model.JobPostId</p>
+                    <h1 class="h3 mb-2">@Model.Title</h1>
+                    <p class="text-muted mb-0">
+                        @(Model.Company?.CompanyName ?? "Chưa có thông tin doanh nghiệp")
+                    </p>
+                </div>
+                <span class="badge @badgeClass">@statusText</span>
+            </div>
+
+            <dl class="row bg-light rounded p-3 mb-4">
+                <dt class="col-sm-4">Địa điểm làm việc</dt>
+                <dd class="col-sm-8">
+                    @(string.IsNullOrWhiteSpace(Model.WorkLocation) ? "Chưa cập nhật" : Model.WorkLocation)
+                </dd>
+
+                <dt class="col-sm-4">Ngày đăng</dt>
+                <dd class="col-sm-8">@Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")</dd>
+
+                <dt class="col-sm-4">Hạn nộp hồ sơ</dt>
+                <dd class="col-sm-8">@(Model.Deadline?.ToString("dd/MM/yyyy") ?? "Chưa cập nhật")</dd>
+
+                <dt class="col-sm-4">Cài đặt hiển thị</dt>
+                <dd class="col-sm-8 mb-0">@(Model.IsPublished ? "Đã bật" : "Đã tắt")</dd>
+            </dl>
+
+            <h2 class="h5">Mô tả công việc</h2>
+            <p style="white-space: pre-wrap; overflow-wrap: anywhere;">@Model.JobDescription</p>
+
+            <h2 class="h5 mt-4">Yêu cầu ứng viên</h2>
+            <p style="white-space: pre-wrap; overflow-wrap: anywhere;">@(string.IsNullOrWhiteSpace(Model.Requirements) ? "Chưa cập nhật" : Model.Requirements)</p>
+
+            <h2 class="h5 mt-4">Quyền lợi</h2>
+            <p style="white-space: pre-wrap; overflow-wrap: anywhere;">@(string.IsNullOrWhiteSpace(Model.Benefits) ? "Chưa cập nhật" : Model.Benefits)</p>
+
+            @if (Model.ApprovalStatus == "Pending")
+            {
+                <form method="post"
+                      action="@Url.RouteUrl("AdminApproveJobPost", new { id = Model.JobPostId })"
+                      class="border-top pt-3 mt-4"
+                      onsubmit="return confirm('Bạn muốn duyệt tin tuyển dụng này?');">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-success">Duyệt tin</button>
+                </form>
+            }
+        </div>
+    </article>
+</div>
