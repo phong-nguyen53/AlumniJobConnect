@@ -1,5 +1,299 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
+﻿@using System.Security.Claims
+@model System.Collections.Generic.IReadOnlyList<AlumniJobConnect.Controllers.HomeController.CompanyEventItem>
+
 @{
+    ViewData["Title"] = "Sự kiện doanh nghiệp";
+
+    var now = DateTime.UtcNow.AddHours(7);
+    var canRegister = User.IsInRole("Alumni");
+    var isEmployer = User.IsInRole("Employer");
+    var employerUserId =
+        isEmployer && int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId)
+            ? (int?)userId
+            : null;
+
+    var showMyEvents = ViewData["ShowMyEvents"] is true;
+
+    var registeredEventIds =
+        ViewData["RegisteredEventIds"] as System.Collections.Generic.HashSet<int>
+        ?? new System.Collections.Generic.HashSet<int>();
 }
+
+<style>
+    .events-page .events-hero {
+        background: linear-gradient(135deg, #0d6efd 0%, #4f46e5 100%);
+        color: #fff;
+        border-radius: 1rem;
+    }
+
+    .events-page .event-card {
+        border-radius: 1rem;
+        overflow: hidden;
+        transition: transform .15s ease, box-shadow .15s ease;
+    }
+
+        .events-page .event-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 .75rem 1.5rem rgba(16, 24, 40, .12) !important;
+        }
+
+    .events-page .date-badge {
+        width: 64px;
+        flex-shrink: 0;
+        border-radius: .85rem;
+        background: #eef2ff;
+        color: #4338ca;
+        text-align: center;
+        padding: .5rem 0;
+        line-height: 1.15;
+    }
+
+        .events-page .date-badge .day {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .events-page .date-badge .month {
+            font-size: .72rem;
+            text-transform: uppercase;
+            letter-spacing: .04em;
+        }
+
+        .events-page .date-badge .year {
+            font-size: .68rem;
+            opacity: .7;
+        }
+
+    .events-page .event-started .date-badge {
+        background: #f1f5f9;
+        color: #64748b;
+    }
+
+    .events-page .event-desc {
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        white-space: pre-wrap;
+    }
+
+    .events-page .meta-row {
+        display: flex;
+        gap: .6rem;
+        font-size: .9rem;
+    }
+
+    .events-page .meta-label {
+        width: 80px;
+        flex-shrink: 0;
+        color: #6c757d;
+    }
+
+    .events-page .event-footer {
+        background: #fff;
+        border-top: 1px solid #eef0f3;
+        padding: 1rem 1.5rem;
+    }
+</style>
+
+<div class="container py-5 events-page">
+    <div class="events-hero p-4 p-md-5 mb-4 shadow-sm">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+            <div>
+                <h1 class="h2 fw-bold mb-1">Sự kiện doanh nghiệp</h1>
+                <p class="mb-0 opacity-75">
+                    Cập nhật các hội thảo, ngày hội việc làm và hoạt động kết nối do doanh nghiệp tổ chức.
+                </p>
+            </div>
+
+            @if (isEmployer)
+            {
+                <a class="btn btn-light fw-semibold px-4"
+                   href="@Url.Content("~/EmployerEvents/Create")">
+                    + Đăng sự kiện
+                </a>
+            }
+        </div>
+    </div>
+
+    @if (TempData["EventRegistrationSuccess"] is string success)
+    {
+        <div class="alert alert-success border-0 shadow-sm" role="status">
+            @success
+        </div>
+    }
+
+    @if (TempData["EventRegistrationError"] is string error)
+    {
+        <div class="alert alert-warning border-0 shadow-sm" role="alert">
+            @error
+        </div>
+    }
+
+    @if (canRegister)
+    {
+        <nav class="d-flex flex-wrap gap-2 mb-4" aria-label="Lọc sự kiện">
+            <a class="btn @(showMyEvents ? "btn-outline-primary" : "btn-primary")"
+               href="@Url.Action("Events", "Home", new { mine = false })">
+                Tất cả sự kiện
+            </a>
+
+            <a class="btn @(showMyEvents ? "btn-primary" : "btn-outline-primary")"
+               href="@Url.Action("Events", "Home", new { mine = true })">
+                Sự kiện đã đăng ký
+            </a>
+        </nav>
+    }
+
+    @if (Model.Count == 0)
+    {
+        <div class="card border-0 shadow-sm">
+            <div class="card-body text-center text-muted py-5">
+                <div class="fs-1 mb-2" aria-hidden="true">📅</div>
+                <p class="mb-0" role="status">
+                    @(showMyEvents
+                                    ? "Bạn chưa đăng ký sự kiện nào."
+                                    : "Chưa có sự kiện nào do doanh nghiệp đăng.")
+            </p>
+        </div>
+    </div>
+        }
+    else
+    {
+        <div class="row g-4">
+            @foreach (var item in Model)
+            {
+                var hasStarted = item.StartAt <= now;
+                var deadlinePassed = item.RegistrationDeadline is DateTime deadlineAt
+                && deadlineAt < now;
+                var isRegistered = registeredEventIds.Contains(item.EventId);
+                var isClosed = hasStarted || deadlinePassed;
+
+                <div class="col-md-6 col-lg-4">
+                    <article class="card event-card border-0 shadow-sm h-100 @(hasStarted ? "event-started" : "")">
+                        <div class="card-body p-4 d-flex flex-column">
+                            <div class="d-flex gap-3 mb-3">
+                                <div class="date-badge" aria-hidden="true">
+                                    <div class="day">@item.StartAt.ToString("dd")</div>
+                                    <div class="month">Th@(item.StartAt.ToString("MM"))</div>
+                                    <div class="year">@item.StartAt.ToString("yyyy")</div>
+                                </div>
+
+                                <div class="flex-grow-1 text-break">
+                                    <h2 class="h5 fw-bold mb-1">@item.EventName</h2>
+                                    <div class="text-primary fw-semibold small">
+                                        @item.CompanyName
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                @if (hasStarted)
+                                {
+                                    <span class="badge rounded-pill bg-secondary">
+                                        Đã qua giờ bắt đầu
+                                    </span>
+                                }
+                                else if (deadlinePassed)
+                                {
+                                    <span class="badge rounded-pill bg-warning text-dark">
+                                        Hết hạn đăng ký
+                                    </span>
+                                }
+                        </div>
+
+                        <div class="d-flex flex-column gap-2 mb-3">
+                            <div class="meta-row">
+                                <span class="meta-label">Bắt đầu</span>
+                                <span class="fw-semibold">
+                                    @item.StartAt.ToString("dd/MM/yyyy HH:mm")
+                                </span>
+                            </div>
+
+                            <div class="meta-row">
+                                <span class="meta-label">Địa điểm</span>
+                                <span class="text-break">
+                                    @(string.IsNullOrWhiteSpace(item.Location)
+                                                                    ? "Chưa cập nhật"
+                                                                    : item.Location)
+                            </span>
+                        </div>
+
+                        @if (item.RegistrationDeadline is DateTime deadline)
+                                {
+                                    <div class="meta-row">
+                                        <span class="meta-label">Hạn đăng ký</span>
+                                        <span>@deadline.ToString("dd/MM/yyyy HH:mm")</span>
+                                    </div>
+                                }
+                            </div>
+
+                            @if (!string.IsNullOrWhiteSpace(item.Description))
+                            {
+                                <p class="event-desc text-break text-muted small border-top pt-3 mt-auto mb-0">@item.Description</p>
+                            }
+                        </div>
+
+                        @if (canRegister)
+                        {
+                            <div class="event-footer">
+                                @if (isRegistered)
+                                {
+                                    <div class="d-flex flex-wrap align-items-center gap-2">
+                                        <span class="badge rounded-pill bg-success">
+                                            Đã đăng ký
+                                        </span>
+
+                                        @if (showMyEvents && !hasStarted)
+                                        {
+                                            <form method="post"
+                                                  action="@Url.RouteUrl("CancelCompanyEventRegistration")"
+                                                  class="m-0"
+                                                  onsubmit="return confirm('Bạn muốn hủy đăng ký sự kiện này?');">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="eventId" value="@item.EventId" />
+
+                                                <button type="submit" class="btn btn-outline-danger btn-sm">
+                                                    Hủy đăng ký
+                                                </button>
+                                            </form>
+                                        }
+                                    </div>
+                                }
+                                else if (isClosed)
+                                {
+                                    <button type="button" class="btn btn-outline-secondary w-100" disabled>
+                                        Đã đóng đăng ký
+                                    </button>
+                                }
+                                else
+                                {
+                                    <form method="post"
+                                          action="@Url.RouteUrl("RegisterCompanyEvent")"
+                                          class="m-0">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="eventId" value="@item.EventId" />
+
+                                        <button type="submit" class="btn btn-primary w-100 fw-semibold">
+                                            Đăng ký tham gia
+                                        </button>
+                                    </form>
+                                }
+                            </div>
+                        }
+
+                        @if (employerUserId == item.CreatedByUserId)
+                        {
+                            <div class="event-footer">
+                                <a class="btn btn-outline-primary w-100"
+                                   href="@Url.RouteUrl("CompanyEventParticipants", new { eventId = item.EventId })">
+                                    Xem người đăng ký
+                                </a>
+                            </div>
+                        }
+                    </article>
+                </div>
+            }
+        </div>
+    }
+</div>

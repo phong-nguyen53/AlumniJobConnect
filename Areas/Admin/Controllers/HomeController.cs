@@ -18,10 +18,15 @@ public class HomeController : Controller
 
     [HttpGet("/Admin")]
     [HttpGet("/Admin/Home/Index")]
+ 
     public async Task<IActionResult> Index()
     {
-        var totalJobPosts = await _context.JobPosts.CountAsync();
-        ViewBag.TotalJobPosts = totalJobPosts;
+        ViewBag.TotalUsers = await _context.Users.CountAsync();
+        ViewBag.TotalCompanies = await _context.Companies.CountAsync();
+        ViewBag.TotalJobPosts = await _context.JobPosts.CountAsync();
+        ViewBag.PendingJobPosts = await _context.JobPosts
+            .CountAsync(job => job.ApprovalStatus == "Pending");
+
         return View();
     }
 }

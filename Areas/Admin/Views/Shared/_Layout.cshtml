@@ -218,6 +218,7 @@
         </nav>
         @RenderBody()
     </div>
+    @await RenderSectionAsync("Scripts", required: false)
     <!-- container-scroller -->
     <!-- plugins:~/admin/assets/js -->
     <script src="~/admin/assets/vendors/js/vendor.bundle.base.js"></script>

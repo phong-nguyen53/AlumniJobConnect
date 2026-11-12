@@ -1,0 +1,55 @@
+﻿@model AlumniJobConnect.Models.User
+
+@{
+    Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "Sửa tài khoản";
+
+    var submitUrl = Url.RouteUrl("AdminEditUserSubmit", new { id = Model.UserId });
+    var usersUrl = Url.RouteUrl("AdminUsers");
+}
+
+<div class="container-fluid py-4">
+    <div class="row justify-content-center">
+        <div class="col-12 col-xl-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <h1 class="h4 fw-bold mb-1">Sửa tài khoản</h1>
+                    <p class="text-muted mb-4">Cập nhật họ tên và số điện thoại.</p>
+
+                    <dl class="bg-light rounded p-3 mb-4">
+                        <dt class="small text-muted">Email đăng nhập</dt>
+                        <dd class="text-break mb-0">@Model.Email</dd>
+                    </dl>
+
+                    <form method="post" action="@submitUrl">
+                        @Html.AntiForgeryToken()
+                        @Html.ValidationSummary(false, "", new { @class = "text-danger" })
+
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="fullName" class="form-label fw-semibold">
+                                    Họ và tên <span class="text-danger">*</span>
+                                </label>
+                                <input id="fullName" name="fullName" class="form-control"
+                                       value="@Model.FullName" autocomplete="name" required>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="phone" class="form-label fw-semibold">
+                                    Số điện thoại
+                                </label>
+                                <input id="phone" name="phone" type="tel" class="form-control"
+                                       value="@Model.Phone" autocomplete="tel">
+                            </div>
+                        </div>
+
+                        <div class="d-flex flex-wrap gap-2 border-top mt-4 pt-3">
+                            <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+                            <a href="@usersUrl" class="btn btn-outline-secondary">Hủy</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

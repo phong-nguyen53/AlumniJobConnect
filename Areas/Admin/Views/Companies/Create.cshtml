@@ -1,0 +1,68 @@
+﻿@using System.Linq
+@using System.Collections.Generic
+@using Microsoft.AspNetCore.Mvc.Rendering
+@model AlumniJobConnect.Models.Company
+
+@{
+    Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "Thêm doanh nghiệp";
+
+    var employers = (ViewBag.EmployerOptions as IEnumerable<SelectListItem>
+        ?? System.Array.Empty<SelectListItem>()).ToList();
+
+    var submitUrl = Url.RouteUrl("AdminCreateCompanySubmit");
+}
+
+<div class="container-fluid py-4">
+    <a class="btn btn-outline-secondary btn-sm mb-3"
+       href="@Url.RouteUrl("AdminCompanies")">
+        ← Danh sách doanh nghiệp
+    </a>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-4">
+            <h1 class="h4 fw-bold mb-2">Thêm doanh nghiệp</h1>
+            <p class="text-muted mb-4">
+                Chọn tài khoản doanh nghiệp và nhập thông tin hồ sơ.
+            </p>
+
+            @if (employers.Count == 0)
+            {
+                <div class="alert alert-info" role="status">
+                    Hiện chưa có tài khoản doanh nghiệp đang hoạt động và chưa có hồ sơ.
+                </div>
+            }
+
+            <form method="post" action="@submitUrl">
+                @Html.AntiForgeryToken()
+                @Html.ValidationSummary(false, "", new { @class = "text-danger" })
+
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label for="userId" class="form-label fw-semibold">
+                            Tài khoản doanh nghiệp <span class="text-danger">*</span>
+                        </label>
+
+                        @Html.DropDownList(
+                        "userId",
+                                                employers,
+                                                "Chọn tài khoản",
+                                                new { @class = "form-select", required = "required" })
+                    </div>
+
+                    @await Html.PartialAsync("_CompanyFields", Model)
+                </div>
+
+                <div class="d-flex flex-wrap gap-2 mt-4">
+                    <button type="submit" class="btn btn-primary"
+                            disabled="@(employers.Count == 0)">
+                        Thêm doanh nghiệp
+                    </button>
+                    <a class="btn btn-light" href="@Url.RouteUrl("AdminCompanies")">
+                        Hủy
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

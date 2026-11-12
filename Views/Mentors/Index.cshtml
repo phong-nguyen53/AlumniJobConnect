@@ -1,0 +1,62 @@
+﻿@model System.Collections.Generic.IReadOnlyList<AlumniJobConnect.Controllers.MentorsController.MentorCard>
+
+@{
+    ViewData["Title"] = "Tìm cựu sinh viên";
+    var companyFilter = ViewData["CompanyFilter"] as string ?? "";
+}
+
+<div class="container py-5">
+    <header class="rounded-3 bg-light p-4 p-md-5 mb-4">
+        <h1 class="h2 fw-bold mb-2">Tìm cựu sinh viên</h1>
+        <p class="text-muted mb-0">
+            Tìm anh chị đi trước để hỏi về công việc và kinh nghiệm ứng tuyển.
+        </p>
+    </header>
+
+    <form method="get" action="@Url.RouteUrl("MentorDirectory")" class="mb-4">
+        <label for="company" class="form-label fw-semibold">Công ty đang làm</label>
+        <div class="d-flex flex-wrap gap-2">
+            <input id="company" name="company" type="search"
+                   class="form-control w-auto flex-grow-1"
+                   value="@companyFilter" placeholder="Ví dụ FPT Software" />
+            <button type="submit" class="btn btn-primary">Tìm cố vấn</button>
+            <a class="btn btn-outline-secondary" href="@Url.RouteUrl("MentorDirectory")">
+                Đặt lại
+            </a>
+        </div>
+    </form>
+
+    @if (Model.Count == 0)
+    {
+        <div class="alert alert-light border" role="status">
+            @(companyFilter.Length > 0
+                    ? "Không tìm thấy cố vấn tại công ty bạn nhập."
+                    : "Hiện chưa có cựu sinh viên được xác nhận và sẵn sàng tư vấn.")
+    </div>
+        }
+    else
+    {
+        <div class="row g-4">
+            @foreach (var mentor in Model)
+            {
+                <div class="col-md-6 col-lg-4">
+                    <article class="card border-0 shadow-sm h-100">
+                        <div class="card-body p-4">
+                            <h2 class="h5 fw-bold mb-2">@mentor.FullName</h2>
+                            <p class="mb-1">@(mentor.JobTitle ?? "Chưa cập nhật vị trí")</p>
+                            <p class="text-muted mb-3">
+                                @(mentor.CompanyName ?? "Chưa cập nhật công ty")
+                            </p>
+                            <p class="text-primary fw-semibold mb-2">@mentor.Expertise</p>
+
+                            @if (!string.IsNullOrWhiteSpace(mentor.Introduction))
+                            {
+                                <p class="text-break mb-0">@mentor.Introduction</p>
+                            }
+                        </div>
+                    </article>
+                </div>
+            }
+        </div>
+    }
+</div>

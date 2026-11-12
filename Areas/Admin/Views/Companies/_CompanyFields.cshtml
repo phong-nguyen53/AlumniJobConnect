@@ -1,0 +1,111 @@
+﻿@model AlumniJobConnect.Models.Company
+
+@{
+    const string richTextMarker = "<!--company-rich-text-->";
+    var description = Model.Description ?? "";
+    var isRichText = description.StartsWith(
+        richTextMarker, System.StringComparison.Ordinal);
+
+    var editorValue = isRichText
+        ? new Ganss.Xss.HtmlSanitizer().Sanitize(
+            description.Substring(richTextMarker.Length))
+        : description;
+}
+
+<link rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/quill@@2.0.3/dist/quill.snow.css">
+
+<div class="col-md-6">
+    <label for="companyName" class="form-label fw-semibold">
+        Tên doanh nghiệp <span class="text-danger">*</span>
+    </label>
+    <input id="companyName" name="companyName"
+           class="form-control" value="@Model.CompanyName" required>
+</div>
+
+<div class="col-md-6">
+    <label for="taxCode" class="form-label fw-semibold">Mã số thuế</label>
+    <input id="taxCode" name="taxCode"
+           class="form-control" value="@Model.TaxCode">
+</div>
+
+<div class="col-md-6">
+    <label for="industry" class="form-label fw-semibold">Ngành nghề</label>
+    <input id="industry" name="industry"
+           class="form-control" value="@Model.Industry">
+</div>
+
+<div class="col-md-6">
+    <label for="website" class="form-label fw-semibold">Website</label>
+    <input id="website" name="website" type="url"
+           class="form-control" value="@Model.Website"
+           placeholder="https://example.com">
+</div>
+
+<div class="col-12">
+    <label for="address" class="form-label fw-semibold">Địa chỉ</label>
+    <input id="address" name="address"
+           class="form-control" value="@Model.Address">
+</div>
+
+<div class="col-12">
+    <label id="companyDescriptionLabel" for="description"
+           class="form-label fw-semibold">
+        Giới thiệu doanh nghiệp
+    </label>
+
+    <textarea id="description" name="description"
+              class="form-control" rows="5"
+              data-rich-text="@(isRichText ? "true" : "false")">@editorValue</textarea>
+
+    <div id="companyDescriptionEditor" hidden style="height: 220px;"></div>
+
+    <div class="form-text">
+        Bạn có thể thêm tiêu đề, in đậm, in nghiêng, gạch chân và tạo danh sách.
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/quill@@2.0.3/dist/quill.js"></script>
+
+<script>
+    (() => {
+        const field = document.getElementById("description");
+        const editor = document.getElementById("companyDescriptionEditor");
+
+        if (!window.Quill || !field?.form || !editor) {
+            return;
+        }
+
+        editor.hidden = false;
+
+        const quill = new window.Quill(editor, {
+            theme: "snow",
+            placeholder: "Nhập giới thiệu doanh nghiệp...",
+            formats: ["header", "bold", "italic", "underline", "list"],
+            modules: {
+                toolbar: [
+                    [{ header: [2, 3, false] }],
+                    ["bold", "italic", "underline"],
+                    [{ list: "ordered" }, { list: "bullet" }],
+                    ["clean"]
+                ]
+            }
+        });
+
+        quill.root.setAttribute("aria-labelledby", "companyDescriptionLabel");
+
+        if (field.dataset.richText === "true") {
+            quill.clipboard.dangerouslyPasteHTML(field.value);
+        } else {
+            quill.setText(field.value);
+        }
+
+        field.hidden = true;
+
+        field.form.addEventListener("submit", () => {
+            field.value = quill.getText().trim()
+                ? "<!--company-rich-text-->" + quill.getSemanticHTML()
+                : "";
+        });
+    })();
+</script>

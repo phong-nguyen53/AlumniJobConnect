@@ -1,0 +1,295 @@
+﻿@using System.Linq
+@model System.Collections.Generic.IReadOnlyList<AlumniJobConnect.Models.User>
+
+@{
+    Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "Danh sách tài khoản";
+
+    var selectedRole = ViewData["SelectedRole"] as string;
+    var usersUrl = Url.RouteUrl("AdminUsers");
+
+    string RoleLabel(string roleName) => roleName switch
+    {
+        "Admin" => "Quản trị viên",
+        "Alumni" => "Sinh viên / Cựu sinh viên",
+        "Employer" => "Doanh nghiệp",
+        _ => roleName
+    };
+
+    string RoleClass(string roleName) => roleName switch
+    {
+        "Admin" => "role-admin",
+        "Alumni" => "role-alumni",
+        "Employer" => "role-employer",
+        _ => "role-none"
+    };
+
+    var activeCount = Model.Count(u => u.IsActive);
+    var inactiveCount = Model.Count - activeCount;
+}
+
+<style>
+    .users-page .page-header {
+        background: linear-gradient(135deg, #0d6efd 0%, #4f46e5 100%);
+        color: #fff;
+        border-radius: 1rem;
+    }
+
+        .users-page .page-header .stat-pill {
+            background: rgba(255, 255, 255, .18);
+            border-radius: 999px;
+            padding: .35rem .9rem;
+            font-size: .875rem;
+            white-space: nowrap;
+        }
+
+    .users-page .filter-card,
+    .users-page .user-card {
+        border-radius: 1rem;
+    }
+
+    .users-page .user-card {
+        transition: transform .15s ease, box-shadow .15s ease;
+    }
+
+        .users-page .user-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 .75rem 1.5rem rgba(16, 24, 40, .12) !important;
+        }
+
+    .users-page .avatar {
+        width: 48px;
+        height: 48px;
+        font-size: 1.15rem;
+    }
+
+    .users-page .role-admin {
+        background: #fee2e2;
+        color: #b91c1c;
+    }
+
+    .users-page .role-alumni {
+        background: #dbeafe;
+        color: #1d4ed8;
+    }
+
+    .users-page .role-employer {
+        background: #fef3c7;
+        color: #b45309;
+    }
+
+    .users-page .role-none {
+        background: #e5e7eb;
+        color: #4b5563;
+    }
+
+    .users-page .info-row {
+        display: flex;
+        gap: .6rem;
+        align-items: flex-start;
+        font-size: .875rem;
+    }
+
+    .users-page .info-label {
+        width: 88px;
+        flex-shrink: 0;
+        color: #6c757d;
+    }
+
+    .users-page .status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        display: inline-block;
+    }
+</style>
+
+<div class="container-fluid py-4 users-page">
+
+    @* ===== Tiêu đề trang ===== *@
+    <div class="page-header p-4 mb-4 shadow-sm">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+            <div>
+                <h1 class="h4 fw-bold mb-1">Danh sách tài khoản</h1>
+                <p class="mb-0 opacity-75 small">Quản lý tài khoản quản trị viên, sinh viên / cựu sinh viên và doanh nghiệp.</p>
+            </div>
+
+            <div class="d-flex flex-wrap align-items-center gap-2">
+                <span class="stat-pill">@Model.Count tài khoản</span>
+                <span class="stat-pill">@activeCount đang hoạt động</span>
+                <span class="stat-pill">@inactiveCount đã tắt</span>
+            </div>
+        </div>
+    </div>
+
+    @* ===== Bộ lọc ===== *@
+    <div class="card filter-card border-0 shadow-sm mb-4">
+        <div class="card-body p-3 p-md-4">
+            <div class="d-flex flex-wrap justify-content-between align-items-end gap-3">
+                <form method="get" action="@usersUrl" class="row g-2 align-items-end flex-grow-1" style="max-width: 560px;">
+                    <div class="col-12 col-sm">
+                        <label for="role" class="form-label small fw-semibold text-muted mb-1">Vai trò</label>
+                        <select id="role" name="role" class="form-select">
+                            <option value="">Tất cả vai trò</option>
+                            <option value="Admin" selected="@(selectedRole == "Admin")">Quản trị viên</option>
+                            <option value="Alumni" selected="@(selectedRole == "Alumni")">Sinh viên / Cựu sinh viên</option>
+                            <option value="Employer" selected="@(selectedRole == "Employer")">Doanh nghiệp</option>
+                        </select>
+                    </div>
+
+                    <div class="col-12 col-sm-auto d-flex gap-2">
+                        <button type="submit" class="btn btn-primary px-4">Lọc</button>
+                        <a class="btn btn-outline-secondary" href="@usersUrl">Đặt lại</a>
+                    </div>
+                </form>
+
+                <a class="btn btn-success text-nowrap px-4" href="@Url.RouteUrl("AdminCreateUser")">
+                    + Thêm tài khoản
+                </a>
+            </div>
+        </div>
+    </div>
+
+    @* ===== Thông báo ===== *@
+    @if (TempData["UserSuccess"] is string success)
+    {
+        <div class="alert alert-success border-0 shadow-sm" role="status">@success</div>
+    }
+
+    @if (TempData["UserError"] is string error)
+    {
+        <div class="alert alert-warning border-0 shadow-sm" role="alert">@error</div>
+    }
+
+    @* ===== Danh sách ===== *@
+    @if (Model.Count == 0)
+    {
+        <div class="card border-0 shadow-sm">
+            <div class="card-body text-center text-muted py-5">
+                <div class="fs-1 mb-2" aria-hidden="true">📭</div>
+                <p class="mb-3">Không có tài khoản phù hợp với bộ lọc.</p>
+                <a class="btn btn-outline-primary btn-sm" href="@usersUrl">Xem tất cả tài khoản</a>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="row g-3">
+            @foreach (var user in Model)
+            {
+                var name = string.IsNullOrWhiteSpace(user.FullName)
+                ? "Chưa cập nhật họ tên"
+                : user.FullName.Trim();
+
+                var initial = name.Substring(0, 1).ToUpperInvariant();
+
+                var roleNames = user.UserRoles
+                .Select(link => link.Role.RoleName)
+                .Distinct()
+                .ToArray();
+
+                var isAdmin = roleNames.Contains("Admin");
+                var avatarClass = RoleClass(roleNames.FirstOrDefault() ?? "");
+                var statusClass = user.IsActive ? "text-success" : "text-secondary";
+                var dotClass = user.IsActive ? "bg-success" : "bg-secondary";
+                var statusText = user.IsActive ? "Đang hoạt động" : "Đã tắt";
+
+                <div class="col-12 col-md-6 col-xl-4">
+                    <article class="card user-card border-0 shadow-sm h-100">
+                        <div class="card-body p-4 d-flex flex-column">
+
+                            <div class="d-flex align-items-center gap-3 mb-3">
+                                <span class="avatar d-inline-flex align-items-center justify-content-center rounded-circle fw-bold flex-shrink-0 @avatarClass"
+                                      aria-hidden="true">
+                                    @initial
+                                </span>
+
+                                <div class="flex-grow-1 text-break">
+                                    <h2 class="h6 fw-bold mb-1">@name</h2>
+                                    <span class="small @statusClass">
+                                        <span class="status-dot @dotClass me-1"></span>@statusText
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div class="d-flex flex-wrap gap-1 mb-3">
+                                @foreach (var role in roleNames.Select(r => new { Name = r, Label = RoleLabel(r) }))
+                                {
+                                    <span class="badge rounded-pill fw-semibold px-3 py-2 @RoleClass(role.Name)">@role.Label</span>
+                                }
+
+                                @if (roleNames.Length == 0)
+                                {
+                                    <span class="badge rounded-pill fw-semibold px-3 py-2 role-none">Chưa có vai trò</span>
+                                }
+                            </div>
+
+                            <div class="d-flex flex-column gap-2 mb-4">
+                                <div class="info-row">
+                                    <span class="info-label">Email</span>
+                                    <span class="text-break">@user.Email</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">Điện thoại</span>
+                                    <span>
+                                        @(string.IsNullOrWhiteSpace(user.Phone) ? "Chưa cập nhật" : user.Phone)
+                                    </span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">Ngày tạo</span>
+                                    <span>@user.CreatedAt.ToString("dd/MM/yyyy")</span>
+                                </div>
+                            </div>
+
+                            <div class="d-flex flex-wrap align-items-center gap-2 border-top pt-3 mt-auto">
+                                <a class="btn btn-outline-primary btn-sm px-3"
+                                   href="@Url.RouteUrl("AdminEditUser", new { id = user.UserId })">
+                                    Sửa
+                                </a>
+                                @if (!isAdmin && user.IsActive)
+                                {
+                                    <form method="post"
+                                          action="@Url.RouteUrl("AdminGrantUserRole", new { id = user.UserId })"
+                                          class="m-0"
+                                          onsubmit="return confirm('Cấp toàn quyền quản trị cho tài khoản này?');">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="currentRole" value="@selectedRole">
+
+                                        <button type="submit" class="btn btn-outline-warning btn-sm">
+                                            Cấp quyền quản trị
+                                        </button>
+                                    </form>
+                                }
+                                @if (isAdmin && roleNames.Any(role => role != "Admin"))
+                                {
+                                    <form method="post"
+                                          action="@Url.RouteUrl("AdminRevokeUserRole", new { id = user.UserId })"
+                                          class="m-0"
+                                          onsubmit="return confirm('Bạn muốn gỡ quyền quản trị của tài khoản này?');">
+                                        @Html.AntiForgeryToken()
+
+                                        <button type="submit" class="btn btn-outline-warning btn-sm">
+                                            Gỡ quyền quản trị
+                                        </button>
+                                    </form>
+                                }
+                                @if (!isAdmin)
+                                {
+                                    <form method="post"
+                                          action="@Url.RouteUrl("AdminDeleteUser", new { id = user.UserId })"
+                                          class="m-0"
+                                          onsubmit="return confirm('Bạn có chắc muốn xóa tài khoản này?');">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-outline-danger btn-sm px-3">
+                                            Xóa
+                                        </button>
+                                    </form>
+                                }
+                            </div>
+                        </div>
+                    </article>
+                </div>
+            }
+        </div>
+    }
+</div>

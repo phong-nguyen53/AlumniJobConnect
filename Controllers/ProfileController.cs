@@ -108,7 +108,51 @@ namespace AlumniJobConnect.Controllers
                 Bio = user.AlumniProfile?.Bio
             };
 
+            ViewData["GraduationState"] = await GetGraduationStateAsync(userId.Value);
             return View(model);
+        }
+
+        [HttpPost("/Profile/ConfirmGraduation", Name = "ConfirmGraduation")]
+        [Authorize(Roles = "Alumni")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ConfirmGraduation([FromForm] int graduationYear)
+        {
+            var userId = GetCurrentUserId();
+
+            if (!userId.HasValue || !await CurrentUserIsActiveAsync())
+            {
+                return Forbid();
+            }
+
+            var currentYear = DateTime.UtcNow.AddHours(7).Year;
+
+            if (!ModelState.IsValid || graduationYear < 1900 || graduationYear > currentYear)
+            {
+                TempData["GraduationError"] = "Vui lòng nhập năm tốt nghiệp hợp lệ.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            var updated = await _context.Database.ExecuteSqlInterpolatedAsync($"""
+                UPDATE dbo.AlumniProfiles
+                SET GraduationYear = {graduationYear},
+                    GraduationConfirmedAtUtc = SYSUTCDATETIME(),
+                    ProfileUpdatedAt = SYSDATETIME()
+                WHERE UserId = {userId.Value}
+                  AND GraduationConfirmedAtUtc IS NULL
+                  AND IsGraduationVerified = 0
+                """);
+
+            if (updated > 0)
+            {
+                TempData["GraduationSuccess"] = "Đã xác nhận tốt nghiệp.";
+            }
+            else
+            {
+                TempData["GraduationError"] =
+                    "Hồ sơ đã xác nhận tốt nghiệp hoặc chưa có hồ sơ sinh viên.";
+            }
+
+            return RedirectToAction(nameof(Index));
         }
 
         // =====================================================
@@ -186,6 +230,7 @@ namespace AlumniJobConnect.Controllers
 
             if (!ModelState.IsValid)
             {
+                ViewData["GraduationState"] = await GetGraduationStateAsync(userId.Value);
                 return View(model);
             }
 
@@ -218,17 +263,18 @@ namespace AlumniJobConnect.Controllers
                     ? null
                     : model.Phone.Trim();
 
+                var existingProfile = user.AlumniProfile;
+
                 if (user.AlumniProfile == null)
                 {
                     user.AlumniProfile = new AlumniProfile
                     {
-                        UserId = user.UserId
+                        UserId = user.UserId,
+                        GraduationYear = model.GraduationYear
                     };
                 }
 
                 user.AlumniProfile.DateOfBirth = model.DateOfBirth;
-                user.AlumniProfile.GraduationYear =
-                    model.GraduationYear;
 
                 user.AlumniProfile.Bio =
                     string.IsNullOrWhiteSpace(model.Bio)
@@ -237,7 +283,25 @@ namespace AlumniJobConnect.Controllers
 
                 user.AlumniProfile.ProfileUpdatedAt = DateTime.Now;
 
-                await _context.SaveChangesAsync();
+                if (existingProfile != null && existingProfile.GraduationYear != model.GraduationYear)
+                {
+                    await using var transaction = await _context.Database.BeginTransactionAsync();
+
+                    await _context.SaveChangesAsync();
+                    await _context.Database.ExecuteSqlInterpolatedAsync($"""
+                        UPDATE dbo.AlumniProfiles
+                        SET GraduationYear = {model.GraduationYear}
+                        WHERE UserId = {userId.Value}
+                          AND GraduationConfirmedAtUtc IS NULL
+                          AND IsGraduationVerified = 0
+                        """);
+
+                    await transaction.CommitAsync();
+                }
+                else
+                {
+                    await _context.SaveChangesAsync();
+                }
             }
             catch
             {
@@ -330,9 +394,15 @@ namespace AlumniJobConnect.Controllers
             }
 
             // View chỉ hiện nút sửa khi người xem là chủ hồ sơ.
-            ViewBag.IsOwner =
-                GetCurrentUserId() == profile.UserId &&
+            var isOwner = GetCurrentUserId() == profile.UserId &&
                 User.IsInRole("Alumni");
+
+            ViewBag.IsOwner = isOwner;
+
+            if (isOwner)
+            {
+                ViewData["GraduationState"] = await GetGraduationStateAsync(profile.UserId);
+            }
 
             return View(profile);
         }
@@ -403,6 +473,19 @@ namespace AlumniJobConnect.Controllers
             return PhysicalFile(
                 path,
                 extension == ".png" ? "image/png" : "image/jpeg");
+        }
+
+        private Task<int> GetGraduationStateAsync(int userId)
+        {
+            return _context.Database.SqlQuery<int>($"""
+                SELECT CASE
+                    WHEN IsGraduationVerified = 1 OR GraduationConfirmedAtUtc IS NOT NULL
+                        THEN 2
+                    ELSE 1
+                END AS [Value]
+                FROM dbo.AlumniProfiles
+                WHERE UserId = {userId}
+                """).SingleOrDefaultAsync();
         }
 
         // Kiểm tra tài khoản người xem còn hoạt động.

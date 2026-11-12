@@ -1,0 +1,565 @@
+﻿@using System.Linq
+@model System.Collections.Generic.IReadOnlyList<AlumniJobConnect.Models.Company>
+
+@{
+    Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "Danh sách doanh nghiệp";
+
+    var totalCompanies = Model.Count;
+    var allPosts = Model.Sum(c => c.JobPosts.Count);
+    var allApproved = Model.Sum(c => c.JobPosts.Count(j => j.ApprovalStatus == "Approved"));
+    var noPostCount = Model.Count(c => c.JobPosts.Count == 0);
+
+    var industries = Model
+        .Where(c => !string.IsNullOrWhiteSpace(c.Industry))
+        .Select(c => c.Industry!.Trim())
+        .Distinct()
+        .OrderBy(i => i)
+        .ToList();
+
+    // Bảng màu avatar xoay vòng theo mã doanh nghiệp
+    var avatarPalette = new[]
+    {
+        "linear-gradient(135deg,#4f8cff,#6f5bff)",
+        "linear-gradient(135deg,#16c79a,#0ea5a4)",
+        "linear-gradient(135deg,#ff9a5a,#ff5f6d)",
+        "linear-gradient(135deg,#a855f7,#ec4899)",
+        "linear-gradient(135deg,#f59e0b,#f97316)",
+        "linear-gradient(135deg,#0ea5e9,#2563eb)"
+    };
+}
+
+<style>
+    .cp-page {
+        --cp-radius: 1.1rem;
+        --cp-border: #e8ebf2;
+    }
+
+    /* ===== Thẻ thống kê ===== */
+    .cp-stat {
+        border: 1px solid var(--cp-border);
+        border-radius: var(--cp-radius);
+        transition: transform .18s ease, box-shadow .18s ease;
+        overflow: hidden;
+        position: relative;
+    }
+
+        .cp-stat::after {
+            content: "";
+            position: absolute;
+            right: -18px;
+            top: -18px;
+            width: 86px;
+            height: 86px;
+            border-radius: 50%;
+            background: currentColor;
+            opacity: .07;
+        }
+
+        .cp-stat:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 .75rem 1.5rem rgba(31,45,61,.09) !important;
+        }
+
+        .cp-stat .cp-bar {
+            width: 6px;
+            height: 46px;
+            border-radius: 99px;
+            display: inline-block;
+            flex-shrink: 0;
+        }
+
+        .cp-stat .cp-num {
+            font-size: 1.65rem;
+            line-height: 1.1;
+            font-weight: 700;
+            color: #1f2d3d;
+        }
+
+    /* ===== Khung chính ===== */
+    .cp-main {
+        border: 1px solid var(--cp-border);
+        border-radius: var(--cp-radius);
+        overflow: hidden;
+    }
+
+    .cp-head {
+        padding: 1.5rem 1.5rem 1.25rem;
+        background: linear-gradient(135deg, #f4f7ff 0%, #ffffff 70%);
+        border-bottom: 1px solid var(--cp-border);
+    }
+
+    .cp-add-btn {
+        border: 0;
+        border-radius: .75rem;
+        padding: .65rem 1.4rem;
+        font-weight: 600;
+        background: linear-gradient(135deg, #3b82f6, #4f46e5);
+        box-shadow: 0 .4rem 1rem rgba(79,70,229,.28);
+        transition: transform .15s ease, box-shadow .15s ease;
+    }
+
+        .cp-add-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 .6rem 1.2rem rgba(79,70,229,.35);
+        }
+
+    /* ===== Thanh công cụ ===== */
+    .cp-toolbar {
+        padding: 1.1rem 1.5rem;
+        border-bottom: 1px solid var(--cp-border);
+        background: #fff;
+    }
+
+        .cp-toolbar .input-group-text,
+        .cp-toolbar .form-control,
+        .cp-toolbar .form-select {
+            border-color: #dfe4ee;
+            background-color: #f8f9fc;
+            height: 44px;
+        }
+
+        .cp-toolbar .input-group-text {
+            border-radius: .75rem 0 0 .75rem;
+        }
+
+        .cp-toolbar .form-control {
+            border-radius: .75rem;
+        }
+
+        .cp-toolbar .form-select, .cp-toolbar .btn {
+            border-radius: .75rem;
+        }
+
+            .cp-toolbar .form-control:focus,
+            .cp-toolbar .form-select:focus {
+                background: #fff;
+                border-color: #86b7fe;
+                box-shadow: 0 0 0 .2rem rgba(13,110,253,.12);
+            }
+
+    /* ===== Bảng ===== */
+    .cp-table-wrap {
+        max-height: 640px;
+        overflow: auto;
+    }
+
+    .cp-table {
+        margin: 0;
+    }
+
+        .cp-table thead th {
+            position: sticky;
+            top: 0;
+            z-index: 1;
+            background: #f8f9fc;
+            font-size: .72rem;
+            letter-spacing: .06em;
+            text-transform: uppercase;
+            color: #7b8794;
+            font-weight: 700;
+            border-bottom: 1px solid var(--cp-border);
+            padding: .85rem 1rem;
+            white-space: nowrap;
+        }
+
+        .cp-table tbody td {
+            padding: 1rem;
+            border-color: #f0f2f7;
+        }
+
+        .cp-table tbody tr {
+            transition: background-color .12s ease;
+        }
+
+            .cp-table tbody tr:hover {
+                background-color: #f6f9ff;
+            }
+
+    .cp-avatar {
+        width: 44px;
+        height: 44px;
+        border-radius: .85rem;
+        color: #fff;
+        font-weight: 700;
+        font-size: 1.05rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        box-shadow: 0 .3rem .7rem rgba(0,0,0,.12);
+    }
+
+    .cp-name {
+        color: #1f2d3d;
+        font-weight: 600;
+    }
+
+    .cp-pill {
+        border-radius: 999px;
+        padding: .4rem .85rem;
+        font-weight: 600;
+        font-size: .78rem;
+    }
+
+    .cp-count {
+        min-width: 38px;
+        display: inline-block;
+        padding: .3rem .6rem;
+        border-radius: .6rem;
+        background: #f1f4f9;
+        font-weight: 700;
+        color: #3a4a5c;
+    }
+
+    /* ===== Nút thao tác ===== */
+    .cp-act {
+        padding: .38rem .85rem;
+        border-radius: .65rem;
+        font-weight: 500;
+    }
+
+    .cp-lock {
+        display: inline-flex;
+        align-items: center;
+        gap: .35rem;
+        padding: .4rem .8rem;
+        border-radius: 999px;
+        background: #f6f7fa;
+        border: 1px dashed #d5dae4;
+        color: #7b8794;
+        font-size: .78rem;
+        white-space: nowrap;
+    }
+
+    .cp-footer {
+        padding: .85rem 1.5rem;
+        border-top: 1px solid var(--cp-border);
+        background: #fafbfd;
+    }
+</style>
+
+<div class="container-fluid py-4 cp-page">
+
+    @* ===== Thông báo ===== *@
+    @if (TempData["CompanySuccess"] is string successMessage)
+    {
+        <div class="alert alert-success alert-dismissible fade show border-0 shadow-sm" role="status">
+            @successMessage
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Đóng"></button>
+        </div>
+    }
+
+    @if (TempData["CompanyError"] is string errorMessage)
+    {
+        <div class="alert alert-warning alert-dismissible fade show border-0 shadow-sm" role="alert">
+            @errorMessage
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Đóng"></button>
+        </div>
+    }
+
+    @* ===== Thống kê nhanh ===== *@
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-xl-3">
+            <div class="card cp-stat shadow-sm h-100 text-primary">
+                <div class="card-body d-flex align-items-center gap-3">
+                    <span class="cp-bar" style="background:linear-gradient(135deg,#4f8cff,#6f5bff)"></span>
+                    <div>
+                        <div class="text-muted small">Doanh nghiệp</div>
+                        <div class="cp-num">@totalCompanies</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-xl-3">
+            <div class="card cp-stat shadow-sm h-100 text-info">
+                <div class="card-body d-flex align-items-center gap-3">
+                    <span class="cp-bar" style="background:linear-gradient(135deg,#0ea5e9,#2563eb)"></span>
+                    <div>
+                        <div class="text-muted small">Tổng số tin</div>
+                        <div class="cp-num">@allPosts</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-xl-3">
+            <div class="card cp-stat shadow-sm h-100 text-success">
+                <div class="card-body d-flex align-items-center gap-3">
+                    <span class="cp-bar" style="background:linear-gradient(135deg,#16c79a,#0ea5a4)"></span>
+                    <div>
+                        <div class="text-muted small">Tin đã duyệt</div>
+                        <div class="cp-num">@allApproved</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-xl-3">
+            <div class="card cp-stat shadow-sm h-100 text-warning">
+                <div class="card-body d-flex align-items-center gap-3">
+                    <span class="cp-bar" style="background:linear-gradient(135deg,#f59e0b,#f97316)"></span>
+                    <div>
+                        <div class="text-muted small">Chưa đăng tin</div>
+                        <div class="cp-num">@noPostCount</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card cp-main shadow-sm">
+
+        @* ===== Tiêu đề + nút thêm ===== *@
+        <div class="cp-head d-flex flex-wrap justify-content-between align-items-center gap-3">
+            <div>
+                <h1 class="h4 fw-bold mb-1">Danh sách doanh nghiệp</h1>
+                <p class="text-muted mb-0">Xem hồ sơ và số tin tuyển dụng của từng doanh nghiệp.</p>
+            </div>
+
+            <a class="btn btn-primary cp-add-btn"
+               href="@Url.RouteUrl("AdminCreateCompany")">
+                + Thêm doanh nghiệp
+            </a>
+        </div>
+
+        @* ===== Thanh tìm kiếm + bộ lọc ===== *@
+        <div class="cp-toolbar">
+            <div class="row g-2">
+                <div class="col-12 col-xl">
+                    <div class="input-group">
+
+                        <input type="search"
+                               id="companySearch"
+                               class="form-control"
+                               placeholder="Tìm theo tên doanh nghiệp hoặc ngành nghề..."
+                               autocomplete="off" />
+                    </div>
+                </div>
+                <div class="col-6 col-md-4 col-xl-2">
+                    <select id="industryFilter" class="form-select" aria-label="Lọc theo ngành nghề">
+                        <option value="">Mọi ngành nghề</option>
+                        @foreach (var industryOption in industries)
+                        {
+                            <option value="@industryOption">@industryOption</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-6 col-md-4 col-xl-2">
+                    <select id="postFilter" class="form-select" aria-label="Lọc theo tin tuyển dụng">
+                        <option value="">Mọi doanh nghiệp</option>
+                        <option value="has">Đã có tin</option>
+                        <option value="none">Chưa có tin</option>
+                    </select>
+                </div>
+                <div class="col-6 col-md-4 col-xl-2">
+                    <select id="sortSelect" class="form-select" aria-label="Sắp xếp">
+                        <option value="default">Sắp xếp mặc định</option>
+                        <option value="name-asc">Tên A → Z</option>
+                        <option value="name-desc">Tên Z → A</option>
+                        <option value="posts-desc">Nhiều tin nhất</option>
+                        <option value="approved-desc">Nhiều tin đã duyệt nhất</option>
+                    </select>
+                </div>
+                <div class="col-6 col-xl-auto">
+                    <button type="button" id="resetFilters" class="btn btn-outline-secondary w-100">
+                        Đặt lại
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        @if (Model.Count == 0)
+        {
+            <div class="text-center py-5">
+                <p class="text-muted mb-3">Chưa có doanh nghiệp nào.</p>
+                <a class="btn btn-primary cp-add-btn" href="@Url.RouteUrl("AdminCreateCompany")">
+                    + Thêm doanh nghiệp đầu tiên
+                </a>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive cp-table-wrap">
+                <table class="table table-hover align-middle cp-table">
+                    <thead>
+                        <tr>
+                            <th scope="col">Doanh nghiệp</th>
+                            <th scope="col">Ngành nghề</th>
+                            <th scope="col" class="text-center">Tổng số tin</th>
+                            <th scope="col" class="text-center">Tin đã duyệt</th>
+                            <th scope="col" class="text-end">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody id="companyTableBody">
+                        @foreach (var company in Model)
+                        {
+                            var totalPosts = company.JobPosts.Count;
+                            var approvedCount = company.JobPosts.Count(job => job.ApprovalStatus == "Approved");
+                            var industry = string.IsNullOrWhiteSpace(company.Industry) ? "" : company.Industry.Trim();
+                            var initial = string.IsNullOrWhiteSpace(company.CompanyName)
+                            ? "?"
+                            : company.CompanyName.Trim().Substring(0, 1).ToUpperInvariant();
+                            var avatarBg = avatarPalette[Math.Abs(company.CompanyId.GetHashCode()) % avatarPalette.Length];
+
+                            <tr data-industry="@industry"
+                                data-posts="@(totalPosts > 0 ? "has" : "none")"
+                                data-total="@totalPosts"
+                                data-approved="@approvedCount"
+                                data-name="@company.CompanyName"
+                                data-search="@company.CompanyName @industry">
+                                <td>
+                                    <div class="d-flex align-items-center gap-3">
+                                        <span class="cp-avatar" style="background:@avatarBg">@initial</span>
+                                        <span class="cp-name">@company.CompanyName</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    @if (industry.Length == 0)
+                                    {
+                                        <span class="text-muted fst-italic">Chưa cập nhật</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge cp-pill bg-primary-subtle text-primary">@industry</span>
+                                    }
+                                </td>
+                                <td class="text-center"><span class="cp-count">@totalPosts</span></td>
+                                <td class="text-center">
+                                    @if (approvedCount > 0)
+                                    {
+                                        <span class="cp-count bg-success-subtle text-success">@approvedCount</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="cp-count text-muted">0</span>
+                                    }
+                                </td>
+                                <td>
+                                    <div class="d-flex flex-wrap justify-content-end align-items-center gap-2">
+                                        <a class="btn btn-outline-primary btn-sm cp-act text-nowrap"
+                                           href="@Url.Action("Details", "CompanyProfile", new { area = "", id = company.CompanyId })"
+                                           title="Xem hồ sơ" aria-label="Xem hồ sơ @company.CompanyName">Xem hồ sơ</a>
+
+                                        <a class="btn btn-outline-secondary btn-sm cp-act text-nowrap"
+                                           href="@Url.RouteUrl("AdminEditCompany", new { id = company.CompanyId })"
+                                           title="Sửa" aria-label="Sửa @company.CompanyName">Sửa</a>
+
+                                        @if (totalPosts == 0)
+                                        {
+                                            <form method="post"
+                                                  action="@Url.RouteUrl("AdminDeleteCompany", new { id = company.CompanyId })"
+                                                  class="m-0"
+                                                  onsubmit="return confirm('Bạn có chắc muốn xóa hồ sơ doanh nghiệp này?');">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit" class="btn btn-outline-danger btn-sm cp-act text-nowrap"
+                                                        title="Xóa" aria-label="Xóa @company.CompanyName">
+                                                    Xóa
+                                                </button>
+                                            </form>
+                                        }
+                                        else
+                                        {
+                                            <span class="cp-lock" title="Không thể xóa vì doanh nghiệp đã có tin tuyển dụng">
+                                                Không thể xóa · Đã có tin
+                                            </span>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+
+                        <tr id="noResultRow" class="d-none">
+                            <td colspan="5" class="text-center text-muted py-5">
+                                Không tìm thấy doanh nghiệp phù hợp.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="cp-footer text-muted small">
+                Hiển thị <strong id="visibleCount">@Model.Count</strong> / @Model.Count doanh nghiệp
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            const searchInput    = document.getElementById('companySearch');
+            const industryFilter = document.getElementById('industryFilter');
+            const postFilter     = document.getElementById('postFilter');
+            const sortSelect     = document.getElementById('sortSelect');
+            const resetBtn       = document.getElementById('resetFilters');
+            const tbody          = document.getElementById('companyTableBody');
+            const visibleCount   = document.getElementById('visibleCount');
+            const noResultRow    = document.getElementById('noResultRow');
+
+            if (!tbody) return;
+
+            // Bỏ dấu tiếng Việt để tìm kiếm không phân biệt dấu
+            const normalize = (text) => (text || '')
+                .toString()
+                .toLowerCase()
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .replace(/đ/g, 'd')
+                .trim();
+
+            const rows = Array.from(tbody.querySelectorAll('tr[data-search]'));
+            rows.forEach((r, i) => {
+                r.dataset.searchNorm = normalize(r.dataset.search);
+                r.dataset.order = i; // thứ tự ban đầu
+            });
+
+            function applySort() {
+                const mode = sortSelect.value;
+                const sorted = rows.slice().sort((a, b) => {
+                    switch (mode) {
+                        case 'name-asc':      return normalize(a.dataset.name).localeCompare(normalize(b.dataset.name), 'vi');
+                        case 'name-desc':     return normalize(b.dataset.name).localeCompare(normalize(a.dataset.name), 'vi');
+                        case 'posts-desc':    return b.dataset.total - a.dataset.total;
+                        case 'approved-desc': return b.dataset.approved - a.dataset.approved;
+                        default:              return a.dataset.order - b.dataset.order;
+                    }
+                });
+                sorted.forEach(r => tbody.insertBefore(r, noResultRow));
+            }
+
+            function applyFilters() {
+                const keyword  = normalize(searchInput.value);
+                const industry = industryFilter.value;
+                const posts    = postFilter.value;
+                let shown = 0;
+
+                rows.forEach(row => {
+                    const match =
+                        (!keyword  || row.dataset.searchNorm.includes(keyword)) &&
+                        (!industry || row.dataset.industry === industry) &&
+                        (!posts    || row.dataset.posts === posts);
+
+                    row.classList.toggle('d-none', !match);
+                    if (match) shown++;
+                });
+
+                if (visibleCount) visibleCount.textContent = shown;
+                if (noResultRow)  noResultRow.classList.toggle('d-none', shown !== 0);
+            }
+
+            searchInput.addEventListener('input', applyFilters);
+            industryFilter.addEventListener('change', applyFilters);
+            postFilter.addEventListener('change', applyFilters);
+            sortSelect.addEventListener('change', applySort);
+
+            resetBtn.addEventListener('click', function () {
+                searchInput.value = '';
+                industryFilter.value = '';
+                postFilter.value = '';
+                sortSelect.value = 'default';
+                applySort();
+                applyFilters();
+                searchInput.focus();
+            });
+        })();
+    </script>
+}

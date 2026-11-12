@@ -1,0 +1,99 @@
+﻿@model AlumniJobConnect.Areas.Admin.Controllers.UsersController.CreateUserInput
+
+@{
+    ViewData["Title"] = "Thêm tài khoản";
+    Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid py-4">
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-4">
+            <h1 class="h4 fw-bold mb-2">Thêm tài khoản</h1>
+            <p class="text-muted mb-4">
+                Nhập thông tin đăng nhập và chọn vai trò cho tài khoản mới.
+            </p>
+
+            <form method="post" action="@Url.RouteUrl("AdminCreateUserSubmit")">
+                @Html.AntiForgeryToken()
+                @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label for="FullName" class="form-label">Họ và tên</label>
+                        @Html.TextBoxFor(m => m.FullName,
+                        new { @class = "form-control", required = "required" })
+                        @Html.ValidationMessageFor(m => m.FullName, "",
+                                                new { @class = "text-danger" })
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="Email" class="form-label">Email</label>
+                        @Html.TextBoxFor(m => m.Email,
+                                                new { @class = "form-control", type = "email", required = "required" })
+                        @Html.ValidationMessageFor(m => m.Email, "",
+                                                new { @class = "text-danger" })
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="Password" class="form-label">Mật khẩu</label>
+                        <input id="Password" name="Password" type="password"
+                               class="form-control" autocomplete="new-password"
+                               minlength="8" maxlength="128" required>
+                        @Html.ValidationMessageFor(m => m.Password, "",
+                                                new { @class = "text-danger" })
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="ConfirmPassword" class="form-label">Nhập lại mật khẩu</label>
+                        <input id="ConfirmPassword" name="ConfirmPassword" type="password"
+                               class="form-control" autocomplete="new-password"
+                               maxlength="128" required>
+                        @Html.ValidationMessageFor(m => m.ConfirmPassword, "",
+                                                new { @class = "text-danger" })
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="Phone" class="form-label">Số điện thoại</label>
+                        @Html.TextBoxFor(m => m.Phone,
+                                                new { @class = "form-control", type = "tel" })
+                        @Html.ValidationMessageFor(m => m.Phone, "",
+                                                new { @class = "text-danger" })
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="RoleName" class="form-label">Vai trò</label>
+                        <select id="RoleName" name="RoleName" class="form-select">
+                            <option value="Alumni" selected="@(Model.RoleName == "Alumni")">
+                                Sinh viên / Cựu sinh viên
+                            </option>
+                            <option value="Employer" selected="@(Model.RoleName == "Employer")">
+                                Doanh nghiệp
+                            </option>
+                            <option value="Admin" selected="@(Model.RoleName == "Admin")">
+                                Quản trị viên
+                            </option>
+                        </select>
+                        @Html.ValidationMessageFor(m => m.RoleName, "",
+                                                new { @class = "text-danger" })
+                    </div>
+
+                    <div class="col-12">
+                        <label for="CompanyName" class="form-label">Tên doanh nghiệp</label>
+                        @Html.TextBoxFor(m => m.CompanyName,
+                                                new { @class = "form-control" })
+                        <div class="form-text">Chỉ cần điền khi chọn vai trò Doanh nghiệp.</div>
+                        @Html.ValidationMessageFor(m => m.CompanyName, "",
+                                                new { @class = "text-danger" })
+                    </div>
+                </div>
+
+                <div class="d-flex flex-wrap gap-2 mt-4">
+                    <button type="submit" class="btn btn-primary">Tạo tài khoản</button>
+                    <a class="btn btn-outline-secondary" href="@Url.RouteUrl("AdminUsers")">
+                        Về danh sách
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

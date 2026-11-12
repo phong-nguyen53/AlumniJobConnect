@@ -24,9 +24,13 @@
                                 và mang đến những cơ hội việc làm phù hợp với năng lực của bạn.
                             </p>
 
-                            <a href="/Jobs" class="btn btn-primary py-md-3 px-md-5 me-3 animated slideInLeft">
-                                Tìm Việc Làm
-                            </a>
+                            @if (User.IsInRole("Alumni"))
+                            {
+                                <a href="@Url.RouteUrl("MentorDirectory")"
+                                   class="btn btn-light py-md-3 px-md-4 m-1">
+                                    Tìm cố vấn
+                                </a>
+                            }
 
                             <a href="/Companies" class="btn btn-secondary py-md-3 px-md-5 animated slideInRight">
                                 Khám Phá Doanh Nghiệp

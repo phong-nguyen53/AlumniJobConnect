@@ -1,0 +1,80 @@
+﻿@model AlumniJobConnect.Controllers.EmployerEventsController.CreateEventInput
+@using System.Security.Claims
+@{
+    ViewData["Title"] = "Đăng sự kiện doanh nghiệp";
+    var employerUserId =
+    User.IsInRole("Employer") &&
+    int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId)
+        ? (int?)userId
+        : null;
+}
+
+<section class="container py-5">
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-4">
+            <h1 class="h3 mb-2">Đăng sự kiện doanh nghiệp</h1>
+            <p class="text-muted mb-4">
+                Nhập thông tin hội thảo, ngày hội tuyển dụng hoặc hoạt động của công ty.
+                Các mốc thời gian nhập theo giờ Việt Nam.
+            </p>
+
+            @if (TempData["EventSuccess"] is string success)
+            {
+                <div class="alert alert-success" role="status">@success</div>
+            }
+
+            <form method="post" action="@Url.Content("~/EmployerEvents/Create")">
+                @Html.AntiForgeryToken()
+                @Html.ValidationSummary(false, "", new { @class = "text-danger" })
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label for="EventName" class="form-label">Tên sự kiện</label>
+                        @Html.TextBoxFor(m => m.EventName,
+                        new { @class = "form-control", maxlength = "200", required = "required" })
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="Location" class="form-label">Địa điểm</label>
+                        @Html.TextBoxFor(m => m.Location,
+                                                new { @class = "form-control", maxlength = "300" })
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="StartAt" class="form-label">Bắt đầu</label>
+                        @Html.TextBoxFor(m => m.StartAt, "{0:yyyy-MM-ddTHH:mm}",
+                                                new { @class = "form-control", type = "datetime-local", required = "required" })
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="EndAt" class="form-label">Kết thúc</label>
+                        @Html.TextBoxFor(m => m.EndAt, "{0:yyyy-MM-ddTHH:mm}",
+                                                new { @class = "form-control", type = "datetime-local" })
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="RegistrationDeadline" class="form-label">Hạn đăng ký</label>
+                        @Html.TextBoxFor(m => m.RegistrationDeadline, "{0:yyyy-MM-ddTHH:mm}",
+                                                new { @class = "form-control", type = "datetime-local" })
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="Capacity" class="form-label">Số chỗ</label>
+                        @Html.TextBoxFor(m => m.Capacity,
+                                                new { @class = "form-control", type = "number", min = "1" })
+                    </div>
+
+                    <div class="col-12">
+                        <label for="Description" class="form-label">Nội dung sự kiện</label>
+                        @Html.TextAreaFor(m => m.Description,
+                                                new { @class = "form-control", rows = "5" })
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary mt-4">
+                    Đăng sự kiện
+                </button>
+            </form>
+        </div>
+    </div>
+</section>
