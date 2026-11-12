@@ -1,10 +1,16 @@
-﻿@model AlumniJobConnect.Controllers.ProfileController.ProfileInput
+﻿@using Microsoft.AspNetCore.Mvc.Rendering
+@model AlumniJobConnect.Controllers.ProfileController.ProfileInput
 
 @{
     ViewData["Title"] = "Hồ sơ cá nhân";
     var hasAvatar = !string.IsNullOrWhiteSpace(Model.AvatarUrl);
     var graduationState = ViewData["GraduationState"] is int state ? state : 0;
     var isGraduate = graduationState == 2;
+    var work = ViewData["WorkMentor"] as AlumniJobConnect.Controllers.ProfileController.WorkMentorInput
+        ?? new AlumniJobConnect.Controllers.ProfileController.WorkMentorInput();
+    var companies = ViewData["WorkCompanyOptions"]
+        as System.Collections.Generic.IEnumerable<SelectListItem>
+        ?? System.Array.Empty<SelectListItem>();
     var currentYear = DateTime.UtcNow.AddHours(7).Year;
     var confirmationYear = Model.GraduationYear.HasValue
         && Model.GraduationYear.Value <= currentYear
@@ -14,6 +20,13 @@
 
 <section class="pf-page">
     <div class="container">
+        @if (!ViewData.ModelState.IsValid)
+        {
+            <div class="alert alert-danger" role="alert">
+                <strong>Chưa lưu được thay đổi. Vui lòng kiểm tra:</strong>
+                @Html.ValidationSummary(false, "", new { @class = "mb-0" })
+            </div>
+        }
         <div class="pf-heading">
             <div>
                 <span class="pf-eyebrow">KHÔNG GIAN CÁ NHÂN</span>
@@ -264,6 +277,96 @@
                             </button>
                         </div>
                     </form>
+                    @if (TempData["WorkMentorSuccess"] is string workSuccess)
+                    {
+                        <div class="alert alert-success mt-3" role="status">@workSuccess</div>
+                    }
+
+                    @if (isGraduate)
+                    {
+                        <section id="workMentorSection" class="pf-graduation mt-4" aria-labelledby="workMentorHeading" style="scroll-margin-top: 140px;">
+                            <h2 id="workMentorHeading" class="h5 fw-bold mb-2">Công việc và tư vấn</h2>
+                            <p class="pf-help mb-3">
+                                Công ty, vị trí và thông tin tư vấn sẽ hiển thị trên thẻ cựu sinh viên.
+                            </p>
+                            <form method="post" action="@Url.RouteUrl("SaveWorkMentor")">
+                                @Html.AntiForgeryToken()
+                                @if (ViewData["WorkMentorFailed"] is true)
+                                {
+                                    <div class="alert alert-danger" role="alert">
+                                        <strong>Chưa lưu được công việc và tư vấn:</strong>
+
+                                        @foreach (var entry in ViewData.ModelState)
+                                        {
+                                            foreach (var error in entry.Value.Errors)
+                                            {
+                                                <p style="display:block !important; color:#842029; margin:8px 0;">
+                                                    <strong>@entry.Key:</strong>
+                                                    @(string.IsNullOrWhiteSpace(error.ErrorMessage)
+                                                                                        ? "Giá trị gửi lên không hợp lệ."
+                                                                                        : error.ErrorMessage)
+                                </p>
+                                                                }
+                                        }
+                                    </div>
+                                }
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label for="workCompany" class="form-label">Công ty đang làm</label>
+                                        @Html.DropDownList("Work.CompanyId", companies, "Chọn doanh nghiệp", new {
+                                        id = "workCompany", @class = "form-control"
+                                                                        })
+                                    @Html.ValidationMessage("Work.CompanyId", "", new { @class = "text-danger small" })
+                                    <small class="pf-help">Chọn doanh nghiệp đã đăng ký trên hệ thống.</small>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="workTitle" class="form-label">Vị trí công việc</label>
+                                    <select id="workPosition" name="jobPostId" class="form-control"
+                                            data-url="@Url.RouteUrl("ProfileCompanyJobs")">
+                                        <option value="0">Khác — nhập vị trí thực tế</option>
+                                    </select>
+                                    @Html.ValidationMessage("jobPostId", "", new { @class = "text-danger small" })
+                                    <div id="workCustomTitle" class="mt-2">
+                                        @Html.TextBox("Work.JobTitle", work.JobTitle, new {
+                                                                                id = "workTitle", @class = "form-control", maxlength = 100,
+                                                                                placeholder = "Nhập vị trí công việc thực tế"
+                                                                                })
+                                    </div>
+                                    @Html.ValidationMessage("Work.JobTitle", "", new { @class = "text-danger small" })
+                                    <small id="companyJobHelp" class="pf-help" role="status" aria-live="polite">
+                                        Chọn công ty để xem ngành nghề và vị trí công ty đã đăng tuyển.
+                                    </small>
+                                </div>
+                                <div class="col-12">
+                                    <label for="workExpertise" class="form-label">Chủ đề có thể tư vấn</label>
+                                    @Html.TextBox("Work.Expertise", work.Expertise, new {
+                                                                        id = "workExpertise", @class = "form-control", maxlength = 150,
+                                                                        placeholder = "Ví dụ góp ý CV, phỏng vấn thực tập .NET"
+                                                                        })
+                                    @Html.ValidationMessage("Work.Expertise", "", new { @class = "text-danger small" })
+                                </div>
+                                <div class="col-12">
+                                    <label for="workIntroduction" class="form-label">Giới thiệu tư vấn</label>
+                                    @Html.TextArea("Work.Introduction", work.Introduction, 3, 0, new {
+                                                                        id = "workIntroduction", @class = "form-control", maxlength = 500
+                                                                        })
+                                    @Html.ValidationMessage("Work.Introduction", "", new { @class = "text-danger small" })
+                                </div>
+                                <div class="col-12">
+                                    <div class="d-flex align-items-center gap-2">
+                                        @Html.CheckBox("Work.IsAvailable", work.IsAvailable, new { id = "workAvailable" })
+                                        <label for="workAvailable" class="form-label mb-0">Sẵn sàng nhận tư vấn</label>
+                                    </div>
+                                    <p class="pf-help">
+                                        Khi bật, hãy điền công ty, vị trí và chủ đề bạn có thể hỗ trợ.
+                                    </p>
+                                </div>
+                            </div>
+                            <button type="submit" class="pf-save mt-3">Lưu công việc và tư vấn</button>
+                        </form>
+                    </section>
+                                        }
+
                     @if (TempData["GraduationSuccess"] is string graduationSuccess)
                     {
                         <div class="alert alert-success mt-3" role="status">
@@ -602,11 +705,6 @@
             padding: 30px 0;
         }
 
-        .pf-graduation {
-            padding-top: 24px;
-            border-top: 1px solid #edf2ef;
-        }
-
         .pf-form-card {
             padding: 22px;
         }
@@ -691,3 +789,74 @@
         });
     })();
 </script>
+
+<script>
+    (() => {
+        const company = document.getElementById("workCompany");
+        const positions = document.getElementById("workPosition");
+        const title = document.getElementById("workTitle");
+        const custom = document.getElementById("workCustomTitle");
+        const help = document.getElementById("companyJobHelp");
+        if (!company || !positions || !title) return;
+        let request;
+        let generation = 0;
+        function toggle() {
+            const other = positions.value === "0";
+            custom.hidden = !other;
+            title.disabled = !other;
+        }
+        async function load(initial) {
+            const current = ++generation;
+            if (request) request.abort();
+            request = new AbortController();
+            const savedTitle = initial ? title.value.trim() : "";
+            positions.replaceChildren(new Option("Khác — nhập vị trí thực tế", "0"));
+            title.disabled = false;
+            if (!initial) title.value = "";
+            toggle();
+            if (!company.value) {
+                help.textContent = "Chọn công ty để xem ngành nghề và vị trí đã đăng tuyển.";
+                return;
+            }
+            positions.disabled = true;
+            help.textContent = "Đang tải ngành nghề và vị trí…";
+            try {
+                const url = new URL(positions.dataset.url, window.location.origin);
+                url.searchParams.set("companyId", company.value);
+                const response = await fetch(url, { signal: request.signal, headers: { Accept: "application/json" } });
+                if (!response.ok) throw new Error("load");
+                const data = await response.json();
+                if (current !== generation) return;
+                const seen = new Set();
+                for (const job of data.jobs) {
+                    const text = job.title.trim();
+                    const key = text.toLocaleLowerCase("vi");
+                    if (seen.has(key)) continue;
+                    seen.add(key);
+                    const option = new Option(text, String(job.id));
+                    positions.add(option);
+                    if (savedTitle && text === savedTitle) positions.value = option.value;
+                }
+                const industry = data.industry ? "Ngành nghề: " + data.industry + ". " : "Ngành nghề chưa cập nhật. ";
+                help.textContent = industry + (seen.size
+                    ? "Vị trí gợi ý lấy từ tin đã duyệt và công khai, gồm cả tin hết hạn."
+                    : "Công ty chưa có tin phù hợp. Chọn Khác để nhập vị trí.");
+            } catch (error) {
+                if (current !== generation || error.name === "AbortError") return;
+                help.textContent = "Chưa tải được vị trí. Bạn có thể chọn Khác và nhập công việc thực tế.";
+            } finally {
+                if (current === generation) { positions.disabled = false; toggle(); }
+            }
+        }
+        positions.addEventListener("change", toggle);
+        company.addEventListener("change", () => load(false));
+        load(true);
+    })();
+</script>
+
+@if (ViewData["WorkMentorFailed"] is true)
+{
+    <script>
+        document.getElementById("workMentorSection")?.scrollIntoView({ block: "start" });
+    </script>
+}

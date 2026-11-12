@@ -1,0 +1,409 @@
+﻿@using System.Linq
+@model AlumniJobConnect.Controllers.MentorChatController.ChatPage
+
+@{
+    ViewData["Title"] = "Tin nhắn tư vấn";
+
+    var selected = Model.Conversations
+        .FirstOrDefault(x => x.ConversationId == Model.ConversationId);
+}
+
+<style>
+    .mc-page { --mc-green:#008f68; --mc-ink:#203c33; --mc-muted:#7b8d85; padding:36px 0 56px; font-family:"Segoe UI",Arial,sans-serif; }
+    .mc-page * { box-sizing:border-box; }
+    .mc-page [hidden] { display:none !important; }
+    .mc-top { display:flex; justify-content:space-between; align-items:center; gap:18px; margin-bottom:24px; }
+    .mc-eyebrow { font-size:10px; font-weight:800; letter-spacing:2px; color:var(--mc-green); }
+    .mc-top h1 { margin:7px 0; font-size:30px; font-weight:750; color:var(--mc-ink); }
+    .mc-top p { margin:0; color:var(--mc-muted); font-size:14px; }
+    .mc-back { display:inline-flex; align-items:center; gap:8px; padding:11px 16px; border:1px solid #dbe7e0; border-radius:12px; color:#456456; background:#fff; text-decoration:none; font-size:13px; white-space:nowrap; }
+    .mc-page a:hover { text-decoration:none; }
+    .chat-shell { display:grid; grid-template-columns:310px minmax(0,1fr); height:690px; overflow:hidden; background:#fff; border:1px solid #e0e9e4; border-radius:22px; box-shadow:0 14px 55px #2045360a; }
+    .chat-sidebar { display:flex; flex-direction:column; overflow:hidden; border-right:1px solid #e5ede8; background:#fff; }
+    .mc-side-head { padding:25px 20px 18px; }
+    .mc-side-title { display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; }
+    .mc-side-title h2 { font-size:19px; font-weight:750; color:var(--mc-ink); margin:0; }
+    .mc-count { font-size:11px; font-weight:700; color:var(--mc-green); background:#eaf7f0; padding:5px 9px; border-radius:8px; }
+    .mc-search { display:flex; align-items:center; gap:9px; background:#f5f8f6; border:1px solid #e8eee9; border-radius:11px; padding:10px 12px; color:#8a9b92; }
+    .mc-search input { min-width:0; width:100%; background:transparent; border:0; outline:0; font-size:13px; color:var(--mc-ink); }
+    .mc-search:focus-within { outline:2px solid #84d6b6; }
+    .mc-search input::placeholder { color:#8a9b92; }
+    .mc-people { flex:1; min-height:0; overflow-y:auto; padding:0 10px 12px; }
+    .chat-person { display:flex; align-items:center; gap:12px; margin:4px 0; padding:14px 12px; color:var(--mc-ink); text-decoration:none; border-radius:13px; border:1px solid transparent; transition:background .15s; }
+    .chat-person:hover { background:#f4f8f5; color:var(--mc-ink); }
+    .chat-person.active { background:#eaf7f0; border-color:#d5ecdf; color:var(--mc-ink); }
+    .mc-avatar { display:flex; align-items:center; justify-content:center; width:44px; height:44px; flex-shrink:0; border-radius:15px; background:#edf2ef; color:#557c69; font-size:17px; font-weight:750; }
+    .active .mc-avatar,.chat-header .mc-avatar { background:#008f68; color:white; }
+    .mc-person-body { min-width:0; flex:1; }
+    .mc-person-body strong { display:block; font-size:14px; font-weight:650; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+    .chat-preview { display:block; overflow:hidden; margin-top:5px; color:#829188; font-size:12px; white-space:nowrap; text-overflow:ellipsis; }
+    .mc-side-note { margin:0; padding:15px 22px; color:#8b9a91; font-size:11px; border-top:1px solid #edf2ef; }
+    .chat-main { display:flex; flex-direction:column; min-width:0; min-height:0; }
+    .chat-header { display:flex; align-items:center; gap:13px; padding:20px 26px; background:white; border-bottom:1px solid #e8eee9; }
+    .chat-header h1 { margin:0 0 5px; font-family:inherit; color:var(--mc-ink); font-size:17px; font-weight:700; }
+    .chat-header small { display:block; color:var(--mc-muted); font-size:12px; }
+    .mc-private { margin-left:auto; border:1px solid #e3ece6; padding:6px 10px; border-radius:20px; font-size:10px; color:#6b8577; white-space:nowrap; }
+    .chat-messages { flex:1; min-height:0; overflow-y:auto; padding:26px; background-color:#f6f9f7; background-image:radial-gradient(#dce8df 0.7px,transparent 0.7px); background-size:20px 20px; }
+    .chat-row { display:flex; margin-bottom:16px; }
+    .chat-row.mine { justify-content:flex-end; }
+    .chat-bubble { max-width:78%; padding:12px 16px 9px; background:white; border:1px solid #e6ede8; border-radius:17px 17px 17px 5px; box-shadow:0 2px 5px #1e463503; }
+    .mine .chat-bubble { color:white; background:#008f68; border-color:#008f68; border-radius:17px 17px 5px 17px; }
+    .chat-text { font-size:14px; line-height:1.65; white-space:pre-wrap; overflow-wrap:anywhere; }
+    .chat-time { display:block; margin-top:5px; font-size:10px; opacity:.65; text-align:right; }
+    .chat-compose { display:flex; align-items:flex-end; gap:12px; padding:18px 24px 8px; background:#fff; border-top:1px solid #e7eee9; }
+    .chat-compose textarea { flex:1; min-width:0; min-height:48px; max-height:150px; resize:vertical; padding:13px 16px; font:14px/1.5 "Segoe UI",Arial,sans-serif; color:#28493a; background:#f6f9f7; border:1px solid #e2ebe5; border-radius:14px; }
+    .chat-compose textarea:focus { outline:2px solid #9ddbc1; outline-offset:1px; }
+    .chat-compose button { display:flex; align-items:center; justify-content:center; gap:8px; min-height:48px; padding:12px 18px; color:white; background:#008f68; border:0; border-radius:13px; font-size:13px; font-weight:650; cursor:pointer; }
+    .chat-compose button:hover { background:#007957; }
+    .chat-compose button:disabled { opacity:.55; cursor:wait; }
+    .mc-compose-help { padding:0 26px 13px; color:#94a198; font-size:10px; display:flex; justify-content:space-between; gap:12px; }
+    .chat-status { padding:0 26px; color:#b42318; font-size:12px; background:white; }
+    .chat-status:not(:empty) { padding-top:10px; padding-bottom:10px; }
+    .chat-empty { display:flex; flex:1; flex-direction:column; align-items:center; justify-content:center; padding:32px; color:var(--mc-muted); text-align:center; background:#f6f9f7; }
+    .mc-empty-icon { display:flex; justify-content:center; align-items:center; width:78px; height:78px; border-radius:25px; background:#e4f3ea; color:#008f68; margin-bottom:24px; }
+    .chat-empty h3 { color:var(--mc-ink); font-size:22px; font-weight:700; margin:0 0 12px; }
+    .chat-empty p { max-width:300px; font-size:14px; line-height:1.8; }
+    .mc-no-results { padding:20px 12px; color:var(--mc-muted); font-size:13px; }
+    .mc-page a:focus-visible,.mc-page button:focus-visible { outline:3px solid #86d6b6; outline-offset:2px; }
+    @@media(max-width:991px) { .chat-shell { grid-template-columns:250px minmax(0,1fr); } .chat-header,.chat-messages { padding:20px; } .mc-private { display:none; } }
+    @@media(max-width:767px) { .mc-page { padding:22px 0 36px; } .mc-top { align-items:flex-start; flex-direction:column; gap:14px; } .mc-top h1 { font-size:25px; } .chat-shell { grid-template-columns:1fr; height:auto; border-radius:16px; } .chat-sidebar { max-height:250px; border-right:0; border-bottom:1px solid #e5ede8; } .mc-side-head { padding:16px 16px 8px; } .mc-side-title { margin-bottom:10px; } .mc-side-note { display:none; } .mc-people { min-height:60px; } .chat-main { height:560px; } .chat-header { padding:16px; } .chat-messages { padding:16px; } .chat-bubble { max-width:88%; } .chat-compose { padding:12px 12px 8px; gap:8px; } .chat-compose button { padding:12px; } .mc-compose-help { padding:0 14px 12px; } }
+</style>
+
+<div class="container mc-page">
+    <div class="mc-top">
+        <div>
+            <div class="mc-eyebrow">KẾT NỐI &amp; CHIA SẺ</div>
+            <h1>Tin nhắn tư vấn</h1>
+            <p>Một cuộc trò chuyện, thêm một góc nhìn về nghề nghiệp.</p>
+        </div>
+    <a href="@Url.RouteUrl("MentorDirectory")"
+       class="mc-back">
+        ← Danh sách cựu sinh viên
+    </a>
+    </div>
+
+    <div class="chat-shell">
+        <aside class="chat-sidebar">
+            <div class="mc-side-head">
+                <div class="mc-side-title">
+                    <h2>Cuộc trò chuyện</h2>
+                    <span class="mc-count">@Model.Conversations.Count</span>
+                </div>
+                <label class="mc-search">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg>
+                    <input id="conversationSearch" type="search" placeholder="Tìm người trò chuyện…" aria-label="Tìm người trò chuyện" />
+                </label>
+            </div>
+            <div class="mc-people">
+
+            @if (Model.Conversations.Count == 0)
+            {
+                <p class="text-muted px-3">
+                    Bạn chưa có cuộc trò chuyện nào.
+                </p>
+            }
+
+            @foreach (var person in Model.Conversations)
+            {
+                <a class="chat-person @(person.ConversationId == Model.ConversationId ? "active" : "")"
+                   href="@Url.RouteUrl("MentorChat", new {
+                       conversationId = person.ConversationId
+                   })">
+
+                    <span class="mc-avatar" aria-hidden="true">@(string.IsNullOrWhiteSpace(person.FullName) ? "?" : person.FullName.Trim().Substring(0, 1).ToUpperInvariant())</span>
+                    <span class="mc-person-body">
+                    <strong>@person.FullName</strong>
+
+                    <span class="chat-preview">
+                        @(string.IsNullOrWhiteSpace(person.LastMessage)
+                            ? "Bắt đầu trò chuyện"
+                            : person.LastMessage)
+                    </span>
+                    </span>
+                </a>
+            }
+            <p id="conversationNoResults" class="mc-no-results" hidden>Không tìm thấy cuộc trò chuyện.</p>
+            </div>
+            <p class="mc-side-note">Lắng nghe, chia sẻ và cùng phát triển.</p>
+        </aside>
+
+        <section class="chat-main">
+            @if (selected == null)
+            {
+                <div class="chat-empty">
+                    <div class="mc-empty-icon" aria-hidden="true">
+                        <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5H4l-2 2V11.5a9.5 9.5 0 0 1 19 0Z"/><path d="M7 10h10M7 14h6"/></svg>
+                    </div>
+                    <h3>Mở đầu một kết nối mới</h3>
+                    <p>Chọn một cuộc trò chuyện hoặc tìm cựu sinh viên để bắt đầu.</p>
+                </div>
+            }
+            else
+            {
+                <header class="chat-header">
+                    <span class="mc-avatar" aria-hidden="true">@(string.IsNullOrWhiteSpace(selected.FullName) ? "?" : selected.FullName.Trim().Substring(0, 1).ToUpperInvariant())</span>
+                    <div>
+                        <h1>@selected.FullName</h1>
+                        <small>Tư vấn công việc &amp; kinh nghiệm ứng tuyển</small>
+                    </div>
+                    <span class="mc-private">Trò chuyện riêng</span>
+                </header>
+
+                <div id="chatMessages"
+                     class="chat-messages"
+                     aria-label="Nội dung cuộc trò chuyện">
+                    <p id="chatPlaceholder" class="text-muted text-center">
+                        Đang tải tin nhắn…
+                    </p>
+                </div>
+
+                <form id="chatForm"
+                      class="chat-compose"
+                      method="post"
+                      action="@Url.RouteUrl("SendMentorChatMessage")"
+                      data-messages-url="@Url.RouteUrl("MentorChatMessages")">
+
+                    @Html.AntiForgeryToken()
+
+                    <input type="hidden"
+                           name="conversationId"
+                           value="@selected.ConversationId" />
+
+                    <textarea id="chatContent"
+                              name="content"
+                              rows="1"
+                              maxlength="2000"
+                              required
+                              aria-label="Tin nhắn"
+                              placeholder="Nhập tin nhắn…"></textarea>
+
+                    <button id="chatSend" type="submit">
+                        Gửi
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="m22 2-7 20-4-9-9-4 20-7Z"/><path d="m11 13 11-11"/></svg>
+                    </button>
+                </form>
+                <div class="mc-compose-help">
+                    <span>Enter để gửi · Shift + Enter để xuống dòng</span>
+                    <span id="chatCharCount">0 / 2.000</span>
+                </div>
+
+                <div id="chatStatus"
+                     class="chat-status"
+                     role="status"
+                     aria-live="polite"></div>
+            }
+        </section>
+    </div>
+</div>
+
+<script>
+(() => {
+    const form = document.getElementById("chatForm");
+    if (!form) return;
+
+    const box = document.getElementById("chatMessages");
+    const input = document.getElementById("chatContent");
+    const sendButton = document.getElementById("chatSend");
+    const status = document.getElementById("chatStatus");
+    const placeholder = document.getElementById("chatPlaceholder");
+    const conversationId = form.elements["conversationId"].value;
+
+    let lastId = 0;
+    let loading = false;
+    let sending = false;
+    let loadedOnce = false;
+    let stopped = false;
+
+    function appendMessage(message) {
+        if (message.messageId <= lastId) return;
+
+        const row = document.createElement("div");
+        row.className = "chat-row" + (message.isMine ? " mine" : "");
+
+        const bubble = document.createElement("div");
+        bubble.className = "chat-bubble";
+
+        const text = document.createElement("div");
+        text.className = "chat-text";
+
+        // Hiển thị như văn bản để nội dung tin nhắn không chạy thành HTML.
+        text.textContent = message.content;
+
+        const time = document.createElement("time");
+        time.className = "chat-time";
+        time.dateTime = message.sentAtUtc;
+        time.textContent = new Date(message.sentAtUtc).toLocaleString("vi-VN", {
+            hour: "2-digit",
+            minute: "2-digit",
+            day: "2-digit",
+            month: "2-digit"
+        });
+
+        bubble.append(text, time);
+        row.append(bubble);
+        box.append(row);
+
+        lastId = message.messageId;
+    }
+
+    async function loadMessages(forceScroll = false) {
+        if (loading || stopped) return;
+        loading = true;
+
+        const nearBottom =
+            box.scrollHeight - box.scrollTop - box.clientHeight < 100;
+
+        try {
+            // Mỗi lần lấy tối đa 100 tin; tiếp tục nếu còn lịch sử.
+            let messages;
+
+            do {
+                const url = new URL(
+                    form.dataset.messagesUrl,
+                    window.location.origin
+                );
+
+                url.searchParams.set("conversationId", conversationId);
+                url.searchParams.set("afterId", lastId);
+
+                const response = await fetch(url, {
+                    cache: "no-store",
+                    headers: { Accept: "application/json" }
+                });
+
+                if (!response.ok || response.redirected) {
+                    throw new Error("Không tải được tin nhắn. Kiểm tra đăng nhập và tải lại trang.");
+                }
+
+                messages = await response.json();
+
+                if (!Array.isArray(messages)) {
+                    throw new Error("Phản hồi tin nhắn không hợp lệ.");
+                }
+
+                for (const message of messages) {
+                    appendMessage(message);
+                }
+
+                if (forceScroll || nearBottom || !loadedOnce) {
+                    box.scrollTop = box.scrollHeight;
+                }
+            } while (messages.length === 100 && !stopped);
+
+            placeholder.hidden = lastId > 0;
+            placeholder.textContent = "Chưa có tin nhắn. Hãy gửi lời chào!";
+            loadedOnce = true;
+
+            if (status.dataset.source === "load") {
+                status.textContent = "";
+                status.dataset.source = "";
+            }
+        } catch (error) {
+            status.textContent = error.message;
+            status.dataset.source = "load";
+        } finally {
+            loading = false;
+        }
+    }
+
+    form.addEventListener("submit", async event => {
+        event.preventDefault();
+
+        const content = input.value.trim();
+        if (!content || sending) return;
+
+        sending = true;
+        sendButton.disabled = true;
+        status.textContent = "";
+        status.dataset.source = "send";
+
+        const data = new FormData(form);
+        data.set("content", content);
+
+        try {
+            const response = await fetch(form.action, {
+                method: "POST",
+                body: data,
+                headers: { Accept: "application/json" }
+            });
+
+            const result = await response.json().catch(() => null);
+
+            if (!response.ok || !result?.success) {
+                throw new Error(result?.error || "Chưa gửi được tin nhắn.");
+            }
+
+            // Giữ phần người dùng vừa gõ thêm trong lúc đang gửi.
+            if (input.value.trim() === content) {
+                input.value = "";
+            }
+
+            input.focus();
+            await loadMessages(true);
+        } catch (error) {
+            status.textContent =
+                error.message + " Nội dung vẫn được giữ trong ô nhập.";
+        } finally {
+            sending = false;
+            sendButton.disabled = false;
+        }
+    });
+
+    input.addEventListener("keydown", event => {
+        if (event.key === "Enter" &&
+            !event.shiftKey &&
+            !event.isComposing) {
+            event.preventDefault();
+            form.requestSubmit();
+        }
+    });
+
+    // Tự kiểm tra tin mới sau mỗi 2 giây, không tải lại trang.
+    async function poll() {
+        if (stopped) return;
+
+        if (!document.hidden) {
+            await loadMessages();
+        }
+
+        if (!stopped) {
+            window.setTimeout(poll, 2000);
+        }
+    }
+
+    window.addEventListener("pagehide", () => {
+        stopped = true;
+    });
+
+    poll();
+})();
+</script>
+<script>
+(() => {
+    const search = document.getElementById("conversationSearch");
+    const people = [...document.querySelectorAll(".mc-page .chat-person")];
+    const noResults = document.getElementById("conversationNoResults");
+    const normalize = text => text.toLocaleLowerCase("vi").normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d");
+    search?.addEventListener("input", () => {
+        const keyword = normalize(search.value.trim());
+        let visible = 0;
+        for (const person of people) {
+            person.hidden = !normalize(person.querySelector("strong").textContent).includes(keyword);
+            if (!person.hidden) visible++;
+        }
+        noResults.hidden = visible > 0 || !keyword;
+    });
+    const input = document.getElementById("chatContent");
+    const count = document.getElementById("chatCharCount");
+    if (input && count) {
+        const update = () => count.textContent = input.value.length.toLocaleString("vi-VN") + " / 2.000";
+        input.addEventListener("input", update);
+        const observer = new MutationObserver(update);
+        observer.observe(document.getElementById("chatSend"), {
+            attributes: true, attributeFilter: ["disabled"]
+        });
+        update();
+    }
+})();
+</script>

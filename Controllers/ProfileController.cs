@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 
 namespace AlumniJobConnect.Controllers
@@ -56,6 +57,286 @@ namespace AlumniJobConnect.Controllers
             [StringLength(1000,
                 ErrorMessage = "Giới thiệu bản thân tối đa 1.000 ký tự.")]
             public string? Bio { get; set; }
+        }
+
+        public sealed class WorkMentorInput
+        {
+            [Range(1, int.MaxValue, ErrorMessage = "Vui lòng chọn công ty hợp lệ.")]
+            public int? CompanyId { get; set; }
+
+            [StringLength(100, ErrorMessage = "Vị trí công việc tối đa 100 ký tự.")]
+            public string? JobTitle { get; set; }
+
+            [StringLength(150, ErrorMessage = "Chủ đề tư vấn tối đa 150 ký tự.")]
+            public string? Expertise { get; set; }
+
+            [StringLength(500, ErrorMessage = "Giới thiệu tư vấn tối đa 500 ký tự.")]
+            public string? Introduction { get; set; }
+
+            public bool IsAvailable { get; set; }
+        }
+
+        public sealed class CompanyOption
+        {
+            public int CompanyId { get; set; }
+            public string CompanyName { get; set; } = "";
+        }
+
+        // Có thể dùng cả tin hết hạn để gợi ý công việc hiện tại.
+        [HttpGet("/Profile/CompanyJobs", Name = "ProfileCompanyJobs")]
+        [Authorize(Roles = "Alumni")]
+        public async Task<IActionResult> CompanyJobs(int companyId)
+        {
+            if (!await CurrentUserIsActiveAsync()) return Forbid();
+            var company = await _context.Companies.AsNoTracking()
+                .Where(c => c.CompanyId == companyId)
+                .Select(c => new { c.Industry }).SingleOrDefaultAsync();
+            if (company == null) return NotFound();
+            var jobs = await _context.JobPosts.AsNoTracking()
+                .Where(j => j.CompanyId == companyId && j.ApprovalStatus == "Approved"
+                    && j.IsPublished && j.Title != null && j.Title.Trim() != "")
+                .OrderByDescending(j => j.CreatedAt).ThenByDescending(j => j.JobPostId)
+                .Select(j => new { id = j.JobPostId, title = j.Title })
+                .ToListAsync();
+            return Json(new { industry = company.Industry, jobs });
+        }
+
+        private async Task LoadWorkMentorAsync(int userId)
+        {
+            ViewData["WorkMentor"] = await _context.Database.SqlQuery<WorkMentorInput>($"""
+                SELECT
+                    currentJob.CompanyId,
+                    COALESCE(currentJob.JobTitle, profile.CurrentJobTitle) AS JobTitle,
+                    mentor.Expertise,
+                    mentor.Introduction,
+                    COALESCE(mentor.IsAvailable, CAST(0 AS bit)) AS IsAvailable
+                FROM dbo.AlumniProfiles AS profile
+                LEFT JOIN dbo.MentorProfiles AS mentor ON mentor.UserId = profile.UserId
+                OUTER APPLY (
+                    SELECT TOP (1) experience.CompanyId, experience.JobTitle
+                    FROM dbo.WorkExperiences AS experience
+                    WHERE experience.AlumniId = profile.AlumniId AND experience.IsCurrent = 1
+                    ORDER BY experience.StartDate DESC, experience.WorkExperienceId DESC
+                ) AS currentJob
+                WHERE profile.UserId = {userId}
+                """).SingleOrDefaultAsync() ?? new WorkMentorInput();
+
+            var work = (WorkMentorInput)ViewData["WorkMentor"]!;
+            var companies = await _context.Database.SqlQuery<CompanyOption>($"""
+                SELECT company.CompanyId, company.CompanyName
+                FROM dbo.Companies AS company
+                INNER JOIN dbo.Users AS account ON account.UserId = company.UserId
+                WHERE account.IsActive = 1 OR company.CompanyId = {work.CompanyId}
+                """)
+                .OrderBy(company => company.CompanyName)
+                .ThenBy(company => company.CompanyId)
+                .ToListAsync();
+
+            ViewData["WorkCompanyOptions"] = new SelectList(
+                companies, "CompanyId", "CompanyName", work.CompanyId);
+        }
+
+        [HttpPost("/Profile/WorkMentor", Name = "SaveWorkMentor")]
+        [Authorize(Roles = "Alumni")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SaveWorkMentor([Bind(Prefix = "Work")] WorkMentorInput input, [FromForm] int? jobPostId)
+        {
+            var userId = GetCurrentUserId();
+            if (!userId.HasValue || !await CurrentUserIsActiveAsync())
+            {
+                return Forbid();
+            }
+
+            // Mã tin phải thuộc công ty đã chọn; tên vị trí lấy lại từ SQL.
+            if (jobPostId.HasValue && jobPostId.Value != 0)
+            {
+                var title = await _context.JobPosts.AsNoTracking()
+                    .Where(j => j.JobPostId == jobPostId.Value
+                        && j.CompanyId == input.CompanyId
+                        && j.ApprovalStatus == "Approved" && j.IsPublished)
+                    .Select(j => j.Title).SingleOrDefaultAsync();
+                if (string.IsNullOrWhiteSpace(title))
+                    ModelState.AddModelError("jobPostId", "Vị trí không thuộc công ty đã chọn hoặc tin không còn hiển thị. Vui lòng chọn lại.");
+                else
+                {
+                    input.JobTitle = title.Trim();
+                    ModelState.Remove("Work.JobTitle");
+                    ModelState.SetModelValue("Work.JobTitle", new Microsoft.AspNetCore.Mvc.ModelBinding.ValueProviderResult(input.JobTitle));
+                    if (input.JobTitle.Length > 100)
+                    {
+                        ModelState.AddModelError(
+                            "Work.JobTitle",
+                            "Tên tin dài hơn 100 ký tự. Chọn Khác và nhập tên vị trí ngắn gọn.");
+                    }
+                    else
+                    {
+                        // SetModelValue đưa ô về trạng thái chưa kiểm tra.
+                        // Tên đã lấy từ SQL và kiểm tra độ dài nên đánh dấu hợp lệ.
+                        ModelState.MarkFieldValid("Work.JobTitle");
+                    }
+                }
+            }
+
+            input.JobTitle = input.JobTitle?.Trim();
+            input.Expertise = input.Expertise?.Trim();
+            input.Introduction = input.Introduction?.Trim();
+
+            var hasCompany = input.CompanyId.HasValue;
+            var hasJob = !string.IsNullOrWhiteSpace(input.JobTitle);
+
+            if (hasCompany != hasJob || input.IsAvailable)
+            {
+                if (!hasCompany)
+                    ModelState.AddModelError("Work.CompanyId", "Vui lòng chọn công ty đang làm.");
+                if (!hasJob)
+                    ModelState.AddModelError("Work.JobTitle", "Vui lòng nhập vị trí công việc.");
+            }
+
+            if (input.IsAvailable && string.IsNullOrWhiteSpace(input.Expertise))
+            {
+                ModelState.AddModelError("Work.Expertise", "Vui lòng nhập chủ đề có thể tư vấn.");
+            }
+
+            if (!ModelState.IsValid)
+            {
+                return await WorkMentorErrorViewAsync(input);
+            }
+
+            try
+            {
+                await using var transaction = await _context.Database.BeginTransactionAsync();
+
+                // Khóa hồ sơ trong lúc lưu để các lần gửi cùng lúc không tạo trùng công việc.
+                var alumniId = await _context.Database.SqlQuery<int>($"""
+                    SELECT profile.AlumniId AS [Value]
+                    FROM dbo.AlumniProfiles AS profile WITH (UPDLOCK, HOLDLOCK)
+                    WHERE profile.UserId = {userId.Value}
+                      AND (profile.GraduationConfirmedAtUtc IS NOT NULL OR profile.IsGraduationVerified = 1)
+                      AND EXISTS (
+                          SELECT 1 FROM dbo.Users AS account
+                          INNER JOIN dbo.UserRoles AS userRole ON userRole.UserId = account.UserId
+                          INNER JOIN dbo.Roles AS role ON role.RoleId = userRole.RoleId
+                          WHERE account.UserId = profile.UserId
+                            AND account.IsActive = 1 AND role.RoleName = 'Alumni'
+                      )
+                    """).SingleOrDefaultAsync();
+
+                if (alumniId == 0)
+                {
+                    return Forbid();
+                }
+
+                // Lấy tên công ty từ SQL theo mã được chọn.
+                // Công ty có tài khoản ngừng hoạt động chỉ được giữ lại nếu đang gắn với công việc hiện tại.
+                CompanyOption? selectedCompany = null;
+
+                if (input.CompanyId.HasValue)
+                {
+                    selectedCompany = await _context.Database.SqlQuery<CompanyOption>($"""
+                        SELECT company.CompanyId, company.CompanyName
+                        FROM dbo.Companies AS company WITH (HOLDLOCK)
+                        INNER JOIN dbo.Users AS account WITH (HOLDLOCK)
+                            ON account.UserId = company.UserId
+                        WHERE company.CompanyId = {input.CompanyId.Value}
+                          AND (
+                              account.IsActive = 1 OR EXISTS (
+                                  SELECT 1 FROM dbo.WorkExperiences
+                                  WHERE AlumniId = {alumniId} AND IsCurrent = 1
+                                    AND CompanyId = company.CompanyId
+                              )
+                          )
+                        """).SingleOrDefaultAsync();
+
+                    if (selectedCompany == null)
+                    {
+                        await transaction.RollbackAsync();
+                        await transaction.DisposeAsync();
+                        ModelState.AddModelError("Work.CompanyId", "Công ty không tồn tại hoặc tài khoản đã ngừng hoạt động.");
+                        return await WorkMentorErrorViewAsync(input);
+                    }
+                }
+
+                var today = DateOnly.FromDateTime(DateTime.UtcNow.AddHours(7));
+                var companyId = input.CompanyId;
+                var companyName = selectedCompany?.CompanyName;
+                var jobTitle = hasJob ? input.JobTitle : null;
+                var expertise = input.Expertise ?? "";
+
+                await _context.Database.ExecuteSqlInterpolatedAsync($"""
+                    IF {companyId} IS NULL OR NOT EXISTS (
+                        SELECT 1 FROM dbo.WorkExperiences
+                        WHERE AlumniId = {alumniId} AND IsCurrent = 1
+                          AND CompanyId = {companyId} AND JobTitle = {jobTitle}
+                    )
+                    BEGIN
+                        UPDATE dbo.WorkExperiences
+                        SET IsCurrent = 0,
+                            EndDate = CASE WHEN StartDate > {today} THEN StartDate ELSE {today} END
+                        WHERE AlumniId = {alumniId} AND IsCurrent = 1;
+
+                        IF {companyId} IS NOT NULL
+                        BEGIN
+                            INSERT INTO dbo.WorkExperiences (AlumniId, CompanyId, CompanyName, JobTitle, IsCurrent)
+                            VALUES ({alumniId}, {companyId}, {companyName}, {jobTitle}, 1);
+                        END;
+                    END;
+
+                    UPDATE dbo.AlumniProfiles
+                    SET CurrentJobTitle = {jobTitle}, ProfileUpdatedAt = SYSDATETIME()
+                    WHERE AlumniId = {alumniId};
+
+                    UPDATE dbo.MentorProfiles WITH (UPDLOCK, HOLDLOCK)
+                    SET Expertise = {expertise},
+                        Introduction = {input.Introduction},
+                        IsAvailable = {input.IsAvailable}
+                    WHERE UserId = {userId.Value};
+
+                    IF @@ROWCOUNT = 0
+                    BEGIN
+                        INSERT INTO dbo.MentorProfiles (UserId, Expertise, Introduction, IsAvailable)
+                        VALUES ({userId.Value}, {expertise}, {input.Introduction}, {input.IsAvailable});
+                    END;
+                    """);
+
+                await transaction.CommitAsync();
+            }
+            catch (Microsoft.Data.SqlClient.SqlException ex)
+            {
+                System.Diagnostics.Debug.WriteLine(ex);
+                var detail = ex.Number switch
+                {
+                    207 => "Cấu trúc bảng chưa khớp với code. Kiểm tra các cột đã bổ sung trong SQL.",
+                    208 => "Thiếu bảng dùng để lưu công việc hoặc thông tin tư vấn.",
+                    547 => "Dữ liệu vi phạm liên kết hoặc điều kiện của bảng. Cần kiểm tra ràng buộc SQL.",
+                    515 => "Bảng có cột bắt buộc chưa được cung cấp dữ liệu.",
+                    2601 or 2627 => "Dữ liệu bị trùng với bản ghi đã có.",
+                    2628 or 8152 => "Nội dung dài hơn giới hạn của cột trong SQL.",
+                    1934 => "Thiết lập kết nối SQL chưa phù hợp với chỉ mục của bảng.",
+                    _ => "Cần kiểm tra lỗi SQL trong nhật ký ứng dụng."
+                };
+                ModelState.AddModelError("", $"Chưa lưu được công việc và tư vấn (SQL {ex.Number}). {detail}");
+                // Chi tiết kỹ thuật chỉ ghi nhật ký, không hiển thị ra trang.
+                var logger = HttpContext.RequestServices.GetService(typeof(Microsoft.Extensions.Logging.ILogger<ProfileController>))
+                    as Microsoft.Extensions.Logging.ILogger<ProfileController>;
+                if (logger != null) Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger, ex,
+                    "Lỗi lưu công việc và tư vấn của UserId {UserId}", userId.Value);
+                return await WorkMentorErrorViewAsync(input);
+            }
+
+            TempData["WorkMentorSuccess"] = "Đã cập nhật công việc và trạng thái nhận tư vấn.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        private async Task<IActionResult> WorkMentorErrorViewAsync(WorkMentorInput input)
+        {
+            var result = await Index();
+            if (result is ViewResult view)
+            {
+                view.ViewName = "Index";
+                view.ViewData["WorkMentor"] = input;
+                view.ViewData["WorkMentorFailed"] = true;
+            }
+            return result;
         }
 
         // Đường dẫn lưu ảnh, không cần sửa Program.cs.
@@ -109,7 +390,8 @@ namespace AlumniJobConnect.Controllers
             };
 
             ViewData["GraduationState"] = await GetGraduationStateAsync(userId.Value);
-            return View(model);
+            await LoadWorkMentorAsync(userId.Value);
+            return View("Index", model);
         }
 
         [HttpPost("/Profile/ConfirmGraduation", Name = "ConfirmGraduation")]
@@ -231,7 +513,8 @@ namespace AlumniJobConnect.Controllers
             if (!ModelState.IsValid)
             {
                 ViewData["GraduationState"] = await GetGraduationStateAsync(userId.Value);
-                return View(model);
+                await LoadWorkMentorAsync(userId.Value);
+                return View("Index", model);
             }
 
             string? newImagePath = null;

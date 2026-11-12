@@ -150,6 +150,96 @@
     <!-- Template Javascript -->
     <script src="~/assets/js/main.js"></script>
     @await RenderSectionAsync("Scripts", required: false)
+
+    @if (User.Identity?.IsAuthenticated == true &&
+        User.IsInRole("Alumni"))
+    {
+        <a id="mentorInbox"
+           href="@Url.RouteUrl("MentorChat")"
+           data-unread-url="@Url.RouteUrl("MentorChatUnread")"
+           aria-label="Mở tin nhắn tư vấn"
+           style="position:fixed; bottom:90px; right:24px;
+                  z-index:1050; display:flex; align-items:center;
+                  gap:10px; padding:14px 20px; color:white;
+                  background:#008f68; border-radius:30px;
+                  text-decoration:none; font-weight:600;
+                  box-shadow:0 6px 20px #0002;">
+
+            <span aria-hidden="true">💬</span>
+            <span>Tin nhắn tư vấn</span>
+
+            <span id="mentorUnreadBadge"
+                  hidden
+                  style="background:#dc3545; color:white;
+                         border-radius:20px; padding:2px 8px;">
+            </span>
+        </a>
+
+        <div id="mentorMessageNotice"
+             role="status"
+             aria-live="polite"
+             style="position:fixed; width:1px; height:1px;
+                    overflow:hidden; clip-path:inset(50%);">
+        </div>
+
+        <script>
+            (() => {
+                const inbox = document.getElementById("mentorInbox");
+                const badge = document.getElementById("mentorUnreadBadge");
+                const notice = document.getElementById("mentorMessageNotice");
+
+                if (!inbox) return;
+
+                let previousCount = -1;
+                let stopped = false;
+
+                async function checkUnread() {
+                    try {
+                        const response = await fetch(inbox.dataset.unreadUrl, {
+                            cache: "no-store",
+                            headers: { Accept: "application/json" }
+                        });
+
+                        if (response.ok && !response.redirected) {
+                            const data = await response.json();
+                            const count = Number(data.count);
+
+                            if (Number.isFinite(count)) {
+                                badge.hidden = count === 0;
+                                badge.textContent = count > 99 ? "99+" : count;
+
+                                inbox.setAttribute(
+                                    "aria-label",
+                                    `Mở tin nhắn tư vấn, ${count} tin chưa đọc`
+                                );
+
+                                if (count > 0 && count !== previousCount) {
+                                    notice.textContent =
+                                        `Bạn có ${count} tin nhắn tư vấn chưa đọc.`;
+                                }
+
+                                previousCount = count;
+                            }
+                        }
+                    } catch {
+                        // Nút hộp thư vẫn hoạt động khi kiểm tra tin mới lỗi.
+                    } finally {
+                        if (!stopped) {
+                            window.setTimeout(checkUnread, 5000);
+                        }
+                    }
+                }
+
+                window.addEventListener("pagehide", () => {
+                    stopped = true;
+                });
+
+                checkUnread();
+            })();
+        </script>
+    }
+
+
 </body>
 
 </html>

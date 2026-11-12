@@ -1,0 +1,27 @@
+﻿@model AlumniJobConnect.Controllers.MentorRequestsController.RequestInput
+@{
+    ViewData["Title"] = "Nhờ tư vấn";
+    var mentor = ViewData["Mentor"] as AlumniJobConnect.Controllers.MentorRequestsController.MentorInfo;
+}
+<div class="container py-5">
+    <a class="btn btn-outline-secondary mb-3" href="@Url.RouteUrl("MentorDirectory")">← Danh sách cựu sinh viên</a>
+    <div class="card border-0 shadow-sm mx-auto" style="max-width: 800px;">
+        <div class="card-body p-4 p-md-5">
+            <h1 class="h3 fw-bold">Nhờ tư vấn</h1>
+            <p class="mb-1">Gửi đến: <strong>@mentor?.FullName</strong></p>
+            <p class="text-primary mb-4">@mentor?.Expertise</p>
+            <form method="post" action="@Url.RouteUrl("CreateMentorRequestSubmit")">
+                @Html.AntiForgeryToken()
+                @Html.ValidationSummary(false, "", new { @class = "text-danger" })
+                <input type="hidden" name="MentorUserId" value="@Model.MentorUserId" />
+                <label for="Message" class="form-label fw-bold">Bạn cần tư vấn điều gì?</label>
+                @Html.TextAreaFor(x => x.Message, new { @class = "form-control", rows = 7, minlength = 10, maxlength = 1000, required = "required", placeholder = "Giới thiệu ngắn về bạn và nêu câu hỏi về công việc, CV hoặc phỏng vấn…", aria_describedby = "messageHelp" })
+                <p id="messageHelp" class="text-muted small mt-2">Từ 10 đến 1.000 ký tự. Hãy nêu câu hỏi cụ thể để anh chị dễ hỗ trợ.</p>
+                <div class="d-flex flex-wrap gap-2 mt-4">
+                    <button class="btn btn-primary" type="submit">Gửi yêu cầu</button>
+                    <a class="btn btn-light" href="@Url.RouteUrl("MentorDirectory")">Hủy</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
