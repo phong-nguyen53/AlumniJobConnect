@@ -10,7 +10,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AlumniJobConnect.Controllers;
 
-[Authorize(Roles = "Alumni")]
+[Authorize(Roles = "Alumni,Employer")]
 [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
 public class MentorChatController : Controller
 {
@@ -36,8 +36,10 @@ public class MentorChatController : Controller
         public int SenderUserId { get; set; }
         public string Content { get; set; } = "";
         public DateTime SentAtUtc { get; set; }
-    }
 
+        public int? JobPostId { get; set; }
+        public string? JobTitle { get; set; }
+    }
     public sealed class ChatPage
     {
         public int CurrentUserId { get; set; }
@@ -65,10 +67,12 @@ public class MentorChatController : Controller
 
         var allowed = await _context.Users
             .AsNoTracking()
-            .AnyAsync(u =>
-                u.UserId == id.Value &&
-                u.IsActive &&
-                u.UserRoles.Any(r => r.Role.RoleName == "Alumni"));
+            .AnyAsync(user =>
+                user.UserId == id.Value &&
+                user.IsActive &&
+                user.UserRoles.Any(link =>
+                    link.Role.RoleName == "Alumni" ||
+                    link.Role.RoleName == "Employer"));
 
         return allowed ? id : null;
     }
@@ -106,7 +110,11 @@ public class MentorChatController : Controller
                 SELECT
                     c.ConversationId,
                     otherUser.UserId AS OtherUserId,
-                    otherUser.FullName,
+                    CASE
+                    WHEN company.UserId = otherUser.UserId
+                        THEN company.CompanyName
+                    ELSE otherUser.FullName
+                END AS FullName,
                     lastMessage.Content AS LastMessage,
                     COALESCE(
                         lastMessage.SentAtUtc,
@@ -120,6 +128,8 @@ public class MentorChatController : Controller
                                 THEN c.MentorUserId
                             ELSE c.StudentUserId
                         END
+                 LEFT JOIN dbo.Companies AS company
+                ON company.CompanyId = c.CompanyId
                 OUTER APPLY (
                     SELECT TOP (1)
                         m.Content,
@@ -148,6 +158,7 @@ public class MentorChatController : Controller
 
     // Bấm nút Nhắn tin tư vấn để mở hoặc tạo cuộc trò chuyện.
     [HttpPost("/MentorChat/Start", Name = "StartMentorChat")]
+    [Authorize(Roles = "Alumni")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Start([FromForm] int mentorUserId)
     {
@@ -234,7 +245,7 @@ public class MentorChatController : Controller
             new { conversationId });
     }
 
-    // Lấy tin nhắn để giao diện tự cập nhật.
+
     [HttpGet("/MentorChat/Messages", Name = "MentorChatMessages")]
     public async Task<IActionResult> Messages(
         int conversationId,
@@ -253,27 +264,42 @@ public class MentorChatController : Controller
 
         var messages = await _context.Database
             .SqlQuery<MessageItem>($"""
-                SELECT
-                    MessageId,
-                    SenderUserId,
-                    Content,
-                    SentAtUtc
-                FROM dbo.MentorMessages
-                WHERE ConversationId = {conversationId}
-                  AND MessageId > {afterId}
-                """)
-            .OrderBy(m => m.MessageId)
+            SELECT
+                message.MessageId,
+                message.SenderUserId,
+                message.Content,
+                message.SentAtUtc,
+                message.JobPostId,
+                job.Title AS JobTitle
+            FROM dbo.MentorMessages AS message
+            LEFT JOIN dbo.JobPosts AS job
+                ON job.JobPostId = message.JobPostId
+            WHERE message.ConversationId = {conversationId}
+              AND message.MessageId > {afterId}
+            """)
+            .OrderBy(message => message.MessageId)
             .Take(100)
             .ToListAsync();
 
-        return Json(messages.Select(m => new
+        return Json(messages.Select(message => new
         {
-            messageId = m.MessageId,
-            content = m.Content,
-            isMine = m.SenderUserId == userId.Value,
+            messageId = message.MessageId,
+            content = message.Content,
+            isMine = message.SenderUserId == userId.Value,
+
             sentAtUtc = DateTime.SpecifyKind(
-                m.SentAtUtc,
-                DateTimeKind.Utc).ToString("O")
+                message.SentAtUtc,
+                DateTimeKind.Utc).ToString("O"),
+
+            jobPostId = message.JobPostId,
+            jobTitle = message.JobTitle,
+
+            jobUrl = message.JobPostId.HasValue
+                ? Url.Action(
+                    "Details",
+                    "Jobs",
+                    new { id = message.JobPostId.Value })
+                : null
         }));
     }
 
@@ -398,4 +424,195 @@ public class MentorChatController : Controller
 
         return Ok(new { success = true });
     }
+
+    [HttpPost(
+    "/MentorChat/StartCompany",
+    Name = "StartCompanyChat")]
+    [Authorize(Roles = "Alumni")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> StartCompany(
+    [FromForm] int companyId,
+    [FromForm] int? jobPostId)
+    {
+        var userId = await ActiveUserIdAsync();
+
+        if (!userId.HasValue)
+            return Forbid();
+
+        if (!ModelState.IsValid || companyId <= 0)
+            return BadRequest("Doanh nghiệp không hợp lệ.");
+
+        try
+        {
+            await using var transaction = await _context.Database
+                .BeginTransactionAsync(
+                    System.Data.IsolationLevel.Serializable);
+
+            // Người nhận lấy từ tài khoản sở hữu công ty.
+            // Không nhận mã tài khoản người nhận từ form.
+            var employerUserId = await _context.Database.SqlQuery<int>($"""
+            SELECT company.UserId AS [Value]
+            FROM dbo.Companies AS company WITH (HOLDLOCK)
+            INNER JOIN dbo.Users AS account WITH (HOLDLOCK)
+                ON account.UserId = company.UserId
+            WHERE company.CompanyId = {companyId}
+              AND account.IsActive = 1
+              AND EXISTS (
+                  SELECT 1
+                  FROM dbo.UserRoles AS userRole
+                  INNER JOIN dbo.Roles AS role
+                      ON role.RoleId = userRole.RoleId
+                  WHERE userRole.UserId = account.UserId
+                    AND role.RoleName = 'Employer'
+              )
+            """).SingleOrDefaultAsync();
+
+            if (employerUserId == 0)
+            {
+                return NotFound(
+                    "Doanh nghiệp không tồn tại hoặc tài khoản hiện không nhận tin.");
+            }
+
+            if (employerUserId == userId.Value)
+            {
+                return BadRequest(
+                    "Bạn không thể nhắn tin cho chính tài khoản của mình.");
+            }
+
+            // Tin tuyển dụng phải thuộc đúng doanh nghiệp được chọn.
+            string? selectedJobTitle = null;
+
+            if (jobPostId.HasValue)
+            {
+                selectedJobTitle = await _context.Database.SqlQuery<string>($"""
+        SELECT job.Title AS [Value]
+        FROM dbo.JobPosts AS job WITH (HOLDLOCK)
+        WHERE job.JobPostId = {jobPostId.Value}
+          AND job.CompanyId = {companyId}
+          AND job.ApprovalStatus = 'Approved'
+          AND job.IsPublished = 1
+        """).SingleOrDefaultAsync();
+
+                if (string.IsNullOrWhiteSpace(selectedJobTitle))
+                {
+                    return BadRequest(
+                        "Tin tuyển dụng không thuộc doanh nghiệp này hoặc không còn được công khai.");
+                }
+            }
+
+            // Dùng lại hộp chat nếu hai tài khoản đã từng trò chuyện.
+            var conversationId = await _context.Database.SqlQuery<int>($"""
+            SELECT ConversationId AS [Value]
+            FROM dbo.MentorConversations WITH (UPDLOCK, HOLDLOCK)
+            WHERE (
+                StudentUserId = {userId.Value}
+                AND MentorUserId = {employerUserId}
+            )
+            OR (
+                StudentUserId = {employerUserId}
+                AND MentorUserId = {userId.Value}
+            )
+            """)
+                .OrderBy(id => id)
+                .FirstOrDefaultAsync();
+
+            if (conversationId == 0)
+            {
+                await _context.Database.ExecuteSqlInterpolatedAsync($"""
+                INSERT INTO dbo.MentorConversations
+                (
+                    StudentUserId,
+                    MentorUserId,
+                    CompanyId,
+                    CreatedAtUtc
+                )
+                VALUES
+                (
+                    {userId.Value},
+                    {employerUserId},
+                    {companyId},
+                    SYSUTCDATETIME()
+                );
+                """);
+
+                conversationId = await _context.Database.SqlQuery<int>($"""
+                SELECT ConversationId AS [Value]
+                FROM dbo.MentorConversations
+                WHERE StudentUserId = {userId.Value}
+                  AND MentorUserId = {employerUserId}
+                """).SingleAsync();
+            }
+            else
+            {
+                // Gắn doanh nghiệp khi cuộc trò chuyện chưa có liên kết.
+                await _context.Database.ExecuteSqlInterpolatedAsync($"""
+                UPDATE dbo.MentorConversations
+                SET CompanyId = {companyId}
+                WHERE ConversationId = {conversationId}
+                  AND CompanyId IS NULL;
+                """);
+            }
+
+            if (jobPostId.HasValue && selectedJobTitle != null)
+            {
+                // Chỉ thêm lời dẫn khi chuyển sang hỏi một tin khác.
+                var previousJobPostId = await _context.Database
+                    .SqlQuery<int?>($"""
+            SELECT TOP (1) message.JobPostId AS [Value]
+            FROM dbo.MentorMessages AS message WITH (UPDLOCK, HOLDLOCK)
+            WHERE message.ConversationId = {conversationId}
+              AND message.JobPostId IS NOT NULL
+            ORDER BY message.MessageId DESC
+            """)
+                    .SingleOrDefaultAsync();
+
+                if (previousJobPostId != jobPostId)
+                {
+                    var introduction = "Trao đổi về tin tuyển dụng: "
+                        + selectedJobTitle;
+
+                    // Giữ nội dung trong giới hạn cột Content.
+                    if (introduction.Length > 2000)
+                        introduction = introduction.Substring(0, 2000);
+
+                    await _context.Database.ExecuteSqlInterpolatedAsync($"""
+            INSERT INTO dbo.MentorMessages
+            (
+                ConversationId,
+                SenderUserId,
+                Content,
+                JobPostId,
+                SentAtUtc
+            )
+            VALUES
+            (
+                {conversationId},
+                {userId.Value},
+                {introduction},
+                {jobPostId.Value},
+                SYSUTCDATETIME()
+            );
+            """);
+                }
+            }
+
+
+            await transaction.CommitAsync();
+
+            return RedirectToRoute(
+                "MentorChat",
+                new { conversationId });
+        }
+        catch (Microsoft.Data.SqlClient.SqlException ex)
+            when (ex.Number == 1205 ||
+                  ex.Number == 2601 ||
+                  ex.Number == 2627)
+        {
+            return StatusCode(
+                409,
+                "Có thao tác đồng thời. Vui lòng quay lại và bấm Nhắn tin doanh nghiệp lần nữa.");
+        }
+    }
+
+
 }

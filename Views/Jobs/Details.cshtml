@@ -181,6 +181,38 @@
                             </dd>
                         </div>
                     </dl>
+
+                    @if (User.Identity?.IsAuthenticated == true &&
+                                        User.IsInRole("Alumni"))
+                    {
+                        <div class="mt-4 pt-3 border-top">
+                            <p class="text-muted small mb-3">
+                                Bạn muốn hỏi thêm về công việc?
+                                Hãy trao đổi trực tiếp với doanh nghiệp.
+                            </p>
+
+                            <form method="post"
+                                  action="@Url.RouteUrl("StartCompanyChat")">
+
+                                @Html.AntiForgeryToken()
+
+                                <input type="hidden"
+                                       name="companyId"
+                                       value="@Model.CompanyId" />
+                                <input type="hidden"
+                                       name="jobPostId"
+                                       value="@Model.JobPostId" />
+
+
+                                <button type="submit"
+                                        class="btn btn-primary w-100 py-3 rounded-3">
+                                    <i class="fas fa-comments me-2"
+                                       aria-hidden="true"></i>
+                                    Nhắn tin doanh nghiệp
+                                </button>
+                            </form>
+                        </div>
+                    }
                 </aside>
             </div>
         </div>

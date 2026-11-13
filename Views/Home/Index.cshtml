@@ -1,5 +1,309 @@
 ﻿@{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = "Trang chủ";
+}
+
+@section Styles {
+    <style>
+        :root {
+            --aj-green: #00b074;
+            --aj-green-dark: #008f68;
+            --aj-ink: #16262d;
+            --aj-soft: #f1f8f6;
+            --aj-border: #e6edf0;
+        }
+
+        /* ===== Hero ===== */
+        .header-carousel .owl-carousel-item img {
+            width: 100%;
+            object-fit: cover;
+            min-height: 520px;
+            max-height: 660px;
+        }
+
+        .hero-overlay {
+            background: linear-gradient(90deg, rgba(14, 30, 37, .88) 0%, rgba(14, 30, 37, .6) 55%, rgba(14, 30, 37, .25) 100%);
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: .5rem;
+            padding: .4rem 1rem;
+            margin-bottom: 1.25rem;
+            border-radius: 50rem;
+            font-size: .875rem;
+            font-weight: 500;
+            color: #fff;
+            background: rgba(255, 255, 255, .14);
+            border: 1px solid rgba(255, 255, 255, .3);
+            backdrop-filter: blur(4px);
+        }
+
+        .hero-title {
+            font-weight: 800;
+            line-height: 1.2;
+            text-shadow: 0 2px 16px rgba(0, 0, 0, .25);
+        }
+
+        .hero-lead {
+            max-width: 620px;
+            opacity: .92;
+        }
+
+        .hero-actions .btn {
+            border-radius: 50rem;
+            font-weight: 600;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, .18);
+            transition: transform .2s ease, box-shadow .2s ease;
+        }
+
+            .hero-actions .btn:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 12px 26px rgba(0, 0, 0, .25);
+            }
+
+        /* ===== Ô tìm kiếm nổi ===== */
+        .search-wrap {
+            position: relative;
+            z-index: 5;
+            margin-top: -64px;
+            margin-bottom: 3rem;
+        }
+
+        .search-card {
+            padding: 1.5rem;
+            border-radius: 20px;
+            background: #fff;
+            border: 1px solid var(--aj-border);
+            box-shadow: 0 24px 60px rgba(22, 38, 45, .16);
+        }
+
+            .search-card .form-label {
+                margin-bottom: .35rem;
+                font-size: .8rem;
+                font-weight: 600;
+                letter-spacing: .02em;
+                color: #6b7b83;
+            }
+
+            .search-card .form-control,
+            .search-card .form-select {
+                height: 52px;
+                border: 1px solid transparent;
+                border-radius: 12px;
+                background-color: var(--aj-soft);
+                transition: border-color .2s ease, box-shadow .2s ease, background-color .2s ease;
+            }
+
+                .search-card .form-control:focus,
+                .search-card .form-select:focus {
+                    background-color: #fff;
+                    border-color: var(--aj-green);
+                    box-shadow: 0 0 0 .2rem rgba(0, 176, 116, .15);
+                }
+
+            .search-card .btn-search {
+                height: 52px;
+                border: 0;
+                border-radius: 12px;
+                font-weight: 600;
+                color: #fff;
+                background: var(--aj-green);
+                transition: background .2s ease, transform .2s ease;
+            }
+
+                .search-card .btn-search:hover {
+                    background: var(--aj-green-dark);
+                    transform: translateY(-1px);
+                }
+
+        /* ===== Tiêu đề section ===== */
+        .eyebrow {
+            display: inline-block;
+            margin-bottom: .6rem;
+            font-size: .8rem;
+            font-weight: 700;
+            letter-spacing: .1em;
+            text-transform: uppercase;
+            color: var(--aj-green);
+        }
+
+        .section-heading {
+            font-weight: 800;
+            color: var(--aj-ink);
+        }
+
+        /* ===== Thẻ tính năng ===== */
+        .feature-card {
+            height: 100%;
+            padding: 2rem 1.5rem;
+            border-radius: 18px;
+            background: #fff;
+            border: 1px solid var(--aj-border);
+            transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease;
+        }
+
+            .feature-card:hover {
+                transform: translateY(-6px);
+                border-color: transparent;
+                box-shadow: 0 18px 44px rgba(22, 38, 45, .12);
+            }
+
+        .feature-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 60px;
+            height: 60px;
+            margin-bottom: 1.25rem;
+            border-radius: 16px;
+            font-size: 1.5rem;
+            color: var(--aj-green);
+            background: var(--aj-soft);
+            transition: background .25s ease, color .25s ease;
+        }
+
+        .feature-card:hover .feature-icon {
+            color: #fff;
+            background: var(--aj-green);
+        }
+
+        .feature-card h5 {
+            font-weight: 700;
+            color: var(--aj-ink);
+        }
+
+        .feature-link {
+            font-weight: 600;
+            text-decoration: none;
+            color: var(--aj-green);
+        }
+
+            .feature-link i {
+                transition: transform .2s ease;
+            }
+
+            .feature-link:hover i {
+                transform: translateX(4px);
+            }
+
+        /* ===== Giới thiệu ===== */
+        .about-bg img {
+            border-radius: 16px;
+        }
+
+        .check-list {
+            padding: 0;
+            margin: 0 0 1rem;
+            list-style: none;
+        }
+
+            .check-list li {
+                display: flex;
+                align-items: flex-start;
+                gap: .85rem;
+                margin-bottom: .85rem;
+            }
+
+            .check-list .check-icon {
+                flex: 0 0 28px;
+                width: 28px;
+                height: 28px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: 50%;
+                font-size: .75rem;
+                color: #fff;
+                background: var(--aj-green);
+            }
+
+        /* ===== Quy trình ===== */
+        .steps-section {
+            background: var(--aj-soft);
+        }
+
+        .step-item {
+            position: relative;
+            height: 100%;
+            padding: 2rem 1.5rem;
+            border-radius: 18px;
+            text-align: center;
+            background: #fff;
+            box-shadow: 0 10px 30px rgba(22, 38, 45, .06);
+        }
+
+        .step-num {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 56px;
+            height: 56px;
+            margin-bottom: 1.1rem;
+            border-radius: 50%;
+            font-size: 1.35rem;
+            font-weight: 800;
+            color: #fff;
+            background: linear-gradient(135deg, var(--aj-green), var(--aj-green-dark));
+            box-shadow: 0 8px 18px rgba(0, 176, 116, .35);
+        }
+
+        .step-item h5 {
+            font-weight: 700;
+            color: var(--aj-ink);
+        }
+
+        /* ===== CTA ===== */
+        .cta-band {
+            position: relative;
+            overflow: hidden;
+            padding: 3.5rem 2rem;
+            border-radius: 24px;
+            color: #fff;
+            background: linear-gradient(120deg, #0f2a2f 0%, #00805a 100%);
+        }
+
+            .cta-band::after {
+                content: "";
+                position: absolute;
+                right: -80px;
+                top: -80px;
+                width: 260px;
+                height: 260px;
+                border-radius: 50%;
+                background: rgba(255, 255, 255, .08);
+            }
+
+            .cta-band .btn {
+                position: relative;
+                z-index: 1;
+                border-radius: 50rem;
+                font-weight: 600;
+            }
+
+        @@media (max-width: 767.98px) {
+            .search-wrap {
+                margin-top: -36px;
+            }
+
+            .header-carousel .owl-carousel-item img {
+                min-height: 480px;
+            }
+
+            .cta-band {
+                padding: 2.5rem 1.25rem;
+            }
+        }
+
+        @@media (prefers-reduced-motion: reduce) {
+            .feature-card,
+            .feature-icon,
+            .hero-actions .btn,
+            .search-card .btn-search {
+                transition: none;
+            }
+        }
+    </style>
 }
 
 <!-- Carousel Start -->
@@ -10,31 +314,36 @@
         <div class="owl-carousel-item position-relative">
             <img class="img-fluid" src="~/assets/img/anh/anh1.jpg" alt="Kết nối cựu sinh viên và việc làm">
 
-            <div class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center"
-                 style="background: rgba(43, 57, 64, .5);">
+            <div class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center hero-overlay">
                 <div class="container">
                     <div class="row justify-content-start">
-                        <div class="col-10 col-lg-8">
-                            <h1 class="display-5 text-white animated slideInDown mb-4">
+                        <div class="col-11 col-lg-8">
+                            <span class="hero-badge">
+                                <i class="fa fa-graduation-cap"></i> Cộng đồng cựu sinh viên
+                            </span>
+
+                            <h1 class="display-5 hero-title text-white animated slideInDown mb-4">
                                 Kết Nối Cựu Sinh Viên – Mở Rộng Cơ Hội Nghề Nghiệp
                             </h1>
 
-                            <p class="fs-5 fw-medium text-white mb-4 pb-2">
+                            <p class="fs-5 fw-medium text-white hero-lead mb-4 pb-2">
                                 Xây dựng cộng đồng cựu sinh viên vững mạnh, kết nối doanh nghiệp
                                 và mang đến những cơ hội việc làm phù hợp với năng lực của bạn.
                             </p>
 
-                            @if (User.IsInRole("Alumni"))
-                            {
-                                <a href="@Url.RouteUrl("MentorDirectory")"
-                                   class="btn btn-light py-md-3 px-md-4 m-1">
-                                    Tìm cố vấn
-                                </a>
-                            }
+                            <div class="hero-actions d-flex flex-wrap gap-2">
+                                @if (User.IsInRole("Alumni"))
+                                {
+                                    <a href="@Url.RouteUrl("MentorDirectory")"
+                                       class="btn btn-light py-md-3 px-md-4">
+                                        <i class="fa fa-user-friends me-2"></i>Tìm cố vấn
+                                    </a>
+                                }
 
-                            <a href="/Companies" class="btn btn-secondary py-md-3 px-md-5 animated slideInRight">
-                                Khám Phá Doanh Nghiệp
-                            </a>
+                                <a href="/Companies" class="btn btn-secondary py-md-3 px-md-5 animated slideInRight">
+                                    <i class="fa fa-building me-2"></i>Khám Phá Doanh Nghiệp
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -45,27 +354,32 @@
         <div class="owl-carousel-item position-relative">
             <img class="img-fluid" src="~/assets/img/anh/anh2.webp" alt="Cơ hội nghề nghiệp và phát triển">
 
-            <div class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center"
-                 style="background: rgba(43, 57, 64, .5);">
+            <div class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center hero-overlay">
                 <div class="container">
                     <div class="row justify-content-start">
-                        <div class="col-10 col-lg-8">
-                            <h1 class="display-5 text-white animated slideInDown mb-4">
+                        <div class="col-11 col-lg-8">
+                            <span class="hero-badge">
+                                <i class="fa fa-seedling"></i> Phát triển sự nghiệp
+                            </span>
+
+                            <h1 class="display-5 hero-title text-white animated slideInDown mb-4">
                                 Chia Sẻ Kinh Nghiệm – Phát Triển Tương Lai
                             </h1>
 
-                            <p class="fs-5 fw-medium text-white mb-4 pb-2">
+                            <p class="fs-5 fw-medium text-white hero-lead mb-4 pb-2">
                                 Cập nhật hồ sơ cá nhân, chia sẻ kinh nghiệm làm việc,
                                 kết nối với cựu sinh viên và tiếp cận những cơ hội nghề nghiệp mới.
                             </p>
 
-                            <a href="/Alumni" class="btn btn-primary py-md-3 px-md-5 me-3 animated slideInLeft">
-                                Kết Nối Cựu Sinh Viên
-                            </a>
+                            <div class="hero-actions d-flex flex-wrap gap-2">
+                                <a href="/Alumni" class="btn btn-primary py-md-3 px-md-5 animated slideInLeft">
+                                    <i class="fa fa-users me-2"></i>Kết Nối Cựu Sinh Viên
+                                </a>
 
-                            <a href="/Events" class="btn btn-secondary py-md-3 px-md-5 animated slideInRight">
-                                Khám Phá Sự Kiện
-                            </a>
+                                <a href="/Events" class="btn btn-secondary py-md-3 px-md-5 animated slideInRight">
+                                    <i class="fa fa-calendar-alt me-2"></i>Khám Phá Sự Kiện
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -76,77 +390,110 @@
 </div>
 <!-- Carousel End -->
 <!-- Search Start -->
-<div class="container-fluid bg-primary mb-5 wow fadeIn"
-     data-wow-delay="0.1s"
-     style="padding: 35px;">
+<div class="container search-wrap wow fadeInUp" data-wow-delay="0.1s">
+    <form class="search-card" action="@Url.Action("jobs", "Home")" method="get" role="search">
+        <div class="row g-3 align-items-end">
 
-    <div class="container">
-        <form action="@Url.Action("jobs", "Home")" method="get">
-            <div class="row g-2">
-
-                <div class="col-md-10">
-                    <div class="row g-2">
-
-                        <div class="col-md-4">
-                            <label for="searchKeyword"
-                                   class="visually-hidden">
-                                Tên công việc
-                            </label>
-
-                            <input id="searchKeyword"
-                                   name="keyword"
-                                   type="search"
-                                   class="form-control border-0"
-                                   placeholder="Nhập tên công việc"
-                                   maxlength="200" />
-                        </div>
-
-                        <div class="col-md-4">
-                            <label for="searchCategory"
-                                   class="visually-hidden">
-                                Ngành nghề
-                            </label>
-
-                            <select id="searchCategory"
-                                    name="categoryId"
-                                    asp-items="ViewBag.Categories"
-                                    class="form-select border-0">
-                                <option value="">Tất cả ngành nghề</option>
-                            </select>
-                        </div>
-
-                        <div class="col-md-4">
-                            <label for="searchLocation"
-                                   class="visually-hidden">
-                                Địa điểm
-                            </label>
-
-                            <select id="searchLocation"
-                                    name="location"
-                                    asp-items="ViewBag.Locations"
-                                    class="form-select border-0">
-                                <option value="">Tất cả địa điểm</option>
-                            </select>
-                        </div>
-
-                    </div>
-                </div>
-
-                <div class="col-md-2">
-                    <button type="submit"
-                            class="btn btn-dark border-0 w-100">
-                        Tìm kiếm
-                    </button>
-                </div>
-
+            <div class="col-lg-4 col-md-6">
+                <label for="searchKeyword" class="form-label">
+                    <i class="fa fa-search me-1 text-primary"></i>Tên công việc
+                </label>
+                <input id="searchKeyword"
+                       name="keyword"
+                       type="search"
+                       class="form-control"
+                       placeholder="Nhập tên công việc"
+                       maxlength="200" />
             </div>
-        </form>
-    </div>
+
+            <div class="col-lg-3 col-md-6">
+                <label for="searchCategory" class="form-label">
+                    <i class="fa fa-layer-group me-1 text-primary"></i>Ngành nghề
+                </label>
+                <select id="searchCategory"
+                        name="categoryId"
+                        asp-items="ViewBag.Categories"
+                        class="form-select">
+                    <option value="">Tất cả ngành nghề</option>
+                </select>
+            </div>
+
+            <div class="col-lg-3 col-md-6">
+                <label for="searchLocation" class="form-label">
+                    <i class="fa fa-map-marker-alt me-1 text-primary"></i>Địa điểm
+                </label>
+                <select id="searchLocation"
+                        name="location"
+                        asp-items="ViewBag.Locations"
+                        class="form-select">
+                    <option value="">Tất cả địa điểm</option>
+                </select>
+            </div>
+
+            <div class="col-lg-2 col-md-6">
+                <button type="submit" class="btn btn-search w-100">
+                    <i class="fa fa-search me-2"></i>Tìm kiếm
+                </button>
+            </div>
+
+        </div>
+    </form>
 </div>
 <!-- Search End -->
 <!-- Category Start -->
-            @await Component.InvokeAsync("JobCategories")
+@await Component.InvokeAsync("JobCategories")
 <!-- Category End -->
+<!-- Features Start -->
+<div class="container-xxl py-5">
+    <div class="container">
+        <div class="text-center mx-auto mb-5 wow fadeInUp" data-wow-delay="0.1s" style="max-width: 640px;">
+            <span class="eyebrow">Tính năng nổi bật</span>
+            <h2 class="section-heading mb-3">Mọi thứ bạn cần để phát triển sự nghiệp</h2>
+            <p class="text-muted mb-0">
+                Nền tảng giúp cựu sinh viên, doanh nghiệp và nhà trường cùng kết nối, chia sẻ và đồng hành.
+            </p>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-lg-3 col-md-6 wow fadeInUp" data-wow-delay="0.1s">
+                <div class="feature-card">
+                    <div class="feature-icon"><i class="fa fa-briefcase"></i></div>
+                    <h5 class="mb-2">Việc làm phù hợp</h5>
+                    <p class="text-muted">Tìm kiếm cơ hội theo ngành nghề và địa điểm, ứng tuyển nhanh chóng chỉ với vài thao tác.</p>
+                    <a class="feature-link" href="@Url.Action("jobs", "Home")">Xem việc làm <i class="fa fa-arrow-right ms-1"></i></a>
+                </div>
+            </div>
+
+            <div class="col-lg-3 col-md-6 wow fadeInUp" data-wow-delay="0.2s">
+                <div class="feature-card">
+                    <div class="feature-icon"><i class="fa fa-user-graduate"></i></div>
+                    <h5 class="mb-2">Mạng lưới cựu sinh viên</h5>
+                    <p class="text-muted">Kết nối với các anh chị đi trước để học hỏi kinh nghiệm và mở rộng quan hệ nghề nghiệp.</p>
+                    <a class="feature-link" href="/Alumni">Kết nối ngay <i class="fa fa-arrow-right ms-1"></i></a>
+                </div>
+            </div>
+
+            <div class="col-lg-3 col-md-6 wow fadeInUp" data-wow-delay="0.3s">
+                <div class="feature-card">
+                    <div class="feature-icon"><i class="fa fa-building"></i></div>
+                    <h5 class="mb-2">Doanh nghiệp đối tác</h5>
+                    <p class="text-muted">Tìm hiểu môi trường làm việc và vị trí đang tuyển dụng của các doanh nghiệp trên nền tảng.</p>
+                    <a class="feature-link" href="/Companies">Khám phá <i class="fa fa-arrow-right ms-1"></i></a>
+                </div>
+            </div>
+
+            <div class="col-lg-3 col-md-6 wow fadeInUp" data-wow-delay="0.4s">
+                <div class="feature-card">
+                    <div class="feature-icon"><i class="fa fa-calendar-alt"></i></div>
+                    <h5 class="mb-2">Sự kiện &amp; hội thảo</h5>
+                    <p class="text-muted">Tham gia các buổi giao lưu, workshop và chương trình hướng nghiệp dành cho cộng đồng.</p>
+                    <a class="feature-link" href="/Events">Xem sự kiện <i class="fa fa-arrow-right ms-1"></i></a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Features End -->
 <!-- About Start -->
 <div class="container-xxl py-5">
     <div class="container">
@@ -154,26 +501,45 @@
             <div class="col-lg-6 wow fadeIn" data-wow-delay="0.1s">
                 <div class="row g-0 about-bg rounded overflow-hidden">
                     <div class="col-6 text-start">
-                        <img class="img-fluid w-100" src="~/assets/img/about-1.jpg">
+                        <img class="img-fluid w-100" src="~/assets/img/about-1.jpg" alt="Hoạt động kết nối cựu sinh viên" loading="lazy">
                     </div>
                     <div class="col-6 text-start">
-                        <img class="img-fluid" src="~/assets/img/about-2.jpg" style="width: 85%; margin-top: 15%;">
+                        <img class="img-fluid" src="~/assets/img/about-2.jpg" alt="Giao lưu nghề nghiệp" loading="lazy" style="width: 85%; margin-top: 15%;">
                     </div>
                     <div class="col-6 text-end">
-                        <img class="img-fluid" src="~/assets/img/about-3.jpg" style="width: 85%;">
+                        <img class="img-fluid" src="~/assets/img/about-3.jpg" alt="Cơ hội việc làm" loading="lazy" style="width: 85%;">
                     </div>
                     <div class="col-6 text-end">
-                        <img class="img-fluid w-100" src="~/assets/img/about-4.jpg">
+                        <img class="img-fluid w-100" src="~/assets/img/about-4.jpg" alt="Cộng đồng cựu sinh viên" loading="lazy">
                     </div>
                 </div>
             </div>
             <div class="col-lg-6 wow fadeIn" data-wow-delay="0.5s">
-                <h1 class="mb-4">We Help To Get The Best Job And Find A Talent</h1>
-                <p class="mb-4">Tempor erat elitr rebum at clita. Diam dolor diam ipsum sit. Aliqu diam amet diam et eos. Clita erat ipsum et lorem et sit, sed stet lorem sit clita duo justo magna dolore erat amet</p>
-                <p><i class="fa fa-check text-primary me-3"></i>Tempor erat elitr rebum at clita</p>
-                <p><i class="fa fa-check text-primary me-3"></i>Aliqu diam amet diam et eos</p>
-                <p><i class="fa fa-check text-primary me-3"></i>Clita duo justo magna dolore erat amet</p>
-                <a class="btn btn-primary py-3 px-5 mt-3" href="">Read More</a>
+                <span class="eyebrow">Về chúng tôi</span>
+                <h2 class="section-heading mb-4">Cầu nối giữa cựu sinh viên và cơ hội nghề nghiệp</h2>
+                <p class="mb-4 text-muted">
+                    AlumniJobConnect giúp cựu sinh viên cập nhật hồ sơ, chia sẻ kinh nghiệm,
+                    tìm cố vấn và tiếp cận các vị trí tuyển dụng từ doanh nghiệp đối tác – tất cả trong một nơi.
+                </p>
+
+                <ul class="check-list">
+                    <li>
+                        <span class="check-icon"><i class="fa fa-check"></i></span>
+                        <span>Hồ sơ cá nhân rõ ràng, dễ dàng chia sẻ với nhà tuyển dụng</span>
+                    </li>
+                    <li>
+                        <span class="check-icon"><i class="fa fa-check"></i></span>
+                        <span>Kết nối trực tiếp với cố vấn và cựu sinh viên cùng ngành</span>
+                    </li>
+                    <li>
+                        <span class="check-icon"><i class="fa fa-check"></i></span>
+                        <span>Cập nhật việc làm và sự kiện mới mỗi ngày</span>
+                    </li>
+                </ul>
+
+                <a class="btn btn-primary rounded-pill py-3 px-5 mt-2" href="/Alumni">
+                    Tìm hiểu thêm <i class="fa fa-arrow-right ms-2"></i>
+                </a>
             </div>
         </div>
     </div>
@@ -182,56 +548,55 @@
 <!-- Jobs Start -->
 @await Component.InvokeAsync("JobListing")
 <!-- Jobs End -->
-<!-- Testimonial Start -->
-<div class="container-xxl py-5 wow fadeInUp" data-wow-delay="0.1s">
-    <div class="container">
-        <h1 class="text-center mb-5">Our Clients Say!!!</h1>
-        <div class="owl-carousel testimonial-carousel">
-            <div class="testimonial-item bg-light rounded p-4">
-                <i class="fa fa-quote-left fa-2x text-primary mb-3"></i>
-                <p>Dolor et eos labore, stet justo sed est sed. Diam sed sed dolor stet amet eirmod eos labore diam</p>
-                <div class="d-flex align-items-center">
-                    <img class="img-fluid flex-shrink-0 rounded" src="~/assets/img/testimonial-1.jpg" style="width: 50px; height: 50px;">
-                    <div class="ps-3">
-                        <h5 class="mb-1">Client Name</h5>
-                        <small>Profession</small>
-                    </div>
+<!-- Steps Start -->
+<div class="container-fluid steps-section py-5 mt-5">
+    <div class="container py-4">
+        <div class="text-center mx-auto mb-5 wow fadeInUp" data-wow-delay="0.1s" style="max-width: 640px;">
+            <span class="eyebrow">Cách thức hoạt động</span>
+            <h2 class="section-heading mb-0">Bắt đầu chỉ với 3 bước đơn giản</h2>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-md-4 wow fadeInUp" data-wow-delay="0.1s">
+                <div class="step-item">
+                    <div class="step-num">1</div>
+                    <h5 class="mb-2">Hoàn thiện hồ sơ</h5>
+                    <p class="text-muted mb-0">Cập nhật thông tin, kỹ năng và kinh nghiệm để nổi bật trong cộng đồng.</p>
                 </div>
             </div>
-            <div class="testimonial-item bg-light rounded p-4">
-                <i class="fa fa-quote-left fa-2x text-primary mb-3"></i>
-                <p>Dolor et eos labore, stet justo sed est sed. Diam sed sed dolor stet amet eirmod eos labore diam</p>
-                <div class="d-flex align-items-center">
-                    <img class="img-fluid flex-shrink-0 rounded" src="~/assets/img/testimonial-2.jpg" style="width: 50px; height: 50px;">
-                    <div class="ps-3">
-                        <h5 class="mb-1">Client Name</h5>
-                        <small>Profession</small>
-                    </div>
+            <div class="col-md-4 wow fadeInUp" data-wow-delay="0.3s">
+                <div class="step-item">
+                    <div class="step-num">2</div>
+                    <h5 class="mb-2">Kết nối &amp; khám phá</h5>
+                    <p class="text-muted mb-0">Tìm cựu sinh viên, cố vấn, doanh nghiệp và sự kiện phù hợp với định hướng.</p>
                 </div>
             </div>
-            <div class="testimonial-item bg-light rounded p-4">
-                <i class="fa fa-quote-left fa-2x text-primary mb-3"></i>
-                <p>Dolor et eos labore, stet justo sed est sed. Diam sed sed dolor stet amet eirmod eos labore diam</p>
-                <div class="d-flex align-items-center">
-                    <img class="img-fluid flex-shrink-0 rounded" src="~/assets/img/testimonial-3.jpg" style="width: 50px; height: 50px;">
-                    <div class="ps-3">
-                        <h5 class="mb-1">Client Name</h5>
-                        <small>Profession</small>
-                    </div>
-                </div>
-            </div>
-            <div class="testimonial-item bg-light rounded p-4">
-                <i class="fa fa-quote-left fa-2x text-primary mb-3"></i>
-                <p>Dolor et eos labore, stet justo sed est sed. Diam sed sed dolor stet amet eirmod eos labore diam</p>
-                <div class="d-flex align-items-center">
-                    <img class="img-fluid flex-shrink-0 rounded" src="~/assets/img/testimonial-4.jpg" style="width: 50px; height: 50px;">
-                    <div class="ps-3">
-                        <h5 class="mb-1">Client Name</h5>
-                        <small>Profession</small>
-                    </div>
+            <div class="col-md-4 wow fadeInUp" data-wow-delay="0.5s">
+                <div class="step-item">
+                    <div class="step-num">3</div>
+                    <h5 class="mb-2">Ứng tuyển &amp; phát triển</h5>
+                    <p class="text-muted mb-0">Nộp hồ sơ vào vị trí mong muốn và tiếp tục xây dựng sự nghiệp cùng cộng đồng.</p>
                 </div>
             </div>
         </div>
     </div>
 </div>
-<!-- Testimonial End -->
+<!-- Steps End -->
+<!-- CTA Start -->
+<div class="container-xxl py-5">
+    <div class="container">
+        <div class="cta-band text-center wow fadeInUp" data-wow-delay="0.1s">
+            <h2 class="fw-bold mb-3 text-white">Sẵn sàng cho bước tiến tiếp theo?</h2>
+            <p class="mb-4 mx-auto" style="max-width: 560px; opacity: .9;">
+                Khám phá hàng loạt cơ hội việc làm và kết nối với cộng đồng cựu sinh viên ngay hôm nay.
+            </p>
+            <a class="btn btn-light py-3 px-5 me-2 mb-2" href="@Url.Action("jobs", "Home")">
+                <i class="fa fa-search me-2"></i>Tìm việc ngay
+            </a>
+            <a class="btn btn-outline-light py-3 px-5 mb-2" href="/Alumni">
+                <i class="fa fa-users me-2"></i>Kết nối cựu sinh viên
+            </a>
+        </div>
+    </div>
+</div>
+<!-- CTA End -->
