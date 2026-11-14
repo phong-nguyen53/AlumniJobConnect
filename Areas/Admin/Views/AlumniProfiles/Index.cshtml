@@ -1,0 +1,664 @@
+﻿@model IEnumerable<AlumniJobConnect.Models.AlumniProfile>
+
+@{
+    ViewData["Title"] = "Sinh viên và cựu sinh viên";
+    Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
+
+    var profiles = Model.ToList();
+
+    var graduateIds =
+        ViewData["GraduateIds"] as System.Collections.Generic.HashSet<int>
+        ?? new System.Collections.Generic.HashSet<int>();
+
+    var currentCompanies =
+        ViewData["CurrentCompanies"]
+            as System.Collections.Generic.Dictionary<int, string>
+        ?? new System.Collections.Generic.Dictionary<int, string>();
+
+    var currentJobTitles =
+        ViewData["CurrentJobTitles"]
+            as System.Collections.Generic.Dictionary<int, string>
+        ?? new System.Collections.Generic.Dictionary<int, string>();
+
+    var graduateCount = profiles.Count(x => graduateIds.Contains(x.AlumniId));
+    var studentCount = profiles.Count - graduateCount;
+}
+<style>
+    .alumni-admin {
+        --aa-primary: #059669;
+        --aa-text: #20352e;
+        --aa-muted: #64756d;
+        color: var(--aa-text);
+    }
+
+        .alumni-admin .aa-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .alumni-admin .aa-eyebrow {
+            color: var(--aa-primary);
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+
+        .alumni-admin .aa-title {
+            margin: 0 0 8px;
+            font-size: 27px;
+            font-weight: 700;
+            line-height: 1.35;
+        }
+
+        .alumni-admin .aa-subtitle {
+            margin: 0;
+            color: var(--aa-muted);
+            line-height: 1.6;
+        }
+
+        .alumni-admin .aa-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-height: 42px;
+            padding: 10px 18px;
+            border: 1px solid transparent;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .alumni-admin .aa-button-primary {
+            color: #fff;
+            background: var(--aa-primary);
+        }
+
+            .alumni-admin .aa-button-primary:hover {
+                color: #fff;
+                background: #047857;
+            }
+
+        .alumni-admin .aa-button-light {
+            color: #42584d;
+            background: #fff;
+            border-color: #dce6e0;
+        }
+
+            .alumni-admin .aa-button-light:hover {
+                background: #f3f8f5;
+            }
+
+        .alumni-admin .aa-panel {
+            overflow: hidden;
+            background: #fff;
+            border: 1px solid #e4ece7;
+            border-radius: 16px;
+            box-shadow: 0 6px 24px rgba(22, 58, 41, .04);
+        }
+
+        .alumni-admin .aa-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 16px;
+            padding: 22px;
+            border-bottom: 1px solid #edf2ef;
+        }
+
+        .alumni-admin .aa-panel-title {
+            margin: 0 0 6px;
+            font-size: 17px;
+            font-weight: 700;
+        }
+
+        .alumni-admin .aa-count {
+            margin: 0;
+            font-size: 13px;
+            color: var(--aa-muted);
+        }
+
+            .alumni-admin .aa-count strong {
+                color: var(--aa-primary);
+            }
+
+        .alumni-admin .aa-search-group {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            width: 100%;
+            max-width: 540px;
+        }
+
+        .alumni-admin .aa-search {
+            flex: 1;
+            min-width: 180px;
+            height: 44px;
+            padding: 10px 14px;
+            color: var(--aa-text);
+            background: #f8faf9;
+            border: 1px solid #dce6e0;
+            border-radius: 10px;
+            outline: none;
+        }
+
+            .alumni-admin .aa-search:focus {
+                background: #fff;
+                border-color: var(--aa-primary);
+                box-shadow: 0 0 0 3px rgba(5, 150, 105, .1);
+            }
+
+        .alumni-admin .aa-table-wrap {
+            overflow-x: auto;
+        }
+
+        .alumni-admin .aa-table {
+            width: 100%;
+            min-width: 980px;
+            margin: 0;
+            border-collapse: collapse;
+        }
+
+            .alumni-admin .aa-table thead th {
+                padding: 16px;
+                color: #596c61;
+                background: #f8faf9;
+                border-bottom: 1px solid #e8efea;
+                font-size: 12px;
+                font-weight: 700;
+                text-align: left;
+                white-space: nowrap;
+            }
+
+            .alumni-admin .aa-table tbody td {
+                padding: 18px 16px;
+                border-bottom: 1px solid #edf2ef;
+                font-size: 14px;
+                vertical-align: middle;
+            }
+
+            .alumni-admin .aa-table tbody tr:last-child td {
+                border-bottom: 0;
+            }
+
+            .alumni-admin .aa-table tbody tr:hover {
+                background: #fbfdfc;
+            }
+
+        .alumni-admin .aa-person {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-width: 200px;
+        }
+
+        .alumni-admin .aa-avatar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            width: 42px;
+            height: 42px;
+            color: #047857;
+            background: #e9f8f0;
+            border-radius: 13px;
+            font-size: 17px;
+            font-weight: 700;
+        }
+
+        .alumni-admin .aa-name {
+            margin-bottom: 5px;
+            font-weight: 700;
+            overflow-wrap: anywhere;
+        }
+
+        .alumni-admin .aa-email {
+            color: var(--aa-muted);
+            font-size: 12px;
+            overflow-wrap: anywhere;
+        }
+
+        .alumni-admin .aa-code {
+            display: inline-block;
+            padding: 5px 9px;
+            color: #475569;
+            background: #f1f5f9;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .alumni-admin .aa-secondary {
+            margin-top: 5px;
+            color: var(--aa-muted);
+            font-size: 12px;
+            line-height: 1.5;
+        }
+
+        .alumni-admin .aa-work {
+            max-width: 230px;
+            line-height: 1.5;
+            overflow-wrap: anywhere;
+        }
+
+        .alumni-admin .aa-actions {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .alumni-admin .aa-action {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 7px 10px;
+            border: 1px solid transparent;
+            border-radius: 7px;
+            font-size: 12px;
+            font-weight: 600;
+            text-decoration: none;
+            white-space: nowrap;
+        }
+
+        .alumni-admin .aa-action-view {
+            color: #0369a1;
+            background: #eef8ff;
+        }
+
+        .alumni-admin .aa-action-delete {
+            color: #be123c;
+            background: #fff1f2;
+        }
+
+        .alumni-admin .aa-action:hover {
+            border-color: currentColor;
+        }
+
+        .alumni-admin .aa-empty {
+            padding: 56px 20px;
+            color: var(--aa-muted);
+            text-align: center;
+        }
+
+        .alumni-admin .aa-empty-icon {
+            margin-bottom: 12px;
+            font-size: 32px;
+        }
+
+        .alumni-admin .aa-empty-title {
+            margin-bottom: 8px;
+            color: var(--aa-text);
+            font-size: 17px;
+            font-weight: 700;
+        }
+
+        .alumni-admin .aa-footer {
+            padding: 15px 22px;
+            color: var(--aa-muted);
+            background: #fcfdfc;
+            border-top: 1px solid #edf2ef;
+            font-size: 13px;
+        }
+
+        .alumni-admin [hidden] {
+            display: none !important;
+        }
+</style>
+
+<div class="alumni-admin">
+
+    <div class="aa-header">
+        <div>
+            <div class="aa-eyebrow">Quản lý thành viên</div>
+
+            <h1 class="aa-title">Sinh viên &amp; Cựu sinh viên</h1>
+
+            <p class="aa-subtitle">
+                Phân loại theo xác nhận tốt nghiệp và xem công việc hiện tại.
+            </p>
+        </div>
+
+
+    </div>
+
+    @if (TempData["Success"] is string alumniSuccessMessage)
+    {
+        <div class="alert alert-success" role="status">
+            @alumniSuccessMessage
+        </div>
+    }
+
+    @if (TempData["Error"] is string alumniErrorMessage)
+    {
+        <div class="alert alert-danger" role="alert">
+            @alumniErrorMessage
+        </div>
+    }
+
+    <div class="aa-panel">
+        <div class="aa-toolbar">
+            <div>
+                <h2 class="aa-panel-title">Danh sách hồ sơ</h2>
+
+                <p class="aa-count">
+                    <strong>@profiles.Count</strong> hồ sơ
+                    · @studentCount sinh viên
+                    · @graduateCount cựu sinh viên
+                </p>
+            </div>
+
+            <div class="aa-search-group" style="max-width: 720px;">
+                <input id="alumniSearch"
+                       type="search"
+                       class="aa-search"
+                       aria-label="Tìm hồ sơ"
+                       placeholder="Tìm tên, email, mã SV, công ty..."
+                       autocomplete="off" />
+
+                <select id="alumniType"
+                        class="aa-search"
+                        style="flex: 0 1 185px;"
+                        aria-label="Lọc loại hồ sơ">
+                    <option value="all">Tất cả hồ sơ</option>
+                    <option value="student">Sinh viên</option>
+                    <option value="graduate">Cựu sinh viên</option>
+                </select>
+
+                <button id="alumniReset"
+                        type="button"
+                        class="aa-button aa-button-light">
+                    Đặt lại
+                </button>
+            </div>
+        </div>
+
+        @if (profiles.Count == 0)
+        {
+            <div class="aa-empty" role="status">
+                <div class="aa-empty-title">Chưa có hồ sơ</div>
+                <p class="mb-0">
+                    Danh sách sinh viên và cựu sinh viên sẽ hiển thị tại đây.
+                </p>
+            </div>
+        }
+        else
+        {
+            <div class="aa-table-wrap">
+                <table class="aa-table">
+                    <thead>
+                        <tr>
+                            <th scope="col">Họ tên / Email</th>
+                            <th scope="col">Mã sinh viên</th>
+                            <th scope="col">Phân loại</th>
+                            <th scope="col">Năm tốt nghiệp</th>
+                            <th scope="col">Công ty đang làm / Vị trí</th>
+                            <th scope="col">Thao tác</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @foreach (var item in profiles)
+                        {
+                            var fullName = string.IsNullOrWhiteSpace(item.User?.FullName)
+                            ? $"Tài khoản #{item.UserId}"
+                            : item.User!.FullName.Trim();
+
+                            var email = item.User?.Email ?? "";
+
+                            var initial = fullName.Substring(0, 1)
+                            .ToUpperInvariant();
+
+                            var isGraduate = graduateIds.Contains(item.AlumniId);
+
+                            var typeValue = isGraduate
+                            ? "graduate"
+                            : "student";
+
+                            var typeLabel = isGraduate
+                            ? "Cựu sinh viên"
+                            : "Sinh viên";
+
+                            var companyName = currentCompanies.TryGetValue(
+                            item.AlumniId, out var companyValue)
+                            ? companyValue
+                            : "";
+
+                            var jobTitle = currentJobTitles.TryGetValue(
+                            item.AlumniId, out var titleValue)
+                            ? titleValue
+                            : "";
+
+                            var searchText = string.Join(" ", new[]
+                            {
+                                        fullName,
+                                        email,
+                                        item.StudentCode,
+                                        companyName,
+                                        jobTitle,
+                                        item.GraduationYear?.ToString()
+                                        });
+
+                            <tr data-alumni-row
+                                data-type="@typeValue"
+                                data-search="@searchText">
+
+                                <td>
+                                    <div class="aa-person">
+                                        <div class="aa-avatar" aria-hidden="true">
+                                            @initial
+                                        </div>
+
+                                        <div>
+                                            <div class="aa-name">@fullName</div>
+
+                                            <div class="aa-email">
+                                                @(string.IsNullOrWhiteSpace(email)
+                                                                                        ? "Chưa cập nhật email"
+                                                                                        : email)
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+
+                                <td>
+                            @if (string.IsNullOrWhiteSpace(item.StudentCode))
+                                    {
+                                        <span class="aa-secondary">
+                                            Chưa cập nhật
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="aa-code">
+                                            @item.StudentCode
+                                        </span>
+                                    }
+                                </td>
+
+                                <td>
+                                    @if (isGraduate)
+                                    {
+                                        <span class="aa-code"
+                                              style="color: #047857; background: #dcfce7;">
+                                            @typeLabel
+                                        </span>
+
+                                        <div class="aa-secondary">
+                                            Đã xác nhận tốt nghiệp
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <span class="aa-code"
+                                              style="color: #1d4ed8; background: #eff6ff;">
+                                            @typeLabel
+                                        </span>
+
+                                        <div class="aa-secondary">
+                                            Chưa xác nhận tốt nghiệp
+                                        </div>
+                                    }
+                            </td>
+
+                            <td>
+                                <div>
+                                    @(item.GraduationYear?.ToString()
+                                                                    ?? "Chưa cập nhật")
+                            </div>
+
+                            @if (!isGraduate && item.GraduationYear.HasValue)
+                                    {
+                                        <div class="aa-secondary">
+                                            Năm dự kiến
+                                        </div>
+                                    }
+                                </td>
+
+                                <td>
+                                    <div class="aa-work">
+                                        @if (string.IsNullOrWhiteSpace(companyName))
+                                        {
+                                            <div class="aa-secondary">
+                                                Chưa cập nhật công ty đang làm
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <div style="font-weight: 700;">
+                                                @companyName
+                                            </div>
+
+                                            <div class="aa-secondary">
+                                                Theo hồ sơ công việc hiện tại
+                                            </div>
+                                        }
+
+                                        @if (!string.IsNullOrWhiteSpace(jobTitle))
+                                        {
+                                            <div style="margin-top: 6px;">
+                                                @jobTitle
+                                            </div>
+                                        }
+                                    </div>
+                                </td>
+
+                                <td>
+                                    <div class="aa-actions">
+                                        <a href="@Url.Action("Details", "AlumniProfiles",
+                                                                                           new { area = "Admin", id = item.AlumniId })"
+                                   class="aa-action aa-action-view"
+                                   aria-label="Xem hồ sơ @fullName">
+                                    Xem hồ sơ
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <div id="alumniNoResults"
+                 class="aa-empty"
+                 role="status"
+                 hidden>
+                <div class="aa-empty-title">
+                    Không tìm thấy hồ sơ phù hợp
+                </div>
+
+                <p class="mb-0">
+                    Thử thay đổi từ khóa hoặc loại hồ sơ.
+                </p>
+            </div>
+
+            <div class="aa-footer" role="status" aria-live="polite">
+                Hiển thị
+                <strong id="alumniVisibleCount">@profiles.Count</strong>
+                / @profiles.Count hồ sơ
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (() => {
+            const search = document.getElementById("alumniSearch");
+            const type = document.getElementById("alumniType");
+            const reset = document.getElementById("alumniReset");
+            const count = document.getElementById("alumniVisibleCount");
+            const empty = document.getElementById("alumniNoResults");
+
+            if (!search || !type || !reset) return;
+
+            function normalize(value) {
+                return (value || "")
+                    .normalize("NFD")
+                    .replace(/[\u0300-\u036f]/g, "")
+                    .replace(/đ/g, "d")
+                    .replace(/Đ/g, "D")
+                    .toLowerCase()
+                    .trim();
+            }
+
+            const entries = Array.from(
+                document.querySelectorAll(
+                    ".alumni-admin [data-alumni-row]"
+                )
+            ).map(row => ({
+                row,
+                type: row.dataset.type,
+                text: normalize(row.dataset.search)
+            }));
+
+            function filter() {
+                const keyword = normalize(search.value);
+                const selectedType = type.value;
+                let visible = 0;
+
+                entries.forEach(entry => {
+                    const matchesKeyword = entry.text.includes(keyword);
+
+                    const matchesType =
+                        selectedType === "all"
+                        || entry.type === selectedType;
+
+                    const matches = matchesKeyword && matchesType;
+
+                    entry.row.hidden = !matches;
+
+                    if (matches) visible++;
+                });
+
+                if (count) count.textContent = visible;
+
+                if (empty) {
+                    empty.hidden = visible > 0 || entries.length === 0;
+                }
+            }
+
+            search.addEventListener("input", filter);
+            type.addEventListener("change", filter);
+
+            reset.addEventListener("click", () => {
+                search.value = "";
+                type.value = "all";
+                filter();
+                search.focus();
+            });
+
+            filter();
+        })();
+    </script>
+}

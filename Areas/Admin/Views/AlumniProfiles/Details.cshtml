@@ -1,0 +1,245 @@
+﻿@model AlumniJobConnect.Models.AlumniProfile
+
+@{
+    ViewData["Title"] = "Chi tiết hồ sơ";
+    Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
+
+    var fullName = string.IsNullOrWhiteSpace(Model.User?.FullName)
+        ? $"Tài khoản #{Model.UserId}"
+        : Model.User!.FullName;
+
+    string ShowText(string? value)
+        => string.IsNullOrWhiteSpace(value)
+            ? "Chưa cập nhật"
+            : value;
+}
+
+<style>
+    .profile-details {
+        max-width: 1100px;
+        margin: 0 auto;
+        color: #20352e;
+    }
+
+        .profile-details .pd-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .profile-details h1 {
+            margin: 0 0 8px;
+            font-size: 27px;
+            font-weight: 700;
+        }
+
+        .profile-details .pd-muted {
+            margin: 0;
+            color: #64756d;
+            line-height: 1.6;
+        }
+
+        .profile-details .pd-back {
+            display: inline-block;
+            padding: 11px 18px;
+            color: #047857;
+            background: #fff;
+            border: 1px solid #dce6e0;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .profile-details .pd-card {
+            margin-bottom: 22px;
+            overflow: hidden;
+            background: #fff;
+            border: 1px solid #e4ece7;
+            border-radius: 16px;
+            box-shadow: 0 6px 24px rgba(22, 58, 41, .04);
+        }
+
+        .profile-details .pd-person {
+            padding: 28px;
+            background: #effbf5;
+        }
+
+        .profile-details .pd-name {
+            margin: 0 0 10px;
+            font-size: 24px;
+            font-weight: 700;
+            overflow-wrap: anywhere;
+        }
+
+        .profile-details .pd-heading {
+            padding: 18px 24px;
+            margin: 0;
+            background: #f8fbf9;
+            border-bottom: 1px solid #eaf0ec;
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .profile-details .pd-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+            gap: 24px;
+            padding: 24px;
+            margin: 0;
+        }
+
+        .profile-details dt {
+            margin-bottom: 8px;
+            color: #64756d;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .profile-details dd {
+            margin: 0;
+            font-size: 15px;
+            line-height: 1.7;
+            overflow-wrap: anywhere;
+        }
+
+        .profile-details .pd-bio {
+            padding: 24px;
+            margin: 0;
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+            line-height: 1.8;
+        }
+
+        .profile-details .pd-badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .profile-details .pd-active {
+            color: #047857;
+            background: #dcfce7;
+        }
+
+        .profile-details .pd-inactive {
+            color: #be123c;
+            background: #ffe4e6;
+        }
+</style>
+
+<div class="profile-details">
+    <div class="pd-header">
+        <div>
+            <h1>Chi tiết hồ sơ</h1>
+            <p class="pd-muted">
+                Thông tin sinh viên và cựu sinh viên trên hệ thống.
+            </p>
+        </div>
+
+        <a href="@Url.Action("Index", "AlumniProfiles",
+                               new { area = "Admin" })"
+           class="pd-back">
+            ← Quay lại danh sách
+        </a>
+    </div>
+
+    <section class="pd-card">
+        <div class="pd-person">
+            <h2 class="pd-name">@fullName</h2>
+
+            <p class="pd-muted">
+                @ShowText(Model.User?.Email)
+            </p>
+
+            @if (Model.User != null)
+            {
+                <div style="margin-top: 14px;">
+                    <span class="pd-badge @(Model.User.IsActive
+                                                  ? "pd-active"
+                                                  : "pd-inactive")">
+                        @(Model.User.IsActive
+                                            ? "Tài khoản đang hoạt động"
+                                            : "Tài khoản đã khóa")
+                </span>
+            </div>
+                        }
+        </div>
+    </section>
+
+    <section class="pd-card">
+        <h2 class="pd-heading">Thông tin học tập</h2>
+
+        <dl class="pd-grid">
+            <div>
+                <dt>Mã sinh viên</dt>
+                <dd>@ShowText(Model.StudentCode)</dd>
+            </div>
+
+            <div>
+                <dt>Năm tốt nghiệp / Dự kiến</dt>
+                <dd>
+                    @(Model.GraduationYear?.ToString() ?? "Chưa cập nhật")
+                </dd>
+            </div>
+
+            <div>
+                <dt>Mã ngành học</dt>
+                <dd>@(Model.MajorId?.ToString() ?? "Chưa cập nhật")</dd>
+            </div>
+
+            <div>
+                <dt>Mã khóa học</dt>
+                <dd>
+                    @(Model.AcademicCourseId?.ToString() ?? "Chưa cập nhật")
+                </dd>
+            </div>
+        </dl>
+    </section>
+
+    <section class="pd-card">
+        <h2 class="pd-heading">Thông tin cá nhân</h2>
+
+        <dl class="pd-grid">
+            <div>
+                <dt>Ngày sinh</dt>
+                <dd>
+                    @(Model.DateOfBirth?.ToString("dd/MM/yyyy")
+                                        ?? "Chưa cập nhật")
+                </dd>
+            </div>
+
+            <div>
+                <dt>Giới tính</dt>
+                <dd>@ShowText(Model.Gender)</dd>
+            </div>
+
+            <div>
+                <dt>Địa chỉ</dt>
+                <dd>@ShowText(Model.Address)</dd>
+            </div>
+
+            <div>
+                <dt>LinkedIn</dt>
+                <dd>@ShowText(Model.LinkedInUrl)</dd>
+            </div>
+
+            <div>
+                <dt>Lần cập nhật hồ sơ</dt>
+                <dd>
+                    @(Model.ProfileUpdatedAt?.ToString("dd/MM/yyyy HH:mm")
+                                        ?? "Chưa cập nhật")
+                </dd>
+            </div>
+        </dl>
+    </section>
+
+    <section class="pd-card">
+        <h2 class="pd-heading">Giới thiệu bản thân</h2>
+        <p class="pd-bio">@ShowText(Model.Bio)</p>
+    </section>
+</div>

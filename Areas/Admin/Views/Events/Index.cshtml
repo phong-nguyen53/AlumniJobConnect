@@ -1,0 +1,529 @@
+﻿@using System.Linq
+@model IEnumerable<AlumniJobConnect.Models.Event>
+
+@{
+    ViewData["Title"] = "Quản lý sự kiện";
+    Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
+
+    var events = Model.ToList();
+    var now = DateTime.UtcNow.AddHours(7);
+
+    string StatusKey(AlumniJobConnect.Models.Event item)
+    {
+        if (item.EventStatus == "Cancelled")
+            return "cancelled";
+
+        if (item.EventStatus == "Completed"
+            || (item.EndAt.HasValue && item.EndAt.Value < now))
+            return "completed";
+
+        if (item.StartAt <= now)
+            return "started";
+
+        return "upcoming";
+    }
+
+    string StatusLabel(string key) => key switch
+    {
+        "cancelled" => "Đã hủy",
+        "completed" => "Đã kết thúc",
+        "started" => "Đã bắt đầu",
+        _ => "Sắp diễn ra"
+    };
+
+    var upcomingCount = events.Count(e => StatusKey(e) == "upcoming");
+    var completedCount = events.Count(e => StatusKey(e) == "completed");
+    var cancelledCount = events.Count(e => StatusKey(e) == "cancelled");
+}
+
+<style>
+    .ae-page {
+        padding: 28px 0;
+        color: #25354a;
+    }
+
+    .ae-heading {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+
+    .ae-heading h1 {
+        margin: 0 0 8px;
+        font-size: 27px;
+        font-weight: 700;
+    }
+
+    .ae-heading p {
+        margin: 0;
+        color: #7a8798;
+        font-size: 14px;
+    }
+
+    .ae-stats {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+
+    .ae-stat {
+        padding: 21px;
+        background: white;
+        border: 1px solid #e9edf3;
+        border-radius: 15px;
+        box-shadow: 0 4px 16px #24365405;
+    }
+
+    .ae-stat span {
+        display: block;
+        color: #7a8798;
+        font-size: 13px;
+    }
+
+    .ae-stat strong {
+        display: block;
+        margin-top: 9px;
+        font-size: 28px;
+        line-height: 1.2;
+    }
+
+    .ae-panel {
+        background: white;
+        border: 1px solid #e9edf3;
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 4px 20px #24365405;
+    }
+
+    .ae-toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 12px;
+        padding: 22px;
+        border-bottom: 1px solid #edf0f5;
+    }
+
+    .ae-search {
+        flex: 1;
+        min-width: 220px;
+    }
+
+    .ae-toolbar .form-control,
+    .ae-toolbar .form-select {
+        min-height: 44px;
+        border-radius: 9px;
+    }
+
+    .ae-filter {
+        width: 210px;
+    }
+
+    .ae-result {
+        padding: 15px 22px;
+        color: #7a8798;
+        font-size: 13px;
+    }
+
+    .ae-table {
+        margin: 0;
+    }
+
+    .ae-table thead th {
+        padding: 15px 18px;
+        color: #7a8798;
+        background: #f7f9fc;
+        border-bottom: 1px solid #e9edf3;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .4px;
+        white-space: nowrap;
+    }
+
+    .ae-table tbody td {
+        padding: 19px 18px;
+        vertical-align: middle;
+        border-bottom: 1px solid #edf0f5;
+        font-size: 13px;
+    }
+
+    .ae-table tbody tr:last-child td {
+        border-bottom: 0;
+    }
+
+    .ae-name {
+        display: block;
+        max-width: 320px;
+        color: #263852;
+        font-weight: 650;
+        font-size: 14px;
+        line-height: 1.5;
+        overflow-wrap: anywhere;
+        text-decoration: none;
+    }
+
+    .ae-sub {
+        display: block;
+        margin-top: 5px;
+        color: #8994a4;
+        font-size: 12px;
+        line-height: 1.5;
+    }
+
+    .ae-badge {
+        display: inline-block;
+        padding: 6px 10px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .ae-upcoming {
+        color: #3155b8;
+        background: #edf2ff;
+    }
+
+    .ae-started {
+        color: #087d5c;
+        background: #e5f6ef;
+    }
+
+    .ae-completed {
+        color: #6c7789;
+        background: #eef1f5;
+    }
+
+    .ae-cancelled {
+        color: #be3647;
+        background: #ffedf0;
+    }
+
+    .ae-actions {
+        display: flex;
+        gap: 6px;
+        white-space: nowrap;
+    }
+
+    .ae-actions .btn {
+        padding: 6px 10px;
+        border-radius: 8px;
+        font-size: 12px;
+    }
+
+    .ae-empty {
+        padding: 44px 20px !important;
+        color: #8994a4;
+        text-align: center;
+    }
+
+    .ae-page [hidden] {
+        display: none !important;
+    }
+
+    @@media (max-width: 991px) {
+        .ae-stats {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+
+    @@media (max-width: 575px) {
+        .ae-heading h1 {
+            font-size: 23px;
+        }
+
+        .ae-stat {
+            padding: 16px;
+        }
+
+        .ae-toolbar {
+            padding: 16px;
+        }
+
+        .ae-search,
+        .ae-filter {
+            width: 100%;
+            min-width: 0;
+            flex-basis: 100%;
+        }
+    }
+</style>
+
+<div class="container-fluid ae-page">
+
+    <div class="ae-heading">
+        <div>
+            <h1>Quản lý sự kiện</h1>
+            <p>Theo dõi lịch tổ chức và quản lý thông tin sự kiện.</p>
+        </div>
+
+        <a href="@Url.Action("Create", "Events", new { area = "Admin" })"
+           class="btn btn-primary rounded-3 px-4">
+            + Thêm sự kiện
+        </a>
+    </div>
+
+    <div class="ae-stats">
+        <div class="ae-stat">
+            <span>Tổng số sự kiện</span>
+            <strong>@events.Count</strong>
+        </div>
+
+        <div class="ae-stat">
+            <span>Sắp diễn ra</span>
+            <strong style="color:#3155b8">@upcomingCount</strong>
+        </div>
+
+        <div class="ae-stat">
+            <span>Đã kết thúc</span>
+            <strong style="color:#087d5c">@completedCount</strong>
+        </div>
+
+        <div class="ae-stat">
+            <span>Đã hủy</span>
+            <strong style="color:#be3647">@cancelledCount</strong>
+        </div>
+    </div>
+
+    <div class="ae-panel">
+        <div class="ae-toolbar">
+            <div class="ae-search">
+                <label for="eventSearch" class="visually-hidden">
+                    Tìm sự kiện
+                </label>
+
+                <input id="eventSearch"
+                       type="search"
+                       class="form-control"
+                       placeholder="Tìm tên sự kiện, địa điểm hoặc người đăng…" />
+            </div>
+
+            <div class="ae-filter">
+                <label for="eventStatus" class="visually-hidden">
+                    Trạng thái
+                </label>
+
+                <select id="eventStatus" class="form-select">
+                    <option value="">Tất cả trạng thái</option>
+                    <option value="upcoming">Sắp diễn ra</option>
+                    <option value="started">Đã bắt đầu</option>
+                    <option value="completed">Đã kết thúc</option>
+                    <option value="cancelled">Đã hủy</option>
+                </select>
+            </div>
+
+            <button id="eventReset"
+                    type="button"
+                    class="btn btn-outline-secondary rounded-3">
+                Đặt lại
+            </button>
+        </div>
+
+        <div class="ae-result" role="status" aria-live="polite">
+            Hiển thị <strong id="eventVisibleCount">@events.Count</strong>
+            / @events.Count sự kiện
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover ae-table">
+                <thead>
+                    <tr>
+                        <th>Sự kiện</th>
+                        <th>Người đăng</th>
+                        <th>Thời gian</th>
+                        <th>Hạn đăng ký</th>
+                        <th>Số chỗ</th>
+                        <th>Trạng thái</th>
+                        <th>Thao tác</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @foreach (var item in events.OrderByDescending(e => e.StartAt))
+                    {
+                        var status = StatusKey(item);
+
+                        var creatorName = item.CreatedByUser?.FullName
+                            ?? "Chưa có thông tin";
+
+                        var searchText = string.Join(" ",
+                            item.EventName,
+                            item.Location,
+                            creatorName);
+
+                        <tr data-event-row
+                            data-status="@status"
+                            data-search="@searchText">
+
+                            <td>
+                                <a class="ae-name"
+                                   href="@Url.Action("Details", "Events", new {
+                                       area = "Admin",
+                                       id = item.EventId
+                                   })">
+                                    @item.EventName
+                                </a>
+
+                                <span class="ae-sub">
+                                    @(string.IsNullOrWhiteSpace(item.Location)
+                                        ? "Chưa cập nhật địa điểm"
+                                        : item.Location)
+                                </span>
+
+                                <span class="ae-sub">
+                                    Mã #@item.EventId
+                                </span>
+                            </td>
+
+                            <td>
+                                @creatorName
+
+                                <span class="ae-sub">
+                                    Đăng @item.CreatedAt.ToString("dd/MM/yyyy")
+                                </span>
+                            </td>
+
+                            <td class="text-nowrap">
+                                @item.StartAt.ToString("dd/MM/yyyy")
+
+                                <span class="ae-sub">
+                                    Bắt đầu @item.StartAt.ToString("HH:mm")
+                                </span>
+
+                                @if (item.EndAt.HasValue)
+                                {
+                                    <span class="ae-sub">
+                                        Kết thúc
+                                        @item.EndAt.Value.ToString("dd/MM HH:mm")
+                                    </span>
+                                }
+                            </td>
+
+                            <td class="text-nowrap">
+                                @if (item.RegistrationDeadline.HasValue)
+                                {
+                                    @item.RegistrationDeadline.Value.ToString("dd/MM/yyyy")
+
+                                    <span class="ae-sub">
+                                        @item.RegistrationDeadline.Value.ToString("HH:mm")
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">
+                                        Không quy định
+                                    </span>
+                                }
+                            </td>
+
+                            <td class="text-nowrap">
+                                @(item.Capacity.HasValue
+                                    ? item.Capacity.Value.ToString()
+                                    : "Không giới hạn")
+                            </td>
+
+                            <td>
+                                <span class="ae-badge ae-@status">
+                                    @StatusLabel(status)
+                                </span>
+                            </td>
+
+                            <td>
+                                <div class="ae-actions">
+                                    <a class="btn btn-outline-primary"
+                                       href="@Url.Action("Details", "Events", new {
+                                           area = "Admin",
+                                           id = item.EventId
+                                       })">
+                                        Xem
+                                    </a>
+
+                                    <a class="btn btn-outline-secondary"
+                                       href="@Url.Action("Edit", "Events", new {
+                                           area = "Admin",
+                                           id = item.EventId
+                                       })">
+                                        Sửa
+                                    </a>
+
+                                    <a class="btn btn-outline-danger"
+                                       href="@Url.Action("Delete", "Events", new {
+                                           area = "Admin",
+                                           id = item.EventId
+                                       })">
+                                        Xóa
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+
+                    <tr id="eventEmptyRow" hidden="@(events.Count > 0)">
+                        <td colspan="7" class="ae-empty">
+                            Không có sự kiện phù hợp.
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+(() => {
+    const search = document.getElementById("eventSearch");
+    const status = document.getElementById("eventStatus");
+    const reset = document.getElementById("eventReset");
+    const count = document.getElementById("eventVisibleCount");
+    const empty = document.getElementById("eventEmptyRow");
+    const rows = [...document.querySelectorAll("[data-event-row]")];
+
+    function normalize(value) {
+        return value
+            .toLocaleLowerCase("vi")
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .replace(/đ/g, "d");
+    }
+
+    function filterEvents() {
+        const keyword = normalize(search.value.trim());
+        const selectedStatus = status.value;
+
+        let visible = 0;
+
+        for (const row of rows) {
+            const matchesText =
+                normalize(row.dataset.search).includes(keyword);
+
+            const matchesStatus =
+                !selectedStatus ||
+                row.dataset.status === selectedStatus;
+
+            row.hidden = !(matchesText && matchesStatus);
+
+            if (!row.hidden) visible++;
+        }
+
+        count.textContent = visible;
+        empty.hidden = visible > 0;
+    }
+
+    search.addEventListener("input", filterEvents);
+    status.addEventListener("change", filterEvents);
+
+    reset.addEventListener("click", () => {
+        search.value = "";
+        status.value = "";
+        filterEvents();
+        search.focus();
+    });
+
+    filterEvents();
+})();
+</script>

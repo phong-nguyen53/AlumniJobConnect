@@ -4,69 +4,281 @@
     Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
     ViewData["Title"] = "Chi tiết tin tuyển dụng";
 
-    var (statusText, badgeClass) = Model.ApprovalStatus switch
+    var (statusText, badgeClass, statusIcon) = Model.ApprovalStatus switch
     {
-        "Pending" => ("Chờ duyệt", "bg-warning text-dark"),
-        "Approved" => ("Đã duyệt", "bg-success"),
-        "Rejected" => ("Đã từ chối", "bg-danger"),
-        _ => (Model.ApprovalStatus ?? "Chưa xác định", "bg-secondary")
+        "Pending" => ("Chờ duyệt", "bg-warning-subtle text-warning-emphasis border border-warning-subtle", "bi-hourglass-split"),
+        "Approved" => ("Đã duyệt", "bg-success-subtle text-success-emphasis border border-success-subtle", "bi-check-circle-fill"),
+        "Rejected" => ("Đã từ chối", "bg-danger-subtle text-danger-emphasis border border-danger-subtle", "bi-x-circle-fill"),
+        _ => (Model.ApprovalStatus ?? "Chưa xác định", "bg-secondary-subtle text-secondary-emphasis border border-secondary-subtle", "bi-question-circle")
     };
+
+    var companyName = Model.Company?.CompanyName ?? "Chưa có thông tin doanh nghiệp";
+    var companyInitial = string.IsNullOrWhiteSpace(Model.Company?.CompanyName)
+        ? "?"
+        : Model.Company.CompanyName.Trim().Substring(0, 1).ToUpper();
+
+    var today = DateOnly.FromDateTime(DateTime.UtcNow.AddHours(7));
+
+    var isExpired = Model.Deadline.HasValue
+        && Model.Deadline.Value < today;
+}
+
+@section Styles {
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    <style>
+        .jp-hero {
+            background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 55%, #3b82f6 100%);
+            color: #fff;
+            border-radius: 1rem 1rem 0 0;
+        }
+
+        .jp-avatar {
+            width: 64px;
+            height: 64px;
+            border-radius: 1rem;
+            background: rgba(255,255,255,.18);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.75rem;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .jp-info-tile {
+            border: 1px solid var(--bs-border-color);
+            border-radius: .75rem;
+            padding: 1rem 1.15rem;
+            height: 100%;
+            background: #fff;
+            transition: box-shadow .2s ease, transform .2s ease;
+        }
+
+            .jp-info-tile:hover {
+                box-shadow: 0 .5rem 1rem rgba(0,0,0,.07);
+                transform: translateY(-2px);
+            }
+
+        .jp-info-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: .6rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.15rem;
+            background: #eff6ff;
+            color: #2563eb;
+        }
+
+        .jp-section-title {
+            display: flex;
+            align-items: center;
+            gap: .6rem;
+            font-size: 1.05rem;
+            font-weight: 600;
+            margin-bottom: .85rem;
+        }
+
+            .jp-section-title i {
+                width: 34px;
+                height: 34px;
+                border-radius: .5rem;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                background: #eff6ff;
+                color: #2563eb;
+            }
+
+        .jp-content {
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+            line-height: 1.7;
+            color: #374151;
+            background: #f9fafb;
+            border-left: 3px solid #2563eb;
+            border-radius: 0 .6rem .6rem 0;
+            padding: 1rem 1.25rem;
+            margin-bottom: 0;
+        }
+
+            .jp-content.is-empty {
+                color: #9ca3af;
+                font-style: italic;
+                border-left-color: #d1d5db;
+            }
+
+        .jp-action-bar {
+            background: #f9fafb;
+            border-top: 1px solid var(--bs-border-color);
+            border-radius: 0 0 1rem 1rem;
+        }
+    </style>
 }
 
 <div class="container-fluid py-4">
-    <a class="btn btn-outline-secondary btn-sm mb-3"
-       href="@Url.RouteUrl("AdminJobPosts")">
-        ← Về danh sách tin
-    </a>
 
-    <article class="card border-0 shadow-sm">
-        <div class="card-body p-4">
-            <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
-                <div>
-                    <p class="small text-muted mb-1">Tin #@Model.JobPostId</p>
-                    <h1 class="h3 mb-2">@Model.Title</h1>
-                    <p class="text-muted mb-0">
-                        @(Model.Company?.CompanyName ?? "Chưa có thông tin doanh nghiệp")
-                    </p>
+    @* Breadcrumb + nút quay lại *@
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0 small">
+                <li class="breadcrumb-item">
+                    <a href="@Url.RouteUrl("AdminJobPosts")" class="text-decoration-none">Tin tuyển dụng</a>
+                </li>
+                <li class="breadcrumb-item active" aria-current="page">Tin #@Model.JobPostId</li>
+            </ol>
+        </nav>
+        <a class="btn btn-outline-secondary btn-sm" href="@Url.RouteUrl("AdminJobPosts")">
+            <i class="bi bi-arrow-left me-1"></i>Về danh sách tin
+        </a>
+    </div>
+
+    <article class="card border-0 shadow-sm rounded-4">
+
+        @* Header *@
+        <header class="jp-hero p-4 p-lg-5">
+            <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="jp-avatar" aria-hidden="true">@companyInitial</div>
+                    <div>
+                        <p class="small mb-1 opacity-75">
+                            <i class="bi bi-hash"></i>Mã tin: @Model.JobPostId
+                        </p>
+                        <h1 class="h3 fw-bold mb-1">@Model.Title</h1>
+                        <p class="mb-0 opacity-90">
+                            <i class="bi bi-building me-1"></i>@companyName
+                        </p>
+                    </div>
                 </div>
-                <span class="badge @badgeClass">@statusText</span>
+
+                <span class="badge rounded-pill px-3 py-2 fs-6 @badgeClass">
+                    <i class="bi @statusIcon me-1"></i>@statusText
+                </span>
+            </div>
+        </header>
+
+        <div class="card-body p-4 p-lg-5">
+
+            @* Thông tin nhanh *@
+            <div class="row g-3 mb-5">
+                <div class="col-12 col-md-6 col-xl-3">
+                    <div class="jp-info-tile">
+                        <div class="d-flex align-items-center gap-3">
+                            <span class="jp-info-icon"><i class="bi bi-geo-alt"></i></span>
+                            <div class="min-w-0">
+                                <div class="small text-muted">Địa điểm làm việc</div>
+                                <div class="fw-semibold text-break">
+                                    @(string.IsNullOrWhiteSpace(Model.WorkLocation) ? "Chưa cập nhật" : Model.WorkLocation)
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-12 col-md-6 col-xl-3">
+                    <div class="jp-info-tile">
+                        <div class="d-flex align-items-center gap-3">
+                            <span class="jp-info-icon"><i class="bi bi-calendar-plus"></i></span>
+                            <div>
+                                <div class="small text-muted">Ngày đăng</div>
+                                <div class="fw-semibold">@Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-12 col-md-6 col-xl-3">
+                    <div class="jp-info-tile">
+                        <div class="d-flex align-items-center gap-3">
+                            <span class="jp-info-icon"><i class="bi bi-calendar-check"></i></span>
+                            <div>
+                                <div class="small text-muted">Hạn nộp hồ sơ</div>
+                                <div class="fw-semibold">
+                                    @(Model.Deadline?.ToString("dd/MM/yyyy") ?? "Chưa cập nhật")
+                                    @if (isExpired)
+                                    {
+                                        <span class="badge bg-danger-subtle text-danger-emphasis ms-1">Đã hết hạn</span>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-12 col-md-6 col-xl-3">
+                    <div class="jp-info-tile">
+                        <div class="d-flex align-items-center gap-3">
+                            <span class="jp-info-icon"><i class="bi bi-eye"></i></span>
+                            <div>
+                                <div class="small text-muted">Cài đặt hiển thị</div>
+                                <div class="fw-semibold">
+                                    @if (Model.IsPublished)
+                                    {
+                                        <span class="text-success"><i class="bi bi-toggle-on me-1"></i>Đã bật</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-secondary"><i class="bi bi-toggle-off me-1"></i>Đã tắt</span>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            <dl class="row bg-light rounded p-3 mb-4">
-                <dt class="col-sm-4">Địa điểm làm việc</dt>
-                <dd class="col-sm-8">
-                    @(string.IsNullOrWhiteSpace(Model.WorkLocation) ? "Chưa cập nhật" : Model.WorkLocation)
-                </dd>
+            @* Mô tả công việc *@
+            <section class="mb-5">
+                <h2 class="jp-section-title"><i class="bi bi-file-text"></i>Mô tả công việc</h2>
+                <p class="jp-content">@Model.JobDescription</p>
+            </section>
 
-                <dt class="col-sm-4">Ngày đăng</dt>
-                <dd class="col-sm-8">@Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")</dd>
+            @* Yêu cầu ứng viên *@
+            <section class="mb-5">
+                <h2 class="jp-section-title"><i class="bi bi-person-check"></i>Yêu cầu ứng viên</h2>
+                @if (string.IsNullOrWhiteSpace(Model.Requirements))
+                {
+                    <p class="jp-content is-empty">Chưa cập nhật</p>
+                }
+                else
+                {
+                    <p class="jp-content">@Model.Requirements</p>
+                }
+            </section>
 
-                <dt class="col-sm-4">Hạn nộp hồ sơ</dt>
-                <dd class="col-sm-8">@(Model.Deadline?.ToString("dd/MM/yyyy") ?? "Chưa cập nhật")</dd>
+            @* Quyền lợi *@
+            <section>
+                <h2 class="jp-section-title"><i class="bi bi-gift"></i>Quyền lợi</h2>
+                @if (string.IsNullOrWhiteSpace(Model.Benefits))
+                {
+                    <p class="jp-content is-empty">Chưa cập nhật</p>
+                }
+                else
+                {
+                    <p class="jp-content">@Model.Benefits</p>
+                }
+            </section>
+        </div>
 
-                <dt class="col-sm-4">Cài đặt hiển thị</dt>
-                <dd class="col-sm-8 mb-0">@(Model.IsPublished ? "Đã bật" : "Đã tắt")</dd>
-            </dl>
-
-            <h2 class="h5">Mô tả công việc</h2>
-            <p style="white-space: pre-wrap; overflow-wrap: anywhere;">@Model.JobDescription</p>
-
-            <h2 class="h5 mt-4">Yêu cầu ứng viên</h2>
-            <p style="white-space: pre-wrap; overflow-wrap: anywhere;">@(string.IsNullOrWhiteSpace(Model.Requirements) ? "Chưa cập nhật" : Model.Requirements)</p>
-
-            <h2 class="h5 mt-4">Quyền lợi</h2>
-            <p style="white-space: pre-wrap; overflow-wrap: anywhere;">@(string.IsNullOrWhiteSpace(Model.Benefits) ? "Chưa cập nhật" : Model.Benefits)</p>
-
-            @if (Model.ApprovalStatus == "Pending")
-            {
+        @* Thanh hành động *@
+        @if (Model.ApprovalStatus == "Pending")
+        {
+            <footer class="jp-action-bar p-3 p-lg-4">
                 <form method="post"
                       action="@Url.RouteUrl("AdminApproveJobPost", new { id = Model.JobPostId })"
-                      class="border-top pt-3 mt-4"
+                      class="d-flex flex-wrap justify-content-between align-items-center gap-3"
                       onsubmit="return confirm('Bạn muốn duyệt tin tuyển dụng này?');">
                     @Html.AntiForgeryToken()
-                    <button type="submit" class="btn btn-success">Duyệt tin</button>
+                    <span class="text-muted small">
+                        <i class="bi bi-info-circle me-1"></i>Tin đang chờ quản trị viên xem xét và duyệt.
+                    </span>
+                    <button type="submit" class="btn btn-success px-4">
+                        <i class="bi bi-check2-circle me-1"></i>Duyệt tin
+                    </button>
                 </form>
-            }
-        </div>
+            </footer>
+        }
     </article>
 </div>
