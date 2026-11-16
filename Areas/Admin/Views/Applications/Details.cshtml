@@ -1,0 +1,413 @@
+﻿@model AlumniJobConnect.Models.Application
+
+@{
+    ViewData["Title"] = "Chi tiết đơn ứng tuyển";
+    Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
+
+    string Text(string? value) =>
+        string.IsNullOrWhiteSpace(value) ? "Chưa cập nhật" : value;
+
+    var candidateName = Text(Model.Alumni?.User?.FullName);
+    var email = Text(Model.Alumni?.User?.Email);
+    var companyName = Text(Model.JobPost?.Company?.CompanyName);
+    var jobTitle = Text(Model.JobPost?.Title);
+
+    var statusName = ViewData["StatusName"] as string
+        ?? $"Trạng thái #{Model.ApplicationStatusId}";
+}
+
+<style>
+    .application-detail {
+        max-width: 1150px;
+        margin: 0 auto;
+        color: #20352e;
+    }
+
+        .application-detail .ad-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .application-detail .ad-eyebrow {
+            margin-bottom: 8px;
+            color: #059669;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .application-detail h1 {
+            margin: 0 0 8px;
+            font-size: 27px;
+            font-weight: 700;
+        }
+
+        .application-detail .ad-muted {
+            margin: 0;
+            color: #64756d;
+            font-size: 14px;
+            line-height: 1.7;
+        }
+
+        .application-detail .ad-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 11px 16px;
+            color: #047857;
+            background: #fff;
+            border: 1px solid #dce6e0;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+            .application-detail .ad-button:hover {
+                color: #047857;
+                background: #ecfdf5;
+            }
+
+        .application-detail .ad-summary {
+            padding: 26px;
+            margin-bottom: 24px;
+            background: #ecfdf5;
+            border: 1px solid #d1fae5;
+            border-radius: 16px;
+        }
+
+        .application-detail .ad-summary-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .application-detail .ad-job-title {
+            margin: 0 0 8px;
+            color: #064e3b;
+            font-size: 23px;
+            font-weight: 700;
+            line-height: 1.5;
+            overflow-wrap: anywhere;
+        }
+
+        .application-detail .ad-badge {
+            display: inline-block;
+            padding: 8px 12px;
+            color: #0369a1;
+            background: #eff8ff;
+            border: 1px solid #dbeafe;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .application-detail .ad-card {
+            overflow: hidden;
+            margin-bottom: 24px;
+            background: #fff;
+            border: 1px solid #e4ece7;
+            border-radius: 16px;
+            box-shadow: 0 6px 24px rgba(22, 58, 41, .04);
+        }
+
+        .application-detail .ad-heading {
+            padding: 18px 24px;
+            margin: 0;
+            color: #20352e;
+            background: #f8fbf9;
+            border-bottom: 1px solid #eaf0ec;
+            font-size: 17px;
+            font-weight: 700;
+        }
+
+        .application-detail .ad-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+            gap: 24px;
+            padding: 24px;
+            margin: 0;
+        }
+
+        .application-detail .ad-full {
+            grid-column: 1 / -1;
+        }
+
+        .application-detail dt {
+            margin-bottom: 7px;
+            color: #64756d;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .application-detail dd {
+            margin: 0;
+            font-size: 15px;
+            line-height: 1.7;
+            overflow-wrap: anywhere;
+        }
+
+        .application-detail .ad-body {
+            padding: 24px;
+        }
+
+        .application-detail .ad-text {
+            margin: 0;
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+            line-height: 1.8;
+            font-size: 14px;
+        }
+
+        .application-detail .ad-empty {
+            padding: 18px;
+            color: #64756d;
+            background: #f8faf9;
+            border: 1px dashed #dce6e0;
+            border-radius: 10px;
+            line-height: 1.7;
+        }
+
+        .application-detail .ad-link {
+            color: #047857;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+            .application-detail .ad-link:hover {
+                text-decoration: underline;
+            }
+
+        .application-detail .ad-note {
+            margin: 0 0 24px;
+            padding: 15px 20px;
+            color: #64756d;
+            background: #f8faf9;
+            border-radius: 12px;
+            font-size: 13px;
+            line-height: 1.7;
+        }
+</style>
+
+<div class="application-detail">
+    <div class="ad-header">
+        <div>
+            <div class="ad-eyebrow">Theo dõi tuyển dụng</div>
+
+            <h1>Đơn ứng tuyển #@Model.ApplicationId</h1>
+
+            <p class="ad-muted">
+                Thông tin ứng viên và quá trình xử lý của doanh nghiệp.
+            </p>
+        </div>
+
+        <a href="@Url.Action("Index", "Applications",
+                               new { area = "Admin" })"
+           class="ad-button">
+            ← Danh sách đơn
+        </a>
+    </div>
+
+    <section class="ad-summary">
+        <div class="ad-summary-top">
+            <div>
+                <h2 class="ad-job-title">@jobTitle</h2>
+                <p class="ad-muted">@companyName</p>
+            </div>
+
+            <span class="ad-badge">@statusName</span>
+        </div>
+    </section>
+
+    <section class="ad-card">
+        <h2 class="ad-heading">Thông tin ứng viên</h2>
+
+        <dl class="ad-grid">
+            <div>
+                <dt>Họ và tên</dt>
+                <dd><strong>@candidateName</strong></dd>
+            </div>
+
+            <div>
+                <dt>Email</dt>
+                <dd>@email</dd>
+            </div>
+
+            <div>
+                <dt>Mã sinh viên</dt>
+                <dd>@Text(Model.Alumni?.StudentCode)</dd>
+            </div>
+
+            <div>
+                <dt>Hồ sơ cá nhân</dt>
+                <dd>
+                    <a href="@Url.Action("Details", "AlumniProfiles",
+                                                       new
+                                                       {
+                                                           area = "Admin",
+                                                           id = Model.AlumniId
+                                                       })"
+                       class="ad-link">
+                        Xem hồ sơ ứng viên →
+                    </a>
+                </dd>
+            </div>
+        </dl>
+    </section>
+
+    <section class="ad-card">
+        <h2 class="ad-heading">Thông tin ứng tuyển</h2>
+
+        <dl class="ad-grid">
+            <div>
+                <dt>Vị trí ứng tuyển</dt>
+                <dd>@jobTitle</dd>
+            </div>
+
+            <div>
+                <dt>Doanh nghiệp</dt>
+                <dd>@companyName</dd>
+            </div>
+
+            <div>
+                <dt>Ngày nộp đơn</dt>
+                <dd>@Html.DisplayFor(m => m.AppliedAt)</dd>
+            </div>
+
+            <div>
+                <dt>Cập nhật lần cuối</dt>
+                <dd>
+                    @if (Model.UpdatedAt.HasValue)
+                    {
+                        @Model.UpdatedAt.Value.ToString("dd/MM/yyyy HH:mm")
+                    }
+                    else
+                    {
+                        <span>Chưa cập nhật</span>
+                    }
+                </dd>
+            </div>
+        </dl>
+    </section>
+
+    <section class="ad-card">
+        <h2 class="ad-heading">CV đã nộp</h2>
+
+        <div class="ad-body">
+            @if (string.IsNullOrWhiteSpace(Model.Cvurl))
+            {
+                <div class="ad-empty">Đơn này chưa có đường dẫn CV.</div>
+            }
+            else
+            {
+                <p class="ad-text">@Model.Cvurl</p>
+
+                <p class="ad-muted" style="margin-top: 12px;">
+                    Đường dẫn CV đã lưu trong đơn ứng tuyển.
+                </p>
+            }
+        </div>
+    </section>
+
+    <section class="ad-card">
+        <h2 class="ad-heading">Thư ứng tuyển</h2>
+
+        <div class="ad-body">
+            @if (string.IsNullOrWhiteSpace(Model.CoverLetter))
+            {
+                <div class="ad-empty">Ứng viên chưa gửi thư ứng tuyển.</div>
+            }
+            else
+            {
+                <p class="ad-text">@Model.CoverLetter</p>
+            }
+        </div>
+    </section>
+
+    <section class="ad-card">
+        <h2 class="ad-heading">Lịch phỏng vấn</h2>
+
+        @if (Model.InterviewAt.HasValue)
+        {
+            <dl class="ad-grid">
+                <div>
+                    <dt>Thời gian phỏng vấn</dt>
+                    <dd>
+                        <strong>
+                            @Model.InterviewAt.Value.ToString("dd/MM/yyyy HH:mm")
+                        </strong>
+                    </dd>
+                </div>
+
+                <div>
+                    <dt>Địa điểm / Hình thức</dt>
+                    <dd>@Text(Model.InterviewLocation)</dd>
+                </div>
+
+                <div>
+                    <dt>Phản hồi của ứng viên</dt>
+                    <dd>@Text(Model.InterviewResponse)</dd>
+                </div>
+
+                <div>
+                    <dt>Thời gian phản hồi</dt>
+                    <dd>
+                        @(Model.InterviewRespondedAt?.ToString("dd/MM/yyyy HH:mm")
+                                            ?? "Chưa phản hồi")
+                </dd>
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(Model.InterviewNote))
+                {
+                    <div class="ad-full">
+                        <dt>Hướng dẫn phỏng vấn</dt>
+                        <dd class="ad-text">@Model.InterviewNote</dd>
+                    </div>
+                }
+
+                @if (!string.IsNullOrWhiteSpace(Model.InterviewDeclineReason))
+                {
+                    <div class="ad-full">
+                        <dt>Lý do từ chối lịch phỏng vấn</dt>
+                        <dd class="ad-text">@Model.InterviewDeclineReason</dd>
+                    </div>
+                }
+            </dl>
+        }
+        else
+        {
+            <div class="ad-body">
+                <div class="ad-empty">
+                    Doanh nghiệp chưa cập nhật lịch phỏng vấn.
+                </div>
+            </div>
+        }
+    </section>
+
+    <section class="ad-card">
+        <h2 class="ad-heading">Ghi chú của doanh nghiệp</h2>
+
+        <div class="ad-body">
+            @if (string.IsNullOrWhiteSpace(Model.EmployerNote))
+            {
+                <div class="ad-empty">Chưa có ghi chú.</div>
+            }
+            else
+            {
+                <p class="ad-text">@Model.EmployerNote</p>
+            }
+        </div>
+    </section>
+
+    <p class="ad-note">
+        Admin theo dõi thông tin.
+        Doanh nghiệp cập nhật kết quả tuyển dụng và lịch phỏng vấn.
+    </p>
+</div>

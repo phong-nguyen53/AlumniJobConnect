@@ -1,0 +1,249 @@
+﻿@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@model AlumniJobConnect.Models.JobCategory
+
+@{
+    ViewData["Title"] = "Xóa ngành nghề";
+    Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+    .category-delete {
+        max-width: 850px;
+        margin: 0 auto;
+        padding: 30px 24px;
+        color: #203b32;
+    }
+
+    .cd-back {
+        display: inline-block;
+        margin-bottom: 24px;
+        color: #008d68;
+        font-size: 14px;
+        text-decoration: none;
+    }
+
+    .cd-card {
+        overflow: hidden;
+        border: 1px solid #e5eae7;
+        border-radius: 18px;
+        background: #fff;
+        box-shadow: 0 8px 28px rgba(26, 65, 49, .05);
+    }
+
+    .cd-header {
+        padding: 28px;
+        border-bottom: 1px solid #f4dfe3;
+        background: #fff7f8;
+    }
+
+    .cd-label {
+        display: inline-block;
+        margin-bottom: 12px;
+        padding: 6px 10px;
+        border-radius: 8px;
+        background: #ffe7ec;
+        color: #b8304c;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .cd-header h1 {
+        margin: 0 0 10px;
+        color: #922c42;
+        font-size: 26px;
+        font-weight: 700;
+    }
+
+    .cd-header p {
+        margin: 0;
+        color: #84646c;
+        font-size: 14px;
+        line-height: 1.7;
+    }
+
+    .cd-body {
+        padding: 28px;
+    }
+
+    .cd-info {
+        margin: 0;
+    }
+
+        .cd-info dt {
+            margin-bottom: 8px;
+            color: #71837c;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .cd-info dd {
+            margin: 0 0 24px;
+            color: #203b32;
+            font-size: 15px;
+            line-height: 1.8;
+            overflow-wrap: anywhere;
+            white-space: pre-line;
+        }
+
+    .cd-name {
+        font-size: 20px !important;
+        font-weight: 700;
+    }
+
+    .cd-warning {
+        padding: 14px 16px;
+        border: 1px solid #f2e2bc;
+        border-radius: 11px;
+        background: #fffaf0;
+        color: #826122;
+        font-size: 13px;
+        line-height: 1.8;
+    }
+
+    .cd-error {
+        margin-bottom: 20px;
+        padding: 14px 16px;
+        border: 1px solid #f1cbd3;
+        border-radius: 11px;
+        background: #fff1f3;
+        color: #ad3047;
+        font-size: 14px;
+        line-height: 1.7;
+    }
+
+    .cd-footer {
+        display: flex;
+        justify-content: flex-end;
+        flex-wrap: wrap;
+        gap: 10px;
+        padding: 22px 28px;
+        border-top: 1px solid #e6eee9;
+        background: #fcfefd;
+    }
+
+    .cd-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 44px;
+        padding: 0 20px;
+        border: 1px solid transparent;
+        border-radius: 11px;
+        font: inherit;
+        font-size: 14px;
+        font-weight: 600;
+        text-decoration: none;
+        cursor: pointer;
+    }
+
+    .cd-cancel {
+        border-color: #dce7e2;
+        background: #fff;
+        color: #526d60;
+    }
+
+        .cd-cancel:hover {
+            background: #eef7f2;
+            color: #35564a;
+            text-decoration: none;
+        }
+
+    .cd-confirm {
+        background: #d73e59;
+        color: #fff;
+    }
+
+        .cd-confirm:hover {
+            background: #b92e46;
+        }
+
+    @@media (max-width: 600px) {
+        .category-delete {
+            padding: 20px 12px;
+        }
+
+        .cd-header,
+        .cd-body,
+        .cd-footer {
+            padding: 20px;
+        }
+
+            .cd-header h1 {
+                font-size: 23px;
+            }
+
+        .cd-button {
+            flex: 1;
+        }
+    }
+</style>
+
+<div class="category-delete">
+    <a href="@Url.Action("Index", "JobCategories", new { area = "Admin" })"
+       class="cd-back">
+        ← Danh sách ngành nghề
+    </a>
+
+    <div class="cd-card">
+        <div class="cd-header">
+            <span class="cd-label">Xác nhận thao tác</span>
+            <h1>Xóa ngành nghề?</h1>
+            <p>
+                Vui lòng kiểm tra thông tin ngành nghề trước khi xác nhận.
+            </p>
+        </div>
+
+        <div class="cd-body">
+            @if (TempData["Error"] != null)
+            {
+                <div class="cd-error" role="alert">
+                    @TempData["Error"]
+                </div>
+            }
+
+            @Html.ValidationSummary(
+            false,
+                        "",
+                        new { @class = "text-danger", role = "alert" })
+
+            <dl class="cd-info">
+                <dt>Mã ngành nghề</dt>
+                <dd>#@Model.JobCategoryId</dd>
+
+                <dt>Tên ngành nghề</dt>
+                <dd class="cd-name">@Model.CategoryName</dd>
+
+                <dt>Mô tả</dt>
+                <dd>
+                    @(string.IsNullOrWhiteSpace(Model.Description)
+                                        ? "Chưa có mô tả."
+                                        : Model.Description)
+                </dd>
+            </dl>
+
+            <div class="cd-warning">
+                Thao tác xóa không thể hoàn tác.
+                Chỉ nên xóa ngành nghề chưa được sử dụng trong tin tuyển dụng.
+            </div>
+        </div>
+
+        <form action="@Url.Action("Delete", "JobCategories", new { area = "Admin", id = Model.JobCategoryId })"
+              method="post"
+              asp-antiforgery="false"
+              class="cd-footer">
+
+            @Html.AntiForgeryToken()
+
+            <input type="hidden" asp-for="JobCategoryId" />
+
+            <a href="@Url.Action("Index", "JobCategories", new { area = "Admin" })"
+               class="cd-button cd-cancel">
+                Hủy
+            </a>
+
+            <button type="submit" class="cd-button cd-confirm">
+                Xác nhận xóa
+            </button>
+        </form>
+    </div>
+</div>

@@ -1,0 +1,353 @@
+﻿@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@model AlumniJobConnect.Models.JobCategory
+
+@{
+    ViewData["Title"] = "Chỉnh sửa ngành nghề";
+    Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+    .category-edit {
+        max-width: 950px;
+        margin: 0 auto;
+        padding: 30px 24px;
+        color: #203b32;
+    }
+
+    .ce-back {
+        display: inline-block;
+        margin-bottom: 22px;
+        color: #008d68;
+        font-size: 14px;
+        text-decoration: none;
+    }
+
+    .ce-heading {
+        margin-bottom: 25px;
+    }
+
+        .ce-heading small {
+            display: block;
+            margin-bottom: 9px;
+            color: #009b72;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .ce-heading h1 {
+            margin: 0 0 10px;
+            font-size: 28px;
+            font-weight: 700;
+        }
+
+        .ce-heading p {
+            margin: 0;
+            color: #71837c;
+            font-size: 14px;
+            line-height: 1.7;
+        }
+
+    .ce-card {
+        overflow: hidden;
+        border: 1px solid #e0ebe5;
+        border-radius: 18px;
+        background: #fff;
+        box-shadow: 0 8px 28px rgba(26, 65, 49, .04);
+    }
+
+    .ce-card-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 12px;
+        padding: 23px 28px;
+        border-bottom: 1px solid #e6eee9;
+        background: #f7fbf9;
+    }
+
+        .ce-card-header h2 {
+            margin: 0 0 7px;
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .ce-card-header p {
+            margin: 0;
+            color: #71837c;
+            font-size: 13px;
+        }
+
+    .ce-badge {
+        padding: 7px 12px;
+        border-radius: 8px;
+        background: #e4f5ed;
+        color: #00835f;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .ce-body {
+        padding: 28px;
+    }
+
+    .ce-field {
+        margin-bottom: 24px;
+    }
+
+    .ce-label {
+        display: block;
+        margin-bottom: 10px;
+        color: #35564a;
+        font-size: 14px;
+        font-weight: 600;
+    }
+
+    .ce-required {
+        color: #d94760;
+    }
+
+    .ce-input {
+        display: block;
+        box-sizing: border-box;
+        width: 100%;
+        padding: 13px 15px;
+        border: 1px solid #dce7e2;
+        border-radius: 11px;
+        background: #fff;
+        color: #203b32;
+        font: inherit;
+        font-size: 14px;
+        outline: none;
+    }
+
+        .ce-input:focus {
+            border-color: #009b72;
+            box-shadow: 0 0 0 3px rgba(0, 155, 114, .1);
+        }
+
+    textarea.ce-input {
+        min-height: 160px;
+        resize: vertical;
+        line-height: 1.7;
+    }
+
+    .ce-help {
+        margin: 8px 0 0;
+        color: #71837c;
+        font-size: 12px;
+        line-height: 1.7;
+    }
+
+    .ce-error {
+        display: block;
+        margin-top: 7px;
+        color: #c73851;
+        font-size: 13px;
+    }
+
+    .ce-input.input-validation-error {
+        border-color: #d94760;
+    }
+
+    .ce-validation.validation-summary-valid {
+        display: none;
+    }
+
+    .ce-validation.validation-summary-errors {
+        margin-bottom: 24px;
+        padding: 14px 18px;
+        border: 1px solid #f2cbd2;
+        border-radius: 11px;
+        background: #fff1f3;
+        color: #ad3047;
+        font-size: 13px;
+    }
+
+    .ce-validation ul {
+        margin: 0;
+        padding-left: 18px;
+        line-height: 1.8;
+    }
+
+    .ce-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 16px;
+        padding: 21px 28px;
+        border-top: 1px solid #e6eee9;
+        background: #fcfefd;
+    }
+
+        .ce-footer p {
+            margin: 0;
+            color: #71837c;
+            font-size: 12px;
+        }
+
+    .ce-actions {
+        display: flex;
+        gap: 10px;
+    }
+
+    .ce-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 44px;
+        padding: 0 20px;
+        border: 1px solid transparent;
+        border-radius: 11px;
+        font: inherit;
+        font-size: 14px;
+        font-weight: 600;
+        text-decoration: none;
+        cursor: pointer;
+    }
+
+    .ce-save {
+        background: #009b72;
+        color: #fff;
+    }
+
+        .ce-save:hover {
+            background: #007e5d;
+        }
+
+    .ce-cancel {
+        border-color: #dce7e2;
+        background: #fff;
+        color: #526d60;
+    }
+
+        .ce-cancel:hover {
+            background: #eef7f2;
+            color: #35564a;
+            text-decoration: none;
+        }
+
+    @@media (max-width: 600px) {
+        .category-edit {
+            padding: 20px 12px;
+        }
+
+        .ce-heading h1 {
+            font-size: 24px;
+        }
+
+        .ce-body,
+        .ce-card-header,
+        .ce-footer {
+            padding: 20px;
+        }
+
+        .ce-actions {
+            width: 100%;
+        }
+
+        .ce-button {
+            flex: 1;
+        }
+    }
+</style>
+
+<div class="category-edit">
+    <a href="@Url.Action("Index", "JobCategories", new { area = "Admin" })"
+       class="ce-back">
+        ← Danh sách ngành nghề
+    </a>
+
+    <div class="ce-heading">
+        <small>Danh mục hệ thống</small>
+        <h1>Chỉnh sửa ngành nghề</h1>
+        <p>Cập nhật tên và mô tả ngành nghề trên hệ thống.</p>
+    </div>
+
+    <form action="@Url.Action("Edit", "JobCategories", new { area = "Admin", id = Model.JobCategoryId })"
+          method="post"
+          asp-antiforgery="false"
+          class="ce-card">
+
+        @Html.AntiForgeryToken()
+        <input asp-for="JobCategoryId" type="hidden" />
+
+        <div class="ce-card-header">
+            <div>
+                <h2>Thông tin ngành nghề</h2>
+                <p>
+                    Các trường có dấu
+                    <span class="ce-required">*</span>
+                    bắt buộc nhập.
+                </p>
+            </div>
+
+            <span class="ce-badge">
+                Mã ngành: #@Model.JobCategoryId
+            </span>
+        </div>
+
+        <div class="ce-body">
+            @Html.ValidationSummary(
+            false,
+                        "",
+                        new { @class = "ce-validation", role = "alert" })
+
+            <div class="ce-field">
+                <label asp-for="CategoryName" class="ce-label">
+                    Tên ngành nghề
+                    <span class="ce-required">*</span>
+                </label>
+
+                <input asp-for="CategoryName"
+                       class="ce-input"
+                       placeholder="Ví dụ: Công nghệ thông tin"
+                       required />
+
+                <span asp-validation-for="CategoryName"
+                      class="ce-error"></span>
+
+                <p class="ce-help">
+                    Nhập tên ngành rõ ràng và tránh trùng với ngành đã có.
+                </p>
+            </div>
+
+            <div class="ce-field">
+                <label asp-for="Description" class="ce-label">
+                    Mô tả ngành nghề
+                </label>
+
+                <textarea asp-for="Description"
+                          class="ce-input"
+                          rows="6"
+                          placeholder="Giới thiệu ngắn về ngành nghề..."></textarea>
+
+                <span asp-validation-for="Description"
+                      class="ce-error"></span>
+            </div>
+        </div>
+
+        <div class="ce-footer">
+            <p>Kiểm tra thông tin trước khi lưu thay đổi.</p>
+
+            <div class="ce-actions">
+                <a href="@Url.Action("Index", "JobCategories", new { area = "Admin" })"
+                   class="ce-button ce-cancel">
+                    Hủy
+                </a>
+
+                <button type="submit" class="ce-button ce-save">
+                    Lưu thay đổi
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

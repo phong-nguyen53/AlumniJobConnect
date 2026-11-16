@@ -1,0 +1,495 @@
+﻿@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@model IEnumerable<AlumniJobConnect.Models.MentorProfile>
+
+@{
+    ViewData["Title"] = "Hồ sơ tư vấn";
+    Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
+
+    var profiles = Model.ToList();
+    var availableCount = profiles.Count(x => x.IsAvailable);
+    var userNames = ViewData["UserNames"]
+    as System.Collections.Generic.Dictionary<int, string>
+    ?? new System.Collections.Generic.Dictionary<int, string>();
+}
+
+<style>
+    .mentor-admin {
+        max-width: 1400px;
+        margin: auto;
+        padding: 28px 24px;
+        color: #203b32;
+    }
+
+    .mt-heading {
+        margin-bottom: 24px;
+    }
+
+        .mt-heading small {
+            color: #009b72;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .mt-heading h1 {
+            margin: 10px 0;
+            font-size: 28px;
+            font-weight: 700;
+        }
+
+    .mt-muted {
+        color: #71837c;
+        font-size: 13px;
+        line-height: 1.7;
+    }
+
+    .mt-stats {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+
+    .mt-stat {
+        padding: 20px;
+        border: 1px solid #e3ece8;
+        border-radius: 15px;
+        background: #fff;
+    }
+
+        .mt-stat span {
+            display: block;
+            color: #71837c;
+            font-size: 13px;
+        }
+
+        .mt-stat strong {
+            display: block;
+            margin-top: 10px;
+            color: #008d68;
+            font-size: 28px;
+        }
+
+    .mt-panel {
+        overflow: hidden;
+        border: 1px solid #e3ece8;
+        border-radius: 18px;
+        background: #fff;
+        box-shadow: 0 8px 28px rgba(26, 65, 49, .04);
+    }
+
+    .mt-toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 18px;
+        padding: 24px;
+        border-bottom: 1px solid #e3ece8;
+    }
+
+        .mt-toolbar h2 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+    .mt-filters {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .mt-control {
+        box-sizing: border-box;
+        min-height: 44px;
+        padding: 10px 13px;
+        border: 1px solid #dce7e2;
+        border-radius: 10px;
+        background: #f8fbf9;
+        color: #35564a;
+        font: inherit;
+        font-size: 13px;
+    }
+
+    .mt-search {
+        width: 270px;
+        max-width: 100%;
+    }
+
+    .mt-control:focus {
+        outline: none;
+        border-color: #009b72;
+        box-shadow: 0 0 0 3px rgba(0, 155, 114, .1);
+    }
+
+    .mt-reset {
+        padding: 10px 15px;
+        border: 1px solid #dce7e2;
+        border-radius: 10px;
+        background: #fff;
+        color: #526d60;
+        font: inherit;
+        font-size: 13px;
+        cursor: pointer;
+    }
+
+    .mt-scroll {
+        overflow-x: auto;
+    }
+
+    .mt-table {
+        width: 100%;
+        min-width: 850px;
+        border-collapse: collapse;
+    }
+
+        .mt-table th {
+            padding: 17px 22px;
+            border-bottom: 1px solid #e3ece8;
+            background: #f6faf8;
+            color: #61786d;
+            font-size: 12px;
+            text-align: left;
+            white-space: nowrap;
+        }
+
+        .mt-table td {
+            padding: 22px;
+            border-bottom: 1px solid #edf2ef;
+            font-size: 14px;
+            vertical-align: top;
+        }
+
+        .mt-table tbody tr:last-child td {
+            border-bottom: 0;
+        }
+
+    .mt-row:hover {
+        background: #fbfdfc;
+    }
+
+    .mt-user {
+        display: inline-block;
+        padding: 8px 11px;
+        border-radius: 9px;
+        background: #edf3ff;
+        color: #3669c9;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .mt-topic {
+        max-width: 240px;
+        color: #00835f;
+        font-weight: 600;
+        line-height: 1.7;
+        overflow-wrap: anywhere;
+    }
+
+    .mt-introduction {
+        max-width: 430px;
+        color: #61786d;
+        line-height: 1.8;
+        white-space: pre-line;
+        overflow-wrap: anywhere;
+    }
+
+    .mt-badge {
+        display: inline-block;
+        padding: 7px 10px;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .mt-ready {
+        background: #e4f8ed;
+        color: #00835f;
+    }
+
+    .mt-paused {
+        background: #fff5df;
+        color: #93691d;
+    }
+
+    .mt-detail {
+        display: inline-block;
+        padding: 9px 13px;
+        border-radius: 9px;
+        background: #e9f8f1;
+        color: #00835f;
+        font-size: 13px;
+        font-weight: 600;
+        text-decoration: none;
+        white-space: nowrap;
+    }
+
+        .mt-detail:hover {
+            background: #d7f0e2;
+            color: #006c4e;
+            text-decoration: none;
+        }
+
+    .mt-empty {
+        padding: 45px 20px !important;
+        color: #71837c;
+        text-align: center;
+        line-height: 1.8;
+    }
+
+    .mt-footer {
+        padding: 16px 24px;
+        border-top: 1px solid #e3ece8;
+        color: #71837c;
+        font-size: 12px;
+    }
+
+    .mentor-admin [hidden] {
+        display: none !important;
+    }
+
+    @@media (max-width: 700px) {
+        .mentor-admin {
+            padding: 20px 12px;
+        }
+
+        .mt-heading h1 {
+            font-size: 24px;
+        }
+
+        .mt-stats {
+            grid-template-columns: 1fr;
+            gap: 10px;
+        }
+
+        .mt-stat {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+            .mt-stat strong {
+                margin: 0;
+                font-size: 24px;
+            }
+
+        .mt-toolbar {
+            padding: 20px 16px;
+        }
+
+        .mt-filters,
+        .mt-search {
+            width: 100%;
+        }
+    }
+</style>
+
+<div class="mentor-admin">
+    <div class="mt-heading">
+        <small>Kết nối và tư vấn</small>
+        <h1>Quản lý hồ sơ tư vấn</h1>
+        <p class="mt-muted">
+            Theo dõi chủ đề hỗ trợ, giới thiệu và trạng thái nhận tư vấn.
+        </p>
+    </div>
+
+    <div class="mt-stats">
+        <div class="mt-stat">
+            <span>Tổng hồ sơ tư vấn</span>
+            <strong>@profiles.Count</strong>
+        </div>
+
+        <div class="mt-stat">
+            <span>Sẵn sàng tư vấn</span>
+            <strong>@availableCount</strong>
+        </div>
+
+        <div class="mt-stat">
+            <span>Tạm ngừng nhận tư vấn</span>
+            <strong>@(profiles.Count - availableCount)</strong>
+        </div>
+    </div>
+
+    <div class="mt-panel">
+        <div class="mt-toolbar">
+            <h2>Danh sách hồ sơ</h2>
+
+            <div class="mt-filters">
+                <input id="mentorSearch"
+                       type="search"
+                       class="mt-control mt-search"
+                       placeholder="Tìm mã tài khoản, chủ đề, giới thiệu..."
+                       aria-label="Tìm hồ sơ tư vấn" />
+
+                <select id="mentorStatus"
+                        class="mt-control"
+                        aria-label="Lọc trạng thái tư vấn">
+                    <option value="">Tất cả trạng thái</option>
+                    <option value="available">Sẵn sàng tư vấn</option>
+                    <option value="paused">Tạm ngừng</option>
+                </select>
+
+                <button id="mentorReset"
+                        type="button"
+                        class="mt-reset">
+                    Đặt lại
+                </button>
+            </div>
+        </div>
+
+        <div class="mt-scroll">
+            <table class="mt-table">
+                <thead>
+                    <tr>
+                        <th scope="col">Tài khoản</th>
+                        <th scope="col">Chủ đề tư vấn</th>
+                        <th scope="col">Giới thiệu</th>
+                        <th scope="col">Trạng thái</th>
+                        <th scope="col">Thao tác</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @foreach (var item in profiles)
+                    {
+
+                        var displayName = userNames.TryGetValue(item.UserId, out var name)
+                        && !string.IsNullOrWhiteSpace(name)
+                        ? name
+                        : $"Tài khoản #{item.UserId}";
+
+                        <tr class="mt-row"
+                            data-status="@(item.IsAvailable ? "available" : "paused")"
+                            data-search="@($"{displayName} {item.UserId} {item.Expertise} {item.Introduction}")">
+
+                            <td>
+                                <span class="mt-user">@displayName</span>
+
+                                <div class="mt-muted" style="margin-top: 7px;">
+                                    Mã tài khoản: #@item.UserId
+                                </div>
+                            </td>
+
+                            <td>
+                                <div class="mt-topic">
+                                    @(string.IsNullOrWhiteSpace(item.Expertise)
+                                                                    ? "Chưa cập nhật chủ đề"
+                                                                    : item.Expertise)
+                                                                                 </div>
+                                                                             </td>
+
+                            <td>
+                                <div class="mt-introduction">
+                                    @(string.IsNullOrWhiteSpace(item.Introduction)
+                                                                    ? "Chưa có giới thiệu tư vấn."
+                                                                    : item.Introduction)
+                                                                                    </div>
+                                                                                </td>
+
+                            <td>
+                                <span class="mt-badge @(item.IsAvailable ? "mt-ready" : "mt-paused")">
+                                    @(item.IsAvailable
+                                                                    ? "Sẵn sàng tư vấn"
+                                                                    : "Tạm ngừng nhận tư vấn")
+                            </span>
+                        </td>
+
+                            <td>
+                                <a href="@Url.Action("Details", "MentorProfiles", new { area = "Admin", id = item.UserId })"
+                                   class="mt-detail"
+                                   aria-label="@($"Xem hồ sơ tư vấn tài khoản {item.UserId}")">
+                                    Xem hồ sơ
+                                </a>
+                            </td>
+                        </tr>
+                                        }
+
+                    <tr id="mentorEmpty" hidden="@(profiles.Count > 0)">
+                        <td colspan="5" class="mt-empty">
+                            <strong id="mentorEmptyTitle">
+                                Chưa có hồ sơ tư vấn
+                            </strong>
+                            <div id="mentorEmptyText">
+                                Hồ sơ sẽ xuất hiện khi người dùng đăng ký tư vấn.
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="mt-footer" role="status" aria-live="polite">
+            Đang hiển thị
+            <strong id="mentorVisibleCount">@profiles.Count</strong>
+            / @profiles.Count hồ sơ
+        </div>
+    </div>
+</div>
+
+<script>
+    (() => {
+        const search = document.getElementById("mentorSearch");
+        const status = document.getElementById("mentorStatus");
+        const reset = document.getElementById("mentorReset");
+        const empty = document.getElementById("mentorEmpty");
+        const count = document.getElementById("mentorVisibleCount");
+        const emptyTitle = document.getElementById("mentorEmptyTitle");
+        const emptyText = document.getElementById("mentorEmptyText");
+
+        function normalize(value) {
+            return (value || "")
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .replace(/[đĐ]/g, "d")
+                .toLowerCase()
+                .trim();
+        }
+
+        const rows = Array.from(
+            document.querySelectorAll(".mentor-admin .mt-row")
+        ).map(row => ({
+            element: row,
+            text: normalize(row.dataset.search),
+            status: row.dataset.status
+        }));
+
+        function filterProfiles() {
+            const keyword = normalize(search.value);
+            let visible = 0;
+
+            rows.forEach(row => {
+                const matches =
+                    row.text.includes(keyword) &&
+                    (!status.value || row.status === status.value);
+
+                row.element.hidden = !matches;
+
+                if (matches) visible++;
+            });
+
+            count.textContent = visible;
+            empty.hidden = visible > 0;
+
+            emptyTitle.textContent = rows.length === 0
+                ? "Chưa có hồ sơ tư vấn"
+                : "Không tìm thấy hồ sơ phù hợp";
+
+            emptyText.textContent = rows.length === 0
+                ? "Hồ sơ sẽ xuất hiện khi người dùng đăng ký tư vấn."
+                : "Thử từ khóa khác hoặc bấm “Đặt lại”.";
+        }
+
+        search.addEventListener("input", filterProfiles);
+        status.addEventListener("change", filterProfiles);
+
+        reset.addEventListener("click", () => {
+            search.value = "";
+            status.value = "";
+            filterProfiles();
+        });
+
+        filterProfiles();
+    })();
+</script>

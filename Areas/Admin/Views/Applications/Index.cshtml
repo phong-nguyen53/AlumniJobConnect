@@ -1,0 +1,506 @@
+﻿@model IEnumerable<AlumniJobConnect.Models.Application>
+
+@{
+    ViewData["Title"] = "Quản lý đơn ứng tuyển";
+    Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
+
+    var applications = Model.ToList();
+
+    var statusNames =
+        ViewData["StatusNames"]
+            as System.Collections.Generic.Dictionary<int, string>
+        ?? new System.Collections.Generic.Dictionary<int, string>();
+
+    var companyNames = applications
+        .Select(a => a.JobPost?.Company?.CompanyName)
+        .Where(name => !string.IsNullOrWhiteSpace(name))
+        .Distinct()
+        .OrderBy(name => name)
+        .ToList();
+
+    var statuses = applications
+        .Select(a => a.ApplicationStatusId)
+        .Distinct()
+        .OrderBy(id => id)
+        .ToList();
+
+    string StatusLabel(int id)
+    {
+        return statusNames.TryGetValue(id, out var name)
+            && !string.IsNullOrWhiteSpace(name)
+                ? name
+                : $"Trạng thái #{id}";
+    }
+}
+
+<style>
+    .applications-admin {
+        color: #20352e;
+    }
+
+        .applications-admin .ap-header {
+            margin-bottom: 24px;
+        }
+
+        .applications-admin .ap-eyebrow {
+            margin-bottom: 8px;
+            color: #059669;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .applications-admin h1 {
+            margin: 0 0 10px;
+            font-size: 27px;
+            font-weight: 700;
+        }
+
+        .applications-admin .ap-muted {
+            margin: 0;
+            color: #64756d;
+            line-height: 1.6;
+        }
+
+        .applications-admin .ap-panel {
+            overflow: hidden;
+            background: #fff;
+            border: 1px solid #e4ece7;
+            border-radius: 16px;
+            box-shadow: 0 6px 24px rgba(22, 58, 41, .04);
+        }
+
+        .applications-admin .ap-toolbar {
+            padding: 22px;
+            border-bottom: 1px solid #eaf0ec;
+        }
+
+        .applications-admin .ap-toolbar-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+
+        .applications-admin h2 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .applications-admin .ap-count {
+            padding: 7px 12px;
+            color: #047857;
+            background: #ecfdf5;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .applications-admin .ap-filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .applications-admin .ap-control {
+            flex: 1 1 180px;
+            min-width: 0;
+            min-height: 44px;
+            padding: 10px 13px;
+            color: #20352e;
+            background: #f8faf9;
+            border: 1px solid #dce6e0;
+            border-radius: 10px;
+            font: inherit;
+            font-size: 14px;
+        }
+
+        .applications-admin .ap-search {
+            flex-grow: 2;
+        }
+
+        .applications-admin .ap-control:focus {
+            outline: none;
+            border-color: #059669;
+            box-shadow: 0 0 0 3px rgba(5, 150, 105, .1);
+        }
+
+        .applications-admin .ap-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px 14px;
+            color: #047857;
+            background: #fff;
+            border: 1px solid #dce6e0;
+            border-radius: 9px;
+            font: inherit;
+            font-size: 13px;
+            font-weight: 600;
+            text-decoration: none;
+            white-space: nowrap;
+            cursor: pointer;
+        }
+
+            .applications-admin .ap-button:hover {
+                color: #047857;
+                background: #ecfdf5;
+            }
+
+        .applications-admin .ap-table-wrap {
+            overflow-x: auto;
+        }
+
+        .applications-admin table {
+            width: 100%;
+            min-width: 1000px;
+            border-collapse: collapse;
+        }
+
+        .applications-admin th {
+            padding: 16px;
+            color: #64756d;
+            background: #f8faf9;
+            border-bottom: 1px solid #e4ece7;
+            text-align: left;
+            font-size: 12px;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .applications-admin td {
+            padding: 18px 16px;
+            border-bottom: 1px solid #edf2ef;
+            font-size: 14px;
+            vertical-align: middle;
+        }
+
+        .applications-admin tbody tr:last-child td {
+            border-bottom: 0;
+        }
+
+        .applications-admin tbody tr:hover {
+            background: #fbfdfc;
+        }
+
+        .applications-admin .ap-name,
+        .applications-admin .ap-job {
+            margin-bottom: 6px;
+            font-weight: 700;
+            line-height: 1.5;
+            overflow-wrap: anywhere;
+        }
+
+        .applications-admin .ap-secondary {
+            color: #64756d;
+            font-size: 12px;
+            line-height: 1.6;
+            overflow-wrap: anywhere;
+        }
+
+        .applications-admin .ap-badge {
+            display: inline-block;
+            padding: 6px 10px;
+            color: #0369a1;
+            background: #eff8ff;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .applications-admin .ap-empty {
+            padding: 48px 20px;
+            color: #64756d;
+            text-align: center;
+        }
+
+        .applications-admin .ap-footer {
+            padding: 16px 22px;
+            color: #64756d;
+            background: #fcfdfc;
+            border-top: 1px solid #eaf0ec;
+            font-size: 13px;
+        }
+
+        .applications-admin [hidden] {
+            display: none !important;
+        }
+</style>
+
+<div class="applications-admin">
+    <div class="ap-header">
+        <div class="ap-eyebrow">Theo dõi tuyển dụng</div>
+
+        <h1>Quản lý đơn ứng tuyển</h1>
+
+        <p class="ap-muted">
+            Theo dõi ứng viên, doanh nghiệp và kết quả xử lý đơn.
+        </p>
+    </div>
+
+    <div class="ap-panel">
+        <div class="ap-toolbar">
+            <div class="ap-toolbar-top">
+                <h2>Danh sách đơn ứng tuyển</h2>
+
+                <span class="ap-count">
+                    @applications.Count đơn
+                </span>
+            </div>
+
+            <div class="ap-filters">
+                <input id="applicationSearch"
+                       type="search"
+                       class="ap-control ap-search"
+                       aria-label="Tìm đơn ứng tuyển"
+                       placeholder="Tên ứng viên, email, vị trí..."
+                       autocomplete="off" />
+
+                <select id="applicationCompany"
+                        class="ap-control"
+                        aria-label="Lọc theo doanh nghiệp">
+                    <option value="">Tất cả doanh nghiệp</option>
+
+                    @foreach (var company in companyNames)
+                    {
+                        <option value="@company">@company</option>
+                    }
+                </select>
+
+                <select id="applicationStatus"
+                        class="ap-control"
+                        aria-label="Lọc theo trạng thái">
+                    <option value="">Tất cả trạng thái</option>
+
+                    @foreach (var statusId in statuses)
+                    {
+                        <option value="@statusId">
+                            @StatusLabel(statusId)
+                        </option>
+                    }
+                </select>
+
+                <button id="applicationReset"
+                        type="button"
+                        class="ap-button">
+                    Đặt lại
+                </button>
+            </div>
+        </div>
+
+        @if (applications.Count == 0)
+        {
+            <div class="ap-empty" role="status">
+                Chưa có đơn ứng tuyển nào.
+            </div>
+        }
+        else
+        {
+            <div class="ap-table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th scope="col">Mã đơn</th>
+                            <th scope="col">Ứng viên</th>
+                            <th scope="col">Vị trí / Doanh nghiệp</th>
+                            <th scope="col">Ngày ứng tuyển</th>
+                            <th scope="col">Trạng thái</th>
+                            <th scope="col">Lịch phỏng vấn</th>
+                            <th scope="col">Thao tác</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @foreach (var item in applications)
+                        {
+                            var candidateName =
+                            string.IsNullOrWhiteSpace(item.Alumni?.User?.FullName)
+                            ? "Chưa cập nhật họ tên"
+                            : item.Alumni!.User!.FullName;
+
+                            var email = item.Alumni?.User?.Email ?? "";
+
+                            var jobTitle = item.JobPost?.Title
+                            ?? "Tin tuyển dụng không còn";
+
+                            var companyName =
+                            item.JobPost?.Company?.CompanyName ?? "";
+
+                            var searchText = string.Join(" ", new[]
+                            {
+                                        item.ApplicationId.ToString(),
+                                        candidateName,
+                                        email,
+                                        jobTitle,
+                                        companyName,
+                                        item.Alumni?.StudentCode
+                                        });
+
+                            <tr data-application-row
+                                data-search="@searchText"
+                                data-company="@companyName"
+                                data-status="@item.ApplicationStatusId">
+
+                                <td>
+                                    <strong>#@item.ApplicationId</strong>
+                                </td>
+
+                                <td>
+                                    <div class="ap-name">@candidateName</div>
+
+                                    <div class="ap-secondary">
+                                        @(string.IsNullOrWhiteSpace(email)
+                                                                        ? "Chưa cập nhật email"
+                                                                        : email)
+                                                                            </div>
+                                                                        </td>
+
+                                <td>
+                                    <div class="ap-job">@jobTitle</div>
+
+                                    <div class="ap-secondary">
+                                        @(string.IsNullOrWhiteSpace(companyName)
+                                                                        ? "Chưa cập nhật doanh nghiệp"
+                                                                        : companyName)
+                            </div>
+                        </td>
+
+                                <td>
+                                    @Html.DisplayFor(_ => item.AppliedAt)
+                                </td>
+
+                                <td>
+                                    <span class="ap-badge">
+                                        @StatusLabel(item.ApplicationStatusId)
+                                    </span>
+                                </td>
+
+                                <td>
+                            @if (item.InterviewAt.HasValue)
+                                    {
+                                        <div>
+                                            @item.InterviewAt.Value.ToString("dd/MM/yyyy HH:mm")
+                                        </div>
+
+                                        <div class="ap-secondary">
+                                            @(string.IsNullOrWhiteSpace(item.InterviewLocation)
+                                                                            ? "Chưa cập nhật địa điểm"
+                                                                            : item.InterviewLocation)
+                            </div>
+                                                        }
+                                    else
+                                    {
+                                        <span class="ap-secondary">
+                                            Chưa có lịch
+                                        </span>
+                                    }
+                                </td>
+
+                                <td>
+                                    <a href="@Url.Action("Details", "Applications",
+                                                                                       new
+                                                                                       {
+                                                                                           area = "Admin",
+                                                                                           id = item.ApplicationId
+                                                                                       })"
+                               class="ap-button">
+                                Xem chi tiết
+                            </a>
+                        </td>
+                    </tr>
+                                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <div id="applicationEmpty"
+                 class="ap-empty"
+                 role="status"
+                 hidden>
+                Không tìm thấy đơn ứng tuyển phù hợp.
+            </div>
+
+            <div class="ap-footer" role="status" aria-live="polite">
+                Hiển thị
+                <strong id="applicationVisible">@applications.Count</strong>
+                / @applications.Count đơn
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (() => {
+            const search = document.getElementById("applicationSearch");
+            const company = document.getElementById("applicationCompany");
+            const status = document.getElementById("applicationStatus");
+            const reset = document.getElementById("applicationReset");
+            const count = document.getElementById("applicationVisible");
+            const empty = document.getElementById("applicationEmpty");
+
+            if (!search || !company || !status || !reset) return;
+
+            function normalize(value) {
+                return (value || "")
+                    .normalize("NFD")
+                    .replace(/[\u0300-\u036f]/g, "")
+                    .replace(/đ/g, "d")
+                    .replace(/Đ/g, "D")
+                    .toLowerCase()
+                    .trim();
+            }
+
+            const entries = Array.from(
+                document.querySelectorAll("[data-application-row]")
+            ).map(row => ({
+                row,
+                search: normalize(row.dataset.search),
+                company: row.dataset.company,
+                status: row.dataset.status
+            }));
+
+            function filter() {
+                const keyword = normalize(search.value);
+                let visible = 0;
+
+                entries.forEach(entry => {
+                    const matches =
+                        entry.search.includes(keyword)
+                        && (!company.value
+                            || entry.company === company.value)
+                        && (!status.value
+                            || entry.status === status.value);
+
+                    entry.row.hidden = !matches;
+
+                    if (matches) visible++;
+                });
+
+                if (count) count.textContent = visible;
+
+                if (empty) {
+                    empty.hidden = visible > 0 || entries.length === 0;
+                }
+            }
+
+            search.addEventListener("input", filter);
+            company.addEventListener("change", filter);
+            status.addEventListener("change", filter);
+
+            reset.addEventListener("click", () => {
+                search.value = "";
+                company.value = "";
+                status.value = "";
+                filter();
+                search.focus();
+            });
+
+            filter();
+        })();
+    </script>
+}

@@ -1,0 +1,416 @@
+﻿@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@model AlumniJobConnect.Models.Menu
+
+@{
+    ViewData["Title"] = "Chỉnh sửa menu";
+    Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+    .menu-edit {
+        max-width: 950px;
+        margin: auto;
+        padding: 28px 24px;
+        color: #203b32;
+    }
+
+    .me-back {
+        display: inline-block;
+        margin-bottom: 22px;
+        color: #008d68;
+        text-decoration: none;
+        font-size: 14px;
+    }
+
+    .me-heading {
+        margin-bottom: 25px;
+    }
+
+        .me-heading small {
+            color: #009b72;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .me-heading h1 {
+            margin: 10px 0;
+            font-size: 28px;
+            font-weight: 700;
+        }
+
+        .me-heading p {
+            margin: 0;
+            color: #71837c;
+            font-size: 14px;
+            line-height: 1.7;
+        }
+
+    .me-card {
+        overflow: hidden;
+        border: 1px solid #e0ebe5;
+        border-radius: 18px;
+        background: #fff;
+        box-shadow: 0 8px 28px rgba(26, 65, 49, .04);
+    }
+
+    .me-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 12px;
+        padding: 23px 28px;
+        border-bottom: 1px solid #e6eee9;
+        background: #f7fbf9;
+    }
+
+        .me-header h2 {
+            margin: 0 0 7px;
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .me-header p,
+        .me-help {
+            color: #71837c;
+            font-size: 12px;
+            line-height: 1.7;
+        }
+
+        .me-header p {
+            margin: 0;
+        }
+
+    .me-badge {
+        padding: 7px 12px;
+        border-radius: 8px;
+        background: #e4f5ed;
+        color: #00835f;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .me-body {
+        padding: 28px;
+    }
+
+    .me-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 24px;
+    }
+
+    .me-full {
+        grid-column: 1 / -1;
+    }
+
+    .me-label {
+        display: block;
+        margin-bottom: 9px;
+        font-size: 14px;
+        font-weight: 600;
+    }
+
+    .me-required,
+    .me-error {
+        color: #c73851;
+    }
+
+    .me-input {
+        box-sizing: border-box;
+        width: 100%;
+        min-height: 46px;
+        padding: 12px 14px;
+        border: 1px solid #dce7e2;
+        border-radius: 11px;
+        background: #fff;
+        color: #203b32;
+        font: inherit;
+        font-size: 14px;
+    }
+
+        .me-input:focus {
+            outline: none;
+            border-color: #009b72;
+            box-shadow: 0 0 0 3px rgba(0, 155, 114, .1);
+        }
+
+        .me-input.input-validation-error {
+            border-color: #c73851;
+        }
+
+    .me-help {
+        margin: 8px 0 0;
+    }
+
+    .me-error {
+        display: block;
+        margin-top: 6px;
+        font-size: 13px;
+    }
+
+    .me-validation.validation-summary-valid {
+        display: none;
+    }
+
+    .me-validation.validation-summary-errors {
+        margin-bottom: 24px;
+        padding: 14px 18px;
+        border: 1px solid #f2cbd2;
+        border-radius: 11px;
+        background: #fff1f3;
+        color: #ad3047;
+        font-size: 13px;
+    }
+
+    .me-validation ul {
+        margin: 0;
+        padding-left: 18px;
+        line-height: 1.8;
+    }
+
+    .me-status {
+        padding: 18px;
+        border: 1px solid #dceee3;
+        border-radius: 12px;
+        background: #f5fbf7;
+    }
+
+    .me-check {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin: 0;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+        .me-check input {
+            width: 18px;
+            height: 18px;
+            accent-color: #009b72;
+        }
+
+    .me-footer {
+        display: flex;
+        justify-content: flex-end;
+        flex-wrap: wrap;
+        gap: 10px;
+        padding: 22px 28px;
+        border-top: 1px solid #e6eee9;
+        background: #fcfefd;
+    }
+
+    .me-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 44px;
+        padding: 0 22px;
+        border: 1px solid #dce7e2;
+        border-radius: 11px;
+        background: #fff;
+        color: #526d60;
+        font: inherit;
+        font-size: 14px;
+        font-weight: 600;
+        text-decoration: none;
+        cursor: pointer;
+    }
+
+        .me-button:hover {
+            background: #eef7f2;
+            color: #35564a;
+            text-decoration: none;
+        }
+
+    .me-save {
+        border-color: #009b72;
+        background: #009b72;
+        color: #fff;
+    }
+
+        .me-save:hover {
+            background: #007e5d;
+            color: #fff;
+        }
+
+    @@media (max-width: 650px) {
+        .menu-edit {
+            padding: 20px 12px;
+        }
+
+        .me-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .me-header,
+        .me-body,
+        .me-footer {
+            padding: 20px;
+        }
+
+        .me-heading h1 {
+            font-size: 24px;
+        }
+    }
+</style>
+
+<div class="menu-edit">
+    <a href="@Url.Action("Index", "Menus", new { area = "Admin" })"
+       class="me-back">
+        ← Danh sách menu
+    </a>
+
+    <div class="me-heading">
+        <small>Điều hướng website</small>
+        <h1>Chỉnh sửa menu</h1>
+        <p>Cập nhật tên, đường dẫn và trạng thái của menu.</p>
+    </div>
+
+    <form action="@Url.Action("Edit", "Menus", new { area = "Admin", id = Model.MenuId })"
+          method="post"
+          asp-antiforgery="false"
+          class="me-card">
+
+        @Html.AntiForgeryToken()
+        <input asp-for="MenuId" type="hidden" />
+
+        <div class="me-header">
+            <div>
+                <h2>Thông tin menu</h2>
+                <p>
+                    Trường có dấu
+                    <span class="me-required">*</span>
+                    bắt buộc nhập.
+                </p>
+            </div>
+
+            <span class="me-badge">Mã menu: #@Model.MenuId</span>
+        </div>
+
+        <div class="me-body">
+            @Html.ValidationSummary(
+            false,
+                        "",
+                        new { @class = "me-validation", role = "alert" })
+
+            <div class="me-grid">
+                <div>
+                    <label asp-for="MenuName" class="me-label">
+                        Tên menu <span class="me-required">*</span>
+                    </label>
+
+                    <input asp-for="MenuName"
+                           class="me-input"
+                           placeholder="Ví dụ: Việc làm"
+                           required />
+
+                    <span asp-validation-for="MenuName"
+                          class="me-error"></span>
+                </div>
+
+                <div>
+                    <label asp-for="ParentId" class="me-label">
+                        Menu cha
+                    </label>
+
+                    <select asp-for="ParentId"
+                            asp-items="ViewBag.ParentId"
+                            class="me-input">
+                        <option value="">Không có — Menu cấp cao nhất</option>
+                    </select>
+
+                    <span asp-validation-for="ParentId"
+                          class="me-error"></span>
+
+                    <p class="me-help">
+                        Chọn menu cha nếu đây là một menu con.
+                    </p>
+                </div>
+
+                <div class="me-full">
+                    <label asp-for="MenuUrl" class="me-label">
+                        Đường dẫn
+                    </label>
+
+                    <input asp-for="MenuUrl"
+                           class="me-input"
+                           placeholder="/Home/Jobs" />
+
+                    <span asp-validation-for="MenuUrl"
+                          class="me-error"></span>
+
+                    <p class="me-help">
+                        Nhập đường dẫn trang đã có trên website.
+                    </p>
+                </div>
+
+                <div>
+                    <label asp-for="Icon" class="me-label">
+                        Mã biểu tượng
+                    </label>
+
+                    <input asp-for="Icon"
+                           class="me-input"
+                           placeholder="Ví dụ: fa fa-briefcase" />
+
+                    <span asp-validation-for="Icon"
+                          class="me-error"></span>
+                </div>
+
+                <div>
+                    <label asp-for="SortOrder" class="me-label">
+                        Thứ tự hiển thị
+                    </label>
+
+                    <input asp-for="SortOrder"
+                           type="number"
+                           min="0"
+                           step="1"
+                           class="me-input" />
+
+                    <span asp-validation-for="SortOrder"
+                          class="me-error"></span>
+
+                    <p class="me-help">
+                        Số nhỏ được xếp trước trong cùng cấp menu.
+                    </p>
+                </div>
+
+                <div class="me-full me-status">
+                    <label asp-for="IsActive" class="me-check">
+                        <input asp-for="IsActive" />
+                        Bật menu
+                    </label>
+
+                    <span asp-validation-for="IsActive"
+                          class="me-error"></span>
+
+                    <p class="me-help">
+                        Bỏ chọn để chuyển menu sang trạng thái tắt.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="me-footer">
+            <a href="@Url.Action("Index", "Menus", new { area = "Admin" })"
+               class="me-button">
+                Hủy
+            </a>
+
+            <button type="submit" class="me-button me-save">
+                Lưu thay đổi
+            </button>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

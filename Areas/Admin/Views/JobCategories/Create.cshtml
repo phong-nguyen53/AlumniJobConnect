@@ -1,0 +1,338 @@
+﻿@model AlumniJobConnect.Models.JobCategory
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+
+@{
+    ViewData["Title"] = "Thêm ngành nghề";
+    Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+    .category-create {
+        max-width: 950px;
+        margin: 0 auto;
+        padding: 30px 24px;
+        color: #203b32;
+    }
+
+    .cc-back {
+        display: inline-block;
+        margin-bottom: 22px;
+        color: #008d68;
+        font-size: 14px;
+        text-decoration: none;
+    }
+
+        .cc-back:hover {
+            color: #006c50;
+            text-decoration: none;
+        }
+
+    .cc-heading {
+        margin-bottom: 25px;
+    }
+
+        .cc-heading small {
+            display: block;
+            margin-bottom: 9px;
+            color: #009b72;
+            font-weight: 700;
+            letter-spacing: 1.4px;
+            text-transform: uppercase;
+        }
+
+        .cc-heading h1 {
+            margin: 0 0 10px;
+            font-size: 28px;
+            font-weight: 700;
+        }
+
+        .cc-heading p {
+            margin: 0;
+            color: #71837c;
+            font-size: 14px;
+            line-height: 1.7;
+        }
+
+    .cc-card {
+        overflow: hidden;
+        border: 1px solid #e0ebe5;
+        border-radius: 18px;
+        background: #fff;
+        box-shadow: 0 8px 28px rgba(26, 65, 49, .04);
+    }
+
+    .cc-card-header {
+        padding: 23px 28px;
+        border-bottom: 1px solid #e6eee9;
+        background: #f7fbf9;
+    }
+
+        .cc-card-header h2 {
+            margin: 0 0 7px;
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .cc-card-header p {
+            margin: 0;
+            color: #71837c;
+            font-size: 13px;
+        }
+
+    .cc-body {
+        padding: 28px;
+    }
+
+    .cc-field {
+        margin-bottom: 25px;
+    }
+
+    .cc-label {
+        display: block;
+        margin-bottom: 10px;
+        color: #35564a;
+        font-size: 14px;
+        font-weight: 600;
+    }
+
+    .cc-required {
+        color: #d94760;
+    }
+
+    .cc-input {
+        display: block;
+        box-sizing: border-box;
+        width: 100%;
+        padding: 13px 15px;
+        border: 1px solid #dce7e2;
+        border-radius: 11px;
+        background: #fff;
+        color: #203b32;
+        font: inherit;
+        font-size: 14px;
+        outline: none;
+        transition: border-color .2s, box-shadow .2s;
+    }
+
+        .cc-input:focus {
+            border-color: #009b72;
+            box-shadow: 0 0 0 3px rgba(0, 155, 114, .1);
+        }
+
+    textarea.cc-input {
+        min-height: 160px;
+        resize: vertical;
+        line-height: 1.7;
+    }
+
+    .cc-help {
+        margin: 8px 0 0;
+        color: #7d8e85;
+        font-size: 12px;
+        line-height: 1.7;
+    }
+
+    .cc-error {
+        display: block;
+        margin-top: 7px;
+        color: #c73851;
+        font-size: 13px;
+    }
+
+    .cc-input.input-validation-error {
+        border-color: #d94760;
+    }
+
+    .cc-validation.validation-summary-valid {
+        display: none;
+    }
+
+    .cc-validation.validation-summary-errors {
+        margin-bottom: 24px;
+        padding: 14px 18px;
+        border: 1px solid #f2cbd2;
+        border-radius: 11px;
+        background: #fff1f3;
+        color: #ad3047;
+        font-size: 13px;
+    }
+
+    .cc-validation ul {
+        margin: 0;
+        padding-left: 18px;
+        line-height: 1.8;
+    }
+
+    .cc-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 16px;
+        padding: 21px 28px;
+        border-top: 1px solid #e6eee9;
+        background: #fcfefd;
+    }
+
+        .cc-footer p {
+            margin: 0;
+            color: #7d8e85;
+            font-size: 12px;
+        }
+
+    .cc-actions {
+        display: flex;
+        gap: 10px;
+    }
+
+    .cc-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 44px;
+        padding: 0 20px;
+        border: 1px solid transparent;
+        border-radius: 11px;
+        font: inherit;
+        font-size: 14px;
+        font-weight: 600;
+        text-decoration: none;
+        cursor: pointer;
+    }
+
+    .cc-save {
+        background: #009b72;
+        color: #fff;
+    }
+
+        .cc-save:hover {
+            background: #007e5d;
+            color: #fff;
+        }
+
+    .cc-cancel {
+        border-color: #dce7e2;
+        background: #fff;
+        color: #526d60;
+    }
+
+        .cc-cancel:hover {
+            background: #eef7f2;
+            color: #35564a;
+            text-decoration: none;
+        }
+
+    @@media (max-width: 600px) {
+        .category-create {
+            padding: 20px 12px;
+        }
+
+        .cc-heading h1 {
+            font-size: 24px;
+        }
+
+        .cc-body,
+        .cc-card-header,
+        .cc-footer {
+            padding: 20px;
+        }
+
+        .cc-actions {
+            width: 100%;
+        }
+
+        .cc-button {
+            flex: 1;
+        }
+    }
+</style>
+
+<div class="category-create">
+    <a href="@Url.Action("Index", "JobCategories", new { area = "Admin" })"
+       class="cc-back">
+        ← Danh sách ngành nghề
+    </a>
+
+    <div class="cc-heading">
+        <small>Danh mục hệ thống</small>
+        <h1>Thêm ngành nghề</h1>
+        <p>Tạo ngành nghề mới để phân loại tin tuyển dụng trên hệ thống.</p>
+    </div>
+
+    <form action="@Url.Action("Create", "JobCategories", new { area = "Admin" })"
+          method="post"
+          asp-antiforgery="false"
+          class="cc-card">
+
+        @Html.AntiForgeryToken()
+
+        <div class="cc-card-header">
+            <h2>Thông tin ngành nghề</h2>
+            <p>Các trường có dấu <span class="cc-required">*</span> bắt buộc nhập.</p>
+        </div>
+
+        <div class="cc-body">
+            @Html.ValidationSummary(
+            false,
+                        "",
+                        new { @class = "cc-validation", role = "alert" })
+
+            <div class="cc-field">
+                <label asp-for="CategoryName" class="cc-label">
+                    Tên ngành nghề <span class="cc-required">*</span>
+                </label>
+
+                <input asp-for="CategoryName"
+                       class="cc-input"
+                       placeholder="Ví dụ: Công nghệ thông tin"
+                       required />
+
+                <span asp-validation-for="CategoryName"
+                      class="cc-error"></span>
+
+                <p class="cc-help">
+                    Nhập tên rõ ràng để người dùng dễ tìm kiếm.
+                </p>
+            </div>
+
+            <div class="cc-field">
+                <label asp-for="Description" class="cc-label">
+                    Mô tả ngành nghề
+                </label>
+
+                <textarea asp-for="Description"
+                          class="cc-input"
+                          rows="6"
+                          placeholder="Giới thiệu ngắn về ngành nghề và các công việc liên quan..."></textarea>
+
+                <span asp-validation-for="Description"
+                      class="cc-error"></span>
+
+                <p class="cc-help">
+                    Ví dụ: Phát triển phần mềm, quản trị hệ thống và kiểm thử phần mềm.
+                </p>
+            </div>
+        </div>
+
+        <div class="cc-footer">
+            <p>Kiểm tra thông tin trước khi lưu.</p>
+
+            <div class="cc-actions">
+                <a href="@Url.Action("Index", "JobCategories", new { area = "Admin" })"
+                   class="cc-button cc-cancel">
+                    Hủy
+                </a>
+
+                <button type="submit" class="cc-button cc-save">
+                    Thêm ngành nghề
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

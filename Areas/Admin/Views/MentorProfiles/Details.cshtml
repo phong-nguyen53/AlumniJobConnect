@@ -1,0 +1,221 @@
+﻿@model AlumniJobConnect.Models.MentorProfile
+
+@{
+    ViewData["Title"] = "Chi tiết hồ sơ tư vấn";
+    Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
+
+    var fullName = ViewData["FullName"] as string
+        ?? $"Tài khoản #{Model.UserId}";
+
+    var email = ViewData["Email"] as string;
+    var accountActive = ViewData["AccountActive"] is bool active && active;
+
+    var initial = string.IsNullOrWhiteSpace(fullName)
+        ? "?"
+        : fullName.Trim().Substring(0, 1).ToUpperInvariant();
+}
+
+<style>
+    .mentor-detail {
+        max-width: 1000px;
+        margin: auto;
+        padding: 28px 24px;
+        color: #203b32;
+    }
+
+    .md-back {
+        display: inline-block;
+        margin-bottom: 22px;
+        color: #008d68;
+        text-decoration: none;
+        font-size: 14px;
+    }
+
+    .md-card {
+        overflow: hidden;
+        border: 1px solid #e1ebe5;
+        border-radius: 18px;
+        background: #fff;
+        box-shadow: 0 8px 28px rgba(26,65,49,.05);
+    }
+
+    .md-header {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 18px;
+        padding: 30px;
+        border-bottom: 1px solid #e1ebe5;
+        background: #f3fbf7;
+    }
+
+    .md-avatar {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 68px;
+        height: 68px;
+        border-radius: 19px;
+        background: #009b72;
+        color: #fff;
+        font-size: 28px;
+        font-weight: 700;
+    }
+
+    .md-header h1 {
+        margin: 0 0 8px;
+        font-size: 25px;
+        font-weight: 700;
+        overflow-wrap: anywhere;
+    }
+
+    .md-muted {
+        color: #71837c;
+        font-size: 13px;
+        line-height: 1.8;
+        overflow-wrap: anywhere;
+    }
+
+    .md-body {
+        padding: 30px;
+    }
+
+    .md-status {
+        display: inline-block;
+        margin-bottom: 28px;
+        padding: 8px 12px;
+        border-radius: 9px;
+        background: #e5f6ec;
+        color: #00835f;
+        font-size: 13px;
+        font-weight: 600;
+    }
+
+    .md-status-paused {
+        background: #fff3da;
+        color: #91671d;
+    }
+
+    .md-status-locked {
+        background: #fff0f2;
+        color: #b8314d;
+    }
+
+    .md-section + .md-section {
+        margin-top: 28px;
+        padding-top: 25px;
+        border-top: 1px solid #edf2ef;
+    }
+
+    .md-section h2 {
+        margin: 0 0 13px;
+        font-size: 16px;
+        font-weight: 700;
+    }
+
+    .md-topic {
+        display: inline-block;
+        padding: 10px 14px;
+        border-radius: 10px;
+        background: #edf3ff;
+        color: #3669c9;
+        line-height: 1.7;
+        overflow-wrap: anywhere;
+    }
+
+    .md-text {
+        margin: 0;
+        color: #526d60;
+        line-height: 1.9;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+    }
+
+    .md-footer {
+        padding: 18px 30px;
+        border-top: 1px solid #e1ebe5;
+        background: #fcfefd;
+        color: #71837c;
+        font-size: 12px;
+    }
+
+    @@media (max-width: 600px) {
+        .mentor-detail {
+            padding: 20px 12px;
+        }
+
+        .md-header,
+        .md-body,
+        .md-footer {
+            padding: 20px;
+        }
+    }
+</style>
+
+<div class="mentor-detail">
+    <a href="@Url.Action("Index", "MentorProfiles", new { area = "Admin" })"
+       class="md-back">
+        ← Danh sách hồ sơ tư vấn
+    </a>
+
+    <div class="md-card">
+        <div class="md-header">
+            <div class="md-avatar" aria-hidden="true">@initial</div>
+
+            <div>
+                <h1>@fullName</h1>
+                <div class="md-muted">
+                    @(string.IsNullOrWhiteSpace(email)
+                                        ? "Chưa cập nhật email"
+                                        : email)
+                </div>
+                <div class="md-muted">
+                    Mã tài khoản: #@Model.UserId
+                </div>
+            </div>
+        </div>
+
+        <div class="md-body">
+            @if (!accountActive)
+            {
+                <span class="md-status md-status-locked">
+                    Tài khoản không hoạt động
+                </span>
+            }
+            else if (Model.IsAvailable)
+            {
+                <span class="md-status">Sẵn sàng tư vấn</span>
+            }
+            else
+            {
+                <span class="md-status md-status-paused">
+                    Tạm ngừng nhận tư vấn
+                </span>
+            }
+
+            <div class="md-section">
+                <h2>Chủ đề có thể tư vấn</h2>
+
+                <div class="md-topic">
+                    @(string.IsNullOrWhiteSpace(Model.Expertise)
+                                        ? "Chưa cập nhật chủ đề"
+                                        : Model.Expertise)
+                </div>
+            </div>
+
+            <div class="md-section">
+                <h2>Giới thiệu tư vấn</h2>
+
+                <p class="md-text">
+                    @(string.IsNullOrWhiteSpace(Model.Introduction)
+                                        ? "Người dùng chưa thêm giới thiệu tư vấn."
+                                        : Model.Introduction)
+                </p>
+            </div>
+        </div>
+
+        <div class="md-footer">
+            Thông tin tư vấn do người dùng cập nhật trong hồ sơ cá nhân.
+        </div>
+    </div>
+</div>

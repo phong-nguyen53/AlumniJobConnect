@@ -1,0 +1,339 @@
+﻿@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@model AlumniJobConnect.Models.Menu
+
+@{
+    ViewData["Title"] = "Xóa menu";
+    Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+    .menu-delete {
+        max-width: 850px;
+        margin: auto;
+        padding: 28px 24px;
+        color: #203b32;
+    }
+
+    .md-back {
+        display: inline-block;
+        margin-bottom: 22px;
+        color: #008d68;
+        font-size: 14px;
+        text-decoration: none;
+    }
+
+    .md-card {
+        overflow: hidden;
+        border: 1px solid #e4ebe7;
+        border-radius: 18px;
+        background: #fff;
+        box-shadow: 0 8px 28px rgba(26, 65, 49, .05);
+    }
+
+    .md-header {
+        padding: 28px;
+        border-bottom: 1px solid #f1dce2;
+        background: #fff6f8;
+    }
+
+    .md-tag {
+        display: inline-block;
+        margin-bottom: 12px;
+        padding: 6px 10px;
+        border-radius: 8px;
+        background: #ffe4eb;
+        color: #b8304c;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .md-header h1 {
+        margin: 0 0 10px;
+        color: #922c42;
+        font-size: 26px;
+        font-weight: 700;
+    }
+
+    .md-header p {
+        margin: 0;
+        color: #84646c;
+        font-size: 14px;
+        line-height: 1.7;
+    }
+
+    .md-body {
+        padding: 28px;
+    }
+
+    .md-name {
+        margin: 0 0 7px;
+        font-size: 22px;
+        font-weight: 700;
+        overflow-wrap: anywhere;
+    }
+
+    .md-id {
+        margin-bottom: 25px;
+        color: #71837c;
+        font-size: 12px;
+    }
+
+    .md-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 22px;
+        margin: 0 0 26px;
+    }
+
+        .md-grid dt {
+            margin-bottom: 8px;
+            color: #71837c;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .md-grid dd {
+            margin: 0;
+            font-size: 14px;
+            line-height: 1.7;
+            overflow-wrap: anywhere;
+        }
+
+    .md-code {
+        display: inline-block;
+        padding: 6px 10px;
+        border-radius: 8px;
+        background: #f3f6f5;
+        color: #526d60;
+        font-size: 13px;
+        white-space: normal;
+        overflow-wrap: anywhere;
+    }
+
+    .md-badge {
+        display: inline-block;
+        padding: 6px 10px;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .md-active {
+        background: #e4f8ed;
+        color: #00835f;
+    }
+
+    .md-inactive {
+        background: #f0f2f5;
+        color: #75808d;
+    }
+
+    .md-warning {
+        padding: 15px 17px;
+        border: 1px solid #f2e2bc;
+        border-radius: 11px;
+        background: #fffaf0;
+        color: #826122;
+        font-size: 13px;
+        line-height: 1.8;
+    }
+
+    .md-error {
+        margin-bottom: 20px;
+        padding: 14px 17px;
+        border: 1px solid #f1cbd3;
+        border-radius: 11px;
+        background: #fff1f3;
+        color: #ad3047;
+        font-size: 14px;
+        line-height: 1.7;
+    }
+
+    .md-validation.validation-summary-valid {
+        display: none;
+    }
+
+    .md-validation.validation-summary-errors {
+        margin-bottom: 20px;
+        color: #ad3047;
+        font-size: 13px;
+    }
+
+    .md-footer {
+        display: flex;
+        justify-content: flex-end;
+        flex-wrap: wrap;
+        gap: 10px;
+        padding: 22px 28px;
+        border-top: 1px solid #e6eee9;
+        background: #fcfefd;
+    }
+
+    .md-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 44px;
+        padding: 0 22px;
+        border: 1px solid #dce7e2;
+        border-radius: 11px;
+        background: #fff;
+        color: #526d60;
+        font: inherit;
+        font-size: 14px;
+        font-weight: 600;
+        text-decoration: none;
+        cursor: pointer;
+    }
+
+        .md-button:hover {
+            background: #eef7f2;
+            color: #35564a;
+            text-decoration: none;
+        }
+
+    .md-confirm {
+        border-color: #d73e59;
+        background: #d73e59;
+        color: #fff;
+    }
+
+        .md-confirm:hover {
+            background: #b92e46;
+            color: #fff;
+        }
+
+    @@media (max-width: 600px) {
+        .menu-delete {
+            padding: 20px 12px;
+        }
+
+        .md-header,
+        .md-body,
+        .md-footer {
+            padding: 20px;
+        }
+
+        .md-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .md-button {
+            flex: 1;
+        }
+    }
+</style>
+
+<div class="menu-delete">
+    <a href="@Url.Action("Index", "Menus", new { area = "Admin" })"
+       class="md-back">
+        ← Danh sách menu
+    </a>
+
+    <div class="md-card">
+        <div class="md-header">
+            <span class="md-tag">Xác nhận thao tác</span>
+            <h1>Bạn muốn xóa menu này?</h1>
+            <p>Kiểm tra thông tin bên dưới trước khi xác nhận.</p>
+        </div>
+
+        <div class="md-body">
+            @if (TempData["Error"] != null)
+            {
+                <div class="md-error" role="alert">
+                    @TempData["Error"]
+                </div>
+            }
+
+            @Html.ValidationSummary(
+            false,
+                        "",
+                        new { @class = "md-validation", role = "alert" })
+
+            <h2 class="md-name">@Model.MenuName</h2>
+            <div class="md-id">Mã menu: #@Model.MenuId</div>
+
+            <dl class="md-grid">
+                <div>
+                    <dt>Đường dẫn</dt>
+                    <dd>
+                        @if (string.IsNullOrWhiteSpace(Model.MenuUrl))
+                        {
+                            <span>Chưa có đường dẫn</span>
+                        }
+                        else
+                        {
+                            <code class="md-code">@Model.MenuUrl</code>
+                        }
+                    </dd>
+                </div>
+
+                <div>
+                    <dt>Mã biểu tượng</dt>
+                    <dd>
+                        @(string.IsNullOrWhiteSpace(Model.Icon)
+                                                ? "Chưa có biểu tượng"
+                                                : Model.Icon)
+                    </dd>
+                </div>
+
+                <div>
+                    <dt>Thứ tự hiển thị</dt>
+                    <dd>@Model.SortOrder</dd>
+                </div>
+
+                <div>
+                    <dt>Trạng thái</dt>
+                    <dd>
+                        <span class="md-badge @(Model.IsActive == true
+                                                          ? "md-active" : "md-inactive")">
+                            @(Model.IsActive == true ? "Đang bật" : "Đang tắt")
+                        </span>
+                    </dd>
+                </div>
+
+                <div>
+                    <dt>Menu cha</dt>
+                    <dd>
+                        @if (Model.Parent != null)
+                        {
+                            @Model.Parent.MenuName
+                        }
+                        else if (Model.ParentId.HasValue)
+                        {
+                            <span>Mã menu cha: #@Model.ParentId</span>
+                        }
+                        else
+                        {
+                            <span>Không có — Menu cấp cao nhất</span>
+                        }
+                    </dd>
+                </div>
+            </dl>
+
+            <div class="md-warning">
+                Thao tác xóa không thể hoàn tác.
+                Nếu chỉ muốn ẩn menu, bạn có thể vào trang Sửa
+                và bỏ chọn “Bật menu”.
+            </div>
+        </div>
+
+        <form action="@Url.Action("Delete", "Menus", new { area = "Admin", id = Model.MenuId })"
+              method="post"
+              asp-antiforgery="false"
+              class="md-footer">
+
+            @Html.AntiForgeryToken()
+            <input asp-for="MenuId" type="hidden" />
+
+            <a href="@Url.Action("Index", "Menus", new { area = "Admin" })"
+               class="md-button">
+                Hủy
+            </a>
+
+            <button type="submit" class="md-button md-confirm">
+                Xác nhận xóa
+            </button>
+        </form>
+    </div>
+</div>

@@ -1,0 +1,316 @@
+﻿@model AlumniJobConnect.Models.MentorMessage
+
+@{
+    ViewData["Title"] = "Chi tiết tin nhắn";
+    Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
+
+    var senderName = ViewData["SenderName"] as string
+        ?? $"Tài khoản #{Model.SenderUserId}";
+
+    var senderEmail = ViewData["SenderEmail"] as string;
+    var jobTitle = ViewData["JobTitle"] as string;
+
+    var sentAt = DateTime.SpecifyKind(
+        Model.SentAtUtc,
+        DateTimeKind.Utc).AddHours(7);
+
+    var readAt = Model.ReadAtUtc.HasValue
+        ? DateTime.SpecifyKind(
+            Model.ReadAtUtc.Value,
+            DateTimeKind.Utc).AddHours(7)
+        : (DateTime?)null;
+
+    var initial = string.IsNullOrWhiteSpace(senderName)
+        ? "?"
+        : senderName.Trim().Substring(0, 1).ToUpperInvariant();
+}
+
+<style>
+    .message-detail {
+        max-width: 1000px;
+        margin: auto;
+        padding: 28px 24px;
+        color: #203b32;
+    }
+
+    .msg-back {
+        display: inline-block;
+        margin-bottom: 22px;
+        color: #008d68;
+        font-size: 14px;
+        text-decoration: none;
+    }
+
+    .msg-heading {
+        margin-bottom: 24px;
+    }
+
+        .msg-heading small {
+            color: #009b72;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .msg-heading h1 {
+            margin: 10px 0;
+            font-size: 28px;
+            font-weight: 700;
+        }
+
+    .msg-muted {
+        color: #71837c;
+        font-size: 13px;
+        line-height: 1.8;
+        overflow-wrap: anywhere;
+    }
+
+    .msg-card {
+        overflow: hidden;
+        border: 1px solid #e1ebe5;
+        border-radius: 18px;
+        background: #fff;
+        box-shadow: 0 8px 28px rgba(26,65,49,.05);
+    }
+
+    .msg-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 18px;
+        padding: 26px;
+        border-bottom: 1px solid #e1ebe5;
+        background: #f6fbf8;
+    }
+
+    .msg-person {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+    }
+
+    .msg-avatar {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        width: 54px;
+        height: 54px;
+        border-radius: 16px;
+        background: #009b72;
+        color: #fff;
+        font-size: 23px;
+        font-weight: 700;
+    }
+
+    .msg-name {
+        margin: 0 0 5px;
+        font-size: 18px;
+        font-weight: 700;
+        overflow-wrap: anywhere;
+    }
+
+    .msg-badge {
+        display: inline-block;
+        padding: 8px 12px;
+        border-radius: 9px;
+        font-size: 12px;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .msg-read {
+        background: #e4f8ed;
+        color: #00835f;
+    }
+
+    .msg-unread {
+        background: #fff3da;
+        color: #91671d;
+    }
+
+    .msg-body {
+        padding: 28px;
+    }
+
+    .msg-label {
+        margin: 0 0 12px;
+        color: #71837c;
+        font-size: 13px;
+        font-weight: 600;
+    }
+
+    .msg-bubble {
+        padding: 20px 22px;
+        border: 1px solid #dceee3;
+        border-radius: 0 16px 16px 16px;
+        background: #eff9f3;
+        color: #294c3d;
+        font-size: 15px;
+        line-height: 1.9;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+    }
+
+    .msg-time {
+        margin-top: 10px;
+        color: #71837c;
+        font-size: 12px;
+    }
+
+    .msg-info {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 24px;
+        margin: 28px 0 0;
+        padding-top: 26px;
+        border-top: 1px solid #e8efeb;
+    }
+
+        .msg-info dt {
+            margin-bottom: 8px;
+            color: #71837c;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .msg-info dd {
+            margin: 0;
+            color: #35564a;
+            font-size: 14px;
+            line-height: 1.8;
+            overflow-wrap: anywhere;
+        }
+
+    .msg-footer {
+        padding: 18px 26px;
+        border-top: 1px solid #e1ebe5;
+        background: #fcfefd;
+        color: #71837c;
+        font-size: 12px;
+        line-height: 1.8;
+    }
+
+    @@media (max-width: 600px) {
+        .message-detail {
+            padding: 20px 12px;
+        }
+
+        .msg-heading h1 {
+            font-size: 24px;
+        }
+
+        .msg-header,
+        .msg-body,
+        .msg-footer {
+            padding: 20px;
+        }
+
+        .msg-info {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<div class="message-detail">
+    <a href="@Url.Action("Index", "MentorMessages", new { area = "Admin" })"
+       class="msg-back">
+        ← Danh sách tin nhắn
+    </a>
+
+    <div class="msg-heading">
+        <small>Kết nối và trao đổi</small>
+        <h1>Chi tiết tin nhắn</h1>
+        <div class="msg-muted">
+            Tin nhắn #@Model.MessageId · Hội thoại #@Model.ConversationId
+        </div>
+    </div>
+
+    <div class="msg-card">
+        <div class="msg-header">
+            <div class="msg-person">
+                <div class="msg-avatar" aria-hidden="true">
+                    @initial
+                </div>
+
+                <div>
+                    <h2 class="msg-name">@senderName</h2>
+
+                    <div class="msg-muted">
+                        @(string.IsNullOrWhiteSpace(senderEmail)
+                                                ? "Chưa cập nhật email"
+                                                : senderEmail)
+                    </div>
+
+                    <div class="msg-muted">
+                        Người gửi · Tài khoản #@Model.SenderUserId
+                    </div>
+                </div>
+            </div>
+
+            <span class="msg-badge @(readAt.HasValue
+                                  ? "msg-read" : "msg-unread")">
+                @(readAt.HasValue ? "Đã đọc" : "Chưa đọc")
+            </span>
+        </div>
+
+        <div class="msg-body">
+            <h3 class="msg-label">Nội dung tin nhắn</h3>
+
+            <div class="msg-bubble">@Model.Content</div>
+
+            <div class="msg-time">
+                Gửi lúc @sentAt.ToString("HH:mm · dd/MM/yyyy")
+                — giờ Việt Nam
+            </div>
+
+            <dl class="msg-info">
+                <div>
+                    <dt>Mã cuộc trò chuyện</dt>
+                    <dd>#@Model.ConversationId</dd>
+                </div>
+
+                <div>
+                    <dt>Thời gian người nhận đọc</dt>
+                    <dd>
+                        @(readAt.HasValue
+                                                ? readAt.Value.ToString("dd/MM/yyyy HH:mm")
+                                                : "Chưa ghi nhận đã đọc")
+                    </dd>
+                </div>
+
+                <div>
+                    <dt>Tin tuyển dụng liên quan</dt>
+                    <dd>
+                        @if (!Model.JobPostId.HasValue)
+                        {
+                            <span>Không gắn tin tuyển dụng</span>
+                        }
+                        else
+                        {
+                            <div>
+                                @(string.IsNullOrWhiteSpace(jobTitle)
+                                                            ? "Không tìm thấy tên tin tuyển dụng"
+                                                            : jobTitle)
+                        </div>
+                        <div class="msg-muted">
+                            Mã tin: #@Model.JobPostId
+                        </div>
+                                                }
+                    </dd>
+                </div>
+
+                <div>
+                    <dt>Mã tin nhắn</dt>
+                    <dd>#@Model.MessageId</dd>
+                </div>
+            </dl>
+        </div>
+
+        <div class="msg-footer">
+            Admin xem để tra cứu và hỗ trợ.
+            Việc mở trang này không đánh dấu tin nhắn là đã đọc.
+        </div>
+    </div>
+</div>

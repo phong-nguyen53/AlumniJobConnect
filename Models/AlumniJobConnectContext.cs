@@ -15,6 +15,12 @@ public partial class AlumniJobConnectContext : DbContext
     {
     }
 
+
+
+
+    public virtual DbSet<MentorProfile> MentorProfiles { get; set; }
+
+    public virtual DbSet<MentorMessage> MentorMessages { get; set; }
     public virtual DbSet<AcademicCourse> AcademicCourses { get; set; }
 
     public virtual DbSet<AlumniProfile> AlumniProfiles { get; set; }

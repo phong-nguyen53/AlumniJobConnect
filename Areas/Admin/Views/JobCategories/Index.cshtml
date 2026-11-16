@@ -1,0 +1,666 @@
+﻿@model IEnumerable<AlumniJobConnect.Models.JobCategory>
+
+@{
+    ViewData["Title"] = "Quản lý ngành nghề";
+    Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
+
+    var categories = Model.ToList();
+    var createUrl = Url.Action("Create", "JobCategories", new { area = "Admin" });
+}
+
+<style>
+    .category-admin {
+        --ca-green: #009b72;
+        --ca-green-dark: #007e5d;
+        --ca-border: #e3ece8;
+        --ca-muted: #71837c;
+        width: 100%;
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 28px 24px;
+        color: #203b32;
+    }
+
+        .category-admin * {
+            box-sizing: border-box;
+        }
+
+        .category-admin [hidden] {
+            display: none !important;
+        }
+
+    /* ---------- Header ---------- */
+    .ca-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+        margin-bottom: 26px;
+    }
+
+    .ca-eyebrow {
+        margin-bottom: 8px;
+        color: var(--ca-green);
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+    }
+
+    .ca-header h1 {
+        margin: 0 0 9px;
+        font-size: 28px;
+        font-weight: 700;
+        color: #203b32;
+    }
+
+    .ca-subtitle {
+        margin: 0;
+        color: var(--ca-muted);
+        font-size: 14px;
+        line-height: 1.6;
+    }
+
+    /* ---------- Nút thêm mới ---------- */
+    .ca-add {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        min-height: 46px;
+        padding: 12px 20px;
+        border-radius: 12px;
+        background: var(--ca-green);
+        color: #fff;
+        font-size: 14px;
+        font-weight: 600;
+        text-decoration: none;
+        white-space: nowrap;
+        box-shadow: 0 6px 16px rgba(0, 155, 114, .22);
+        transition: background .2s, transform .2s, box-shadow .2s;
+    }
+
+        .ca-add:hover {
+            background: var(--ca-green-dark);
+            color: #fff;
+            text-decoration: none;
+            transform: translateY(-1px);
+            box-shadow: 0 8px 20px rgba(0, 155, 114, .3);
+        }
+
+        .ca-add .ca-plus {
+            font-size: 18px;
+            line-height: 1;
+        }
+
+    .ca-add-sm {
+        min-height: 44px;
+        padding: 0 18px;
+        border-radius: 11px;
+        font-size: 13px;
+        box-shadow: none;
+    }
+
+    /* ---------- Panel ---------- */
+    .ca-panel {
+        overflow: hidden;
+        border: 1px solid var(--ca-border);
+        border-radius: 18px;
+        background: #fff;
+        box-shadow: 0 8px 28px rgba(26, 65, 49, .04);
+    }
+
+    .ca-toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 18px;
+        padding: 24px;
+        border-bottom: 1px solid var(--ca-border);
+    }
+
+        .ca-toolbar h2 {
+            margin: 0 0 7px;
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+    .ca-count {
+        margin: 0;
+        color: var(--ca-muted);
+        font-size: 13px;
+    }
+
+        .ca-count strong {
+            color: var(--ca-green);
+        }
+
+    .ca-toolbar-actions {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        flex-wrap: wrap;
+        flex: 1;
+        gap: 12px;
+    }
+
+    .ca-search-group {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        width: 100%;
+        max-width: 440px;
+    }
+
+    .ca-search {
+        width: 100%;
+        min-width: 0;
+        height: 44px;
+        padding: 0 15px;
+        border: 1px solid #dce7e2;
+        border-radius: 11px;
+        outline: none;
+        background: #f8fbf9;
+        color: #203b32;
+        font: inherit;
+        font-size: 14px;
+        transition: border-color .2s, box-shadow .2s;
+    }
+
+        .ca-search:focus {
+            border-color: var(--ca-green);
+            box-shadow: 0 0 0 3px rgba(0, 155, 114, .1);
+        }
+
+    .ca-reset {
+        height: 44px;
+        padding: 0 15px;
+        border: 1px solid #dce7e2;
+        border-radius: 11px;
+        background: #fff;
+        color: #35564a;
+        font: inherit;
+        font-size: 13px;
+        white-space: nowrap;
+        cursor: pointer;
+        transition: background .2s;
+    }
+
+        .ca-reset:hover {
+            background: #f0f8f4;
+        }
+
+    /* ---------- Bảng ---------- */
+    .ca-table-wrap {
+        overflow-x: auto;
+    }
+
+    .ca-table {
+        width: 100%;
+        min-width: 720px;
+        border-collapse: collapse;
+    }
+
+        .ca-table thead {
+            background: #f6faf8;
+        }
+
+        .ca-table th {
+            padding: 17px 24px;
+            border-bottom: 1px solid var(--ca-border);
+            color: #61786d;
+            font-size: 12px;
+            font-weight: 600;
+            text-align: left;
+            white-space: nowrap;
+        }
+
+        .ca-table td {
+            padding: 21px 24px;
+            border-bottom: 1px solid #edf2ef;
+            font-size: 14px;
+            vertical-align: middle;
+        }
+
+        .ca-table tbody tr:last-child td {
+            border-bottom: 0;
+        }
+
+    .ca-row:hover {
+        background: #fbfdfc;
+    }
+
+    .ca-number {
+        color: #7a8d84;
+        font-size: 13px;
+    }
+
+    .ca-category {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .ca-icon {
+        display: inline-flex;
+        flex-shrink: 0;
+        align-items: center;
+        justify-content: center;
+        width: 42px;
+        height: 42px;
+        border-radius: 12px;
+        background: #e9f8f1;
+        color: var(--ca-green);
+    }
+
+        .ca-icon svg {
+            width: 21px;
+            height: 21px;
+        }
+
+    .ca-name {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: 600;
+        color: #203b32;
+        overflow-wrap: anywhere;
+    }
+
+    .ca-id {
+        color: #82948b;
+        font-size: 12px;
+    }
+
+    .ca-description {
+        max-width: 440px;
+        color: #61786d;
+        line-height: 1.65;
+        overflow-wrap: anywhere;
+        white-space: pre-line;
+    }
+
+    .ca-muted {
+        color: #94a29b;
+        font-style: italic;
+        font-size: 13px;
+    }
+
+    .ca-actions {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        flex-wrap: wrap;
+    }
+
+    .ca-action {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 34px;
+        padding: 7px 12px;
+        border-radius: 9px;
+        font-size: 12px;
+        font-weight: 600;
+        text-decoration: none;
+        white-space: nowrap;
+        transition: background .2s;
+    }
+
+        .ca-action:hover {
+            text-decoration: none;
+        }
+
+    .ca-detail {
+        background: #edf3ff;
+        color: #3669c9;
+    }
+
+        .ca-detail:hover {
+            background: #dfeaff;
+            color: #2654ac;
+        }
+
+    .ca-edit {
+        background: #e9f8f1;
+        color: #00835f;
+    }
+
+        .ca-edit:hover {
+            background: #d7f2e4;
+            color: #006f50;
+        }
+
+    .ca-delete {
+        background: #fff0f2;
+        color: #d44760;
+    }
+
+        .ca-delete:hover {
+            background: #ffe1e7;
+            color: #b62c45;
+        }
+
+    /* ---------- Trạng thái trống ---------- */
+    .ca-empty {
+        padding: 55px 24px !important;
+        text-align: center;
+        color: var(--ca-muted);
+        line-height: 1.8;
+    }
+
+        .ca-empty strong {
+            display: block;
+            margin-bottom: 5px;
+            color: #35564a;
+            font-size: 16px;
+        }
+
+    .ca-empty-add {
+        margin-top: 18px;
+    }
+
+    /* ---------- Footer & thông báo ---------- */
+    .ca-footer {
+        padding: 15px 24px;
+        border-top: 1px solid var(--ca-border);
+        background: #fcfefd;
+        color: var(--ca-muted);
+        font-size: 12px;
+    }
+
+    .ca-alert {
+        margin-bottom: 18px;
+        padding: 14px 18px;
+        border: 1px solid;
+        border-radius: 12px;
+        font-size: 14px;
+        line-height: 1.6;
+    }
+
+    .ca-alert-success {
+        border-color: #c9ead8;
+        background: #edf9f2;
+        color: #17633c;
+    }
+
+    .ca-alert-error {
+        border-color: #f4ccd2;
+        background: #fff1f3;
+        color: #a93148;
+    }
+
+    /* ---------- Responsive ---------- */
+    @@media (max-width: 768px) {
+        .category-admin {
+            padding: 20px 12px;
+        }
+
+        .ca-header {
+            align-items: flex-start;
+            flex-direction: column;
+        }
+
+            .ca-header h1 {
+                font-size: 24px;
+            }
+
+        .ca-add {
+            width: 100%;
+        }
+
+        .ca-toolbar {
+            padding: 20px 16px;
+        }
+
+        .ca-toolbar-actions {
+            width: 100%;
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .ca-search-group {
+            max-width: none;
+        }
+
+        .ca-table th,
+        .ca-table td {
+            padding-left: 16px;
+            padding-right: 16px;
+        }
+    }
+</style>
+
+<div class="category-admin">
+    <div class="ca-header">
+        <div>
+            <div class="ca-eyebrow">Danh mục hệ thống</div>
+            <h1>Quản lý ngành nghề</h1>
+            <p class="ca-subtitle">
+                Quản lý các ngành nghề để phân loại tin tuyển dụng.
+            </p>
+        </div>
+
+        <a href="@createUrl" class="ca-add">
+            <span class="ca-plus" aria-hidden="true">＋</span>
+            Thêm ngành nghề
+        </a>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="ca-alert ca-alert-success" role="status">
+            @TempData["Success"]
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="ca-alert ca-alert-error" role="alert">
+            @TempData["Error"]
+        </div>
+    }
+
+    <div class="ca-panel">
+        <div class="ca-toolbar">
+            <div>
+                <h2>Danh sách ngành nghề</h2>
+                <p class="ca-count">
+                    Tổng cộng <strong>@categories.Count</strong> ngành nghề
+                </p>
+            </div>
+
+            <div class="ca-toolbar-actions">
+                <div class="ca-search-group">
+                    <input id="categorySearch"
+                           class="ca-search"
+                           type="search"
+                           aria-label="Tìm kiếm ngành nghề"
+                           placeholder="Tìm tên ngành nghề, mô tả..."
+                           autocomplete="off" />
+
+                    <button id="categoryReset"
+                            class="ca-reset"
+                            type="button">
+                        Đặt lại
+                    </button>
+                </div>
+
+                <a href="@createUrl" class="ca-add ca-add-sm">
+                    <span class="ca-plus" aria-hidden="true">＋</span>
+                    Thêm mới
+                </a>
+            </div>
+        </div>
+
+        <div class="ca-table-wrap">
+            <table class="ca-table">
+                <thead>
+                    <tr>
+                        <th scope="col" style="width: 70px;">STT</th>
+                        <th scope="col" style="width: 30%;">Ngành nghề</th>
+                        <th scope="col">Mô tả</th>
+                        <th scope="col" style="width: 220px;">Thao tác</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @for (var index = 0; index < categories.Count; index++)
+                    {
+                        var item = categories[index];
+
+                        <tr class="ca-row"
+                            data-search="@($"{item.CategoryName} {item.Description}")">
+                            <td>
+                                <span class="ca-number">@(index + 1)</span>
+                            </td>
+
+                            <td>
+                                <div class="ca-category">
+                                    <span class="ca-icon" aria-hidden="true">
+                                        <svg viewBox="0 0 24 24"
+                                             fill="none"
+                                             stroke="currentColor"
+                                             stroke-width="1.7"
+                                             stroke-linecap="round"
+                                             stroke-linejoin="round">
+                                            <rect x="3" y="7"
+                                                  width="18" height="14"
+                                                  rx="3"></rect>
+                                            <path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                            <path d="M3 12a22 22 0 0 0 18 0"></path>
+                                            <path d="M12 12v3"></path>
+                                        </svg>
+                                    </span>
+
+                                    <div>
+                                        <span class="ca-name">
+                                            @item.CategoryName
+                                        </span>
+                                        <span class="ca-id">
+                                            Mã ngành: #@item.JobCategoryId
+                                        </span>
+                                    </div>
+                                </div>
+                            </td>
+
+                            <td>
+                                @if (string.IsNullOrWhiteSpace(item.Description))
+                                {
+                                    <span class="ca-muted">
+                                        Chưa có mô tả
+                                    </span>
+                                }
+                                else
+                                {
+                                    <div class="ca-description">@item.Description</div>
+                                }
+                            </td>
+
+                            <td>
+                                <div class="ca-actions">
+
+                                    <a href="@Url.Action("Edit", "JobCategories", new { area = "Admin", id = item.JobCategoryId })"
+                                       class="ca-action ca-edit"
+                                       aria-label="@($"Sửa ngành {item.CategoryName}")">
+                                        Sửa
+                                    </a>
+
+                                    <a href="@Url.Action("Delete", "JobCategories", new { area = "Admin", id = item.JobCategoryId })"
+                                       class="ca-action ca-delete"
+                                       aria-label="@($"Xóa ngành {item.CategoryName}")">
+                                        Xóa
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+
+                    <tr id="categoryEmpty" hidden="@(categories.Count > 0)">
+                        <td colspan="4" class="ca-empty">
+                            <strong id="categoryEmptyTitle">
+                                Chưa có ngành nghề
+                            </strong>
+                            <span id="categoryEmptyText">
+                                Bấm “Thêm ngành nghề” để tạo danh mục đầu tiên.
+                            </span>
+                            <div>
+                                <a href="@createUrl" class="ca-add ca-add-sm ca-empty-add">
+                                    <span class="ca-plus" aria-hidden="true">＋</span>
+                                    Thêm ngành nghề
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="ca-footer" role="status" aria-live="polite">
+            Đang hiển thị
+            <strong id="categoryVisibleCount">@categories.Count</strong>
+            / @categories.Count ngành nghề
+        </div>
+    </div>
+</div>
+
+<script>
+    (() => {
+        const searchInput = document.getElementById("categorySearch");
+        const resetButton = document.getElementById("categoryReset");
+        const rows = Array.from(document.querySelectorAll(".category-admin .ca-row"));
+        const emptyRow = document.getElementById("categoryEmpty");
+        const emptyTitle = document.getElementById("categoryEmptyTitle");
+        const emptyText = document.getElementById("categoryEmptyText");
+        const visibleCount = document.getElementById("categoryVisibleCount");
+
+        function normalize(value) {
+            return (value || "")
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .replace(/[đĐ]/g, "d")
+                .toLowerCase()
+                .trim();
+        }
+
+        const searchableRows = rows.map(row => ({
+            element: row,
+            text: normalize(row.dataset.search)
+        }));
+
+        function filterCategories() {
+            const keyword = normalize(searchInput.value);
+            let count = 0;
+
+            searchableRows.forEach(row => {
+                const matches = row.text.includes(keyword);
+                row.element.hidden = !matches;
+
+                if (matches) count++;
+            });
+
+            visibleCount.textContent = count;
+            emptyRow.hidden = count > 0;
+
+            if (rows.length === 0) {
+                emptyTitle.textContent = "Chưa có ngành nghề";
+                emptyText.textContent =
+                    "Bấm “Thêm ngành nghề” để tạo danh mục đầu tiên.";
+            } else {
+                emptyTitle.textContent = "Không tìm thấy ngành nghề";
+                emptyText.textContent =
+                    "Thử từ khóa khác, bấm “Đặt lại” hoặc thêm ngành nghề mới.";
+            }
+        }
+
+        searchInput.addEventListener("input", filterCategories);
+
+        resetButton.addEventListener("click", () => {
+            searchInput.value = "";
+            filterCategories();
+            searchInput.focus();
+        });
+
+        filterCategories();
+    })();
+</script>

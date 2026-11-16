@@ -1,0 +1,401 @@
+﻿@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@model AlumniJobConnect.Models.Menu
+
+@{
+    ViewData["Title"] = "Thêm menu";
+    Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+    .menu-create {
+        max-width: 950px;
+        margin: 0 auto;
+        padding: 28px 24px;
+        color: #203b32;
+    }
+
+    .mc-back {
+        display: inline-block;
+        margin-bottom: 22px;
+        color: #008d68;
+        font-size: 14px;
+        text-decoration: none;
+    }
+
+    .mc-heading {
+        margin-bottom: 25px;
+    }
+
+        .mc-heading small {
+            color: #009b72;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .mc-heading h1 {
+            margin: 10px 0;
+            font-size: 28px;
+            font-weight: 700;
+        }
+
+        .mc-heading p {
+            margin: 0;
+            color: #71837c;
+            font-size: 14px;
+            line-height: 1.7;
+        }
+
+    .mc-card {
+        overflow: hidden;
+        border: 1px solid #e0ebe5;
+        border-radius: 18px;
+        background: #fff;
+        box-shadow: 0 8px 28px rgba(26, 65, 49, .04);
+    }
+
+    .mc-header {
+        padding: 23px 28px;
+        border-bottom: 1px solid #e6eee9;
+        background: #f7fbf9;
+    }
+
+        .mc-header h2 {
+            margin: 0 0 7px;
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .mc-header p,
+        .mc-help {
+            margin: 0;
+            color: #71837c;
+            font-size: 12px;
+            line-height: 1.7;
+        }
+
+    .mc-body {
+        padding: 28px;
+    }
+
+    .mc-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 24px;
+    }
+
+    .mc-full {
+        grid-column: 1 / -1;
+    }
+
+    .mc-label {
+        display: block;
+        margin-bottom: 9px;
+        font-size: 14px;
+        font-weight: 600;
+    }
+
+    .mc-required,
+    .mc-error {
+        color: #c73851;
+    }
+
+    .mc-input {
+        box-sizing: border-box;
+        width: 100%;
+        min-height: 46px;
+        padding: 12px 14px;
+        border: 1px solid #dce7e2;
+        border-radius: 11px;
+        background: #fff;
+        color: #203b32;
+        font: inherit;
+        font-size: 14px;
+    }
+
+        .mc-input:focus {
+            outline: none;
+            border-color: #009b72;
+            box-shadow: 0 0 0 3px rgba(0, 155, 114, .1);
+        }
+
+        .mc-input.input-validation-error {
+            border-color: #c73851;
+        }
+
+    .mc-help {
+        margin-top: 8px;
+    }
+
+    .mc-error {
+        display: block;
+        margin-top: 6px;
+        font-size: 13px;
+    }
+
+    .mc-validation.validation-summary-valid {
+        display: none;
+    }
+
+    .mc-validation.validation-summary-errors {
+        margin-bottom: 24px;
+        padding: 14px 18px;
+        border: 1px solid #f2cbd2;
+        border-radius: 11px;
+        background: #fff1f3;
+        color: #ad3047;
+        font-size: 13px;
+    }
+
+    .mc-validation ul {
+        margin: 0;
+        padding-left: 18px;
+        line-height: 1.8;
+    }
+
+    .mc-status {
+        padding: 18px;
+        border: 1px solid #dceee3;
+        border-radius: 12px;
+        background: #f5fbf7;
+    }
+
+    .mc-check {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin: 0;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+        .mc-check input {
+            width: 18px;
+            height: 18px;
+            accent-color: #009b72;
+        }
+
+    .mc-footer {
+        display: flex;
+        justify-content: flex-end;
+        flex-wrap: wrap;
+        gap: 10px;
+        padding: 22px 28px;
+        border-top: 1px solid #e6eee9;
+        background: #fcfefd;
+    }
+
+    .mc-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 44px;
+        padding: 0 22px;
+        border: 1px solid #dce7e2;
+        border-radius: 11px;
+        background: #fff;
+        color: #526d60;
+        font: inherit;
+        font-size: 14px;
+        font-weight: 600;
+        text-decoration: none;
+        cursor: pointer;
+    }
+
+        .mc-button:hover {
+            background: #eef7f2;
+            color: #35564a;
+            text-decoration: none;
+        }
+
+    .mc-save {
+        border-color: #009b72;
+        background: #009b72;
+        color: #fff;
+    }
+
+        .mc-save:hover {
+            background: #007e5d;
+            color: #fff;
+        }
+
+    @@media (max-width: 650px) {
+        .menu-create {
+            padding: 20px 12px;
+        }
+
+        .mc-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .mc-header,
+        .mc-body,
+        .mc-footer {
+            padding: 20px;
+        }
+    }
+</style>
+
+<div class="menu-create">
+    <a href="@Url.Action("Index", "Menus", new { area = "Admin" })"
+       class="mc-back">
+        ← Danh sách menu
+    </a>
+
+    <div class="mc-heading">
+        <small>Điều hướng website</small>
+        <h1>Thêm menu</h1>
+        <p>Tạo mục điều hướng mới cho website.</p>
+    </div>
+
+    <form action="@Url.Action("Create", "Menus", new { area = "Admin" })"
+          method="post"
+          asp-antiforgery="false"
+          class="mc-card">
+
+        @Html.AntiForgeryToken()
+
+        <div class="mc-header">
+            <h2>Thông tin menu</h2>
+            <p>
+                Trường có dấu
+                <span class="mc-required">*</span>
+                bắt buộc nhập.
+            </p>
+        </div>
+
+        <div class="mc-body">
+            @Html.ValidationSummary(
+            false,
+                        "",
+                        new { @class = "mc-validation", role = "alert" })
+
+            <div class="mc-grid">
+                <div>
+                    <label asp-for="MenuName" class="mc-label">
+                        Tên menu <span class="mc-required">*</span>
+                    </label>
+
+                    <input asp-for="MenuName"
+                           class="mc-input"
+                           placeholder="Ví dụ: Việc làm"
+                           required />
+
+                    <span asp-validation-for="MenuName"
+                          class="mc-error"></span>
+                </div>
+
+                <div>
+                    <label asp-for="ParentId" class="mc-label">
+                        Menu cha
+                    </label>
+
+                    <select asp-for="ParentId"
+                            asp-items="ViewBag.ParentId"
+                            class="mc-input">
+                        <option value="">Không có — Menu cấp cao nhất</option>
+                    </select>
+
+                    <span asp-validation-for="ParentId"
+                          class="mc-error"></span>
+
+                    <p class="mc-help">
+                        Chọn menu cha nếu muốn tạo menu con.
+                    </p>
+                </div>
+
+                <div class="mc-full">
+                    <label asp-for="MenuUrl" class="mc-label">
+                        Đường dẫn
+                    </label>
+
+                    <input asp-for="MenuUrl"
+                           class="mc-input"
+                           placeholder="/Home/Jobs" />
+
+                    <span asp-validation-for="MenuUrl"
+                          class="mc-error"></span>
+
+                    <p class="mc-help">
+                        Nhập đường dẫn đã có trên website, ví dụ /Home/Jobs.
+                        Thêm menu không tự tạo trang mới.
+                    </p>
+                </div>
+
+                <div>
+                    <label asp-for="Icon" class="mc-label">
+                        Mã biểu tượng
+                    </label>
+
+                    <input asp-for="Icon"
+                           class="mc-input"
+                           placeholder="Ví dụ: fa fa-briefcase" />
+
+                    <span asp-validation-for="Icon"
+                          class="mc-error"></span>
+
+                    <p class="mc-help">
+                        Dùng mã biểu tượng thuộc thư viện website đang sử dụng.
+                    </p>
+                </div>
+
+                <div>
+                    <label asp-for="SortOrder" class="mc-label">
+                        Thứ tự hiển thị
+                    </label>
+
+                    <input asp-for="SortOrder"
+                           type="number"
+                           min="0"
+                           step="1"
+                           class="mc-input" />
+
+                    <span asp-validation-for="SortOrder"
+                          class="mc-error"></span>
+
+                    <p class="mc-help">
+                        Số nhỏ được xếp trước trong cùng cấp menu.
+                    </p>
+                </div>
+
+                <div class="mc-full mc-status">
+                    <label class="mc-check" for="menuIsActive">
+                        <input id="menuIsActive"
+                               name="IsActive"
+                               type="checkbox"
+                               value="true"
+                               checked="@(Model.IsActive == true)" />
+                        Bật menu
+                    </label>
+
+                    <input type="hidden" name="IsActive" value="false" />
+
+                    <span asp-validation-for="IsActive"
+                          class="mc-error"></span>
+
+                    <p class="mc-help">
+                        Bỏ chọn để lưu menu ở trạng thái tắt.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="mc-footer">
+            <a href="@Url.Action("Index", "Menus", new { area = "Admin" })"
+               class="mc-button">
+                Hủy
+            </a>
+
+            <button type="submit" class="mc-button mc-save">
+                Thêm menu
+            </button>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

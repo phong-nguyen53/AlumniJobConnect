@@ -1,0 +1,513 @@
+﻿@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@model IEnumerable<AlumniJobConnect.Models.MentorMessage>
+
+@{
+    ViewData["Title"] = "Quản lý tin nhắn";
+    Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
+
+    var messages = Model.ToList();
+
+    var senderNames = ViewData["SenderNames"]
+        as System.Collections.Generic.Dictionary<int, string>
+        ?? new System.Collections.Generic.Dictionary<int, string>();
+
+    var jobTitles = ViewData["JobTitles"]
+        as System.Collections.Generic.Dictionary<int, string>
+        ?? new System.Collections.Generic.Dictionary<int, string>();
+}
+
+<style>
+    .message-admin {
+        max-width: 1450px;
+        margin: auto;
+        padding: 28px 24px;
+        color: #203b32;
+    }
+
+    .mm-heading {
+        margin-bottom: 24px;
+    }
+
+        .mm-heading small {
+            color: #009b72;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .mm-heading h1 {
+            margin: 10px 0;
+            font-size: 28px;
+            font-weight: 700;
+        }
+
+    .mm-muted {
+        color: #71837c;
+        font-size: 12px;
+        line-height: 1.7;
+    }
+
+    .mm-heading p {
+        margin: 0;
+        font-size: 14px;
+    }
+
+    .mm-panel {
+        overflow: hidden;
+        border: 1px solid #e3ece8;
+        border-radius: 18px;
+        background: #fff;
+        box-shadow: 0 8px 28px rgba(26, 65, 49, .04);
+    }
+
+    .mm-toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 18px;
+        padding: 24px;
+        border-bottom: 1px solid #e3ece8;
+    }
+
+        .mm-toolbar h2 {
+            margin: 0 0 7px;
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .mm-toolbar p {
+            margin: 0;
+        }
+
+    .mm-filters {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .mm-control {
+        box-sizing: border-box;
+        min-height: 44px;
+        padding: 10px 13px;
+        border: 1px solid #dce7e2;
+        border-radius: 10px;
+        background: #f8fbf9;
+        color: #35564a;
+        font: inherit;
+        font-size: 13px;
+    }
+
+    .mm-search {
+        width: 290px;
+        max-width: 100%;
+    }
+
+    .mm-control:focus {
+        outline: none;
+        border-color: #009b72;
+        box-shadow: 0 0 0 3px rgba(0, 155, 114, .1);
+    }
+
+    .mm-reset {
+        padding: 10px 15px;
+        border: 1px solid #dce7e2;
+        border-radius: 10px;
+        background: #fff;
+        color: #526d60;
+        font: inherit;
+        font-size: 13px;
+        cursor: pointer;
+    }
+
+    .mm-scroll {
+        overflow-x: auto;
+    }
+
+    .mm-table {
+        width: 100%;
+        min-width: 1100px;
+        border-collapse: collapse;
+    }
+
+        .mm-table th {
+            padding: 17px 20px;
+            border-bottom: 1px solid #e3ece8;
+            background: #f6faf8;
+            color: #61786d;
+            font-size: 12px;
+            text-align: left;
+            white-space: nowrap;
+        }
+
+        .mm-table td {
+            padding: 20px;
+            border-bottom: 1px solid #edf2ef;
+            font-size: 13px;
+            vertical-align: top;
+        }
+
+        .mm-table tbody tr:last-child td {
+            border-bottom: 0;
+        }
+
+    .mm-row:hover {
+        background: #fbfdfc;
+    }
+
+    .mm-name {
+        display: block;
+        margin-bottom: 5px;
+        font-size: 14px;
+        font-weight: 700;
+        overflow-wrap: anywhere;
+    }
+
+    .mm-conversation {
+        display: inline-block;
+        padding: 7px 10px;
+        border-radius: 8px;
+        background: #edf3ff;
+        color: #3669c9;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .mm-content {
+        min-width: 220px;
+        max-width: 360px;
+        padding: 12px 14px;
+        border-radius: 0 12px 12px 12px;
+        background: #f0f8f4;
+        color: #35564a;
+        line-height: 1.8;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+    }
+
+    .mm-time {
+        white-space: nowrap;
+        line-height: 1.8;
+    }
+
+    .mm-badge {
+        display: inline-block;
+        padding: 6px 10px;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .mm-read {
+        background: #e4f8ed;
+        color: #00835f;
+    }
+
+    .mm-unread {
+        background: #fff5df;
+        color: #93691d;
+    }
+
+    .mm-job {
+        max-width: 200px;
+        color: #526d60;
+        line-height: 1.7;
+        overflow-wrap: anywhere;
+    }
+
+    .mm-detail {
+        display: inline-block;
+        padding: 9px 12px;
+        border-radius: 9px;
+        background: #e9f8f1;
+        color: #00835f;
+        font-size: 12px;
+        font-weight: 600;
+        text-decoration: none;
+        white-space: nowrap;
+    }
+
+        .mm-detail:hover {
+            background: #d7f0e2;
+            color: #006c4e;
+            text-decoration: none;
+        }
+
+    .mm-empty {
+        padding: 45px 20px !important;
+        color: #71837c;
+        text-align: center;
+        line-height: 1.8;
+    }
+
+    .mm-footer {
+        padding: 16px 24px;
+        border-top: 1px solid #e3ece8;
+        color: #71837c;
+        font-size: 12px;
+        line-height: 1.8;
+    }
+
+    .message-admin [hidden] {
+        display: none !important;
+    }
+
+    @@media (max-width: 700px) {
+        .message-admin {
+            padding: 20px 12px;
+        }
+
+        .mm-heading h1 {
+            font-size: 24px;
+        }
+
+        .mm-toolbar {
+            padding: 20px 16px;
+        }
+
+        .mm-filters,
+        .mm-search {
+            width: 100%;
+        }
+    }
+</style>
+
+<div class="message-admin">
+    <div class="mm-heading">
+        <small>Kết nối và trao đổi</small>
+        <h1>Quản lý tin nhắn</h1>
+        <p class="mm-muted">
+            Tra cứu tin nhắn và trạng thái đọc của người nhận.
+            Thời gian hiển thị theo giờ Việt Nam.
+        </p>
+    </div>
+
+    <div class="mm-panel">
+        <div class="mm-toolbar">
+            <div>
+                <h2>Danh sách tin nhắn</h2>
+                <p class="mm-muted">
+                    Tổng cộng <strong>@messages.Count</strong> tin nhắn
+                </p>
+            </div>
+
+            <div class="mm-filters">
+                <input id="messageSearch"
+                       type="search"
+                       class="mm-control mm-search"
+                       placeholder="Tìm người gửi, nội dung, mã hội thoại..."
+                       aria-label="Tìm tin nhắn" />
+
+                <select id="messageStatus"
+                        class="mm-control"
+                        aria-label="Lọc trạng thái đọc">
+                    <option value="">Tất cả trạng thái</option>
+                    <option value="read">Đã đọc</option>
+                    <option value="unread">Chưa đọc</option>
+                </select>
+
+                <button id="messageReset"
+                        type="button"
+                        class="mm-reset">
+                    Đặt lại
+                </button>
+            </div>
+        </div>
+
+        <div class="mm-scroll">
+            <table class="mm-table">
+                <thead>
+                    <tr>
+                        <th scope="col">Người gửi</th>
+                        <th scope="col">Hội thoại</th>
+                        <th scope="col">Nội dung</th>
+                        <th scope="col">Thời gian gửi</th>
+                        <th scope="col">Trạng thái đọc</th>
+                        <th scope="col">Tin tuyển dụng</th>
+                        <th scope="col">Thao tác</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @foreach (var item in messages)
+                    {
+                        var senderName =
+                        senderNames.TryGetValue(item.SenderUserId, out var name)
+                        && !string.IsNullOrWhiteSpace(name)
+                        ? name
+                        : $"Tài khoản #{item.SenderUserId}";
+
+                        var jobTitle = item.JobPostId.HasValue
+                        ? (jobTitles.TryGetValue(item.JobPostId.Value, out var title)
+                        ? title
+                        : $"Tin #{item.JobPostId.Value}")
+                        : "";
+
+                        var sentAt = DateTime.SpecifyKind(
+                        item.SentAtUtc,
+                        DateTimeKind.Utc).AddHours(7);
+
+                        <tr class="mm-row"
+                            data-status="@(item.ReadAtUtc.HasValue ? "read" : "unread")"
+                            data-search="@($"{senderName} {item.SenderUserId} {item.Content} {item.ConversationId} {jobTitle}")">
+
+                            <td>
+                                <span class="mm-name">@senderName</span>
+                                <div class="mm-muted">
+                                    Tài khoản #@item.SenderUserId
+                                </div>
+                                <div class="mm-muted">
+                                    Tin nhắn #@item.MessageId
+                                </div>
+                            </td>
+
+                            <td>
+                                <span class="mm-conversation">
+                                    #@item.ConversationId
+                                </span>
+                            </td>
+
+                            <td>
+                                <div class="mm-content">@item.Content</div>
+                            </td>
+
+                            <td>
+                                <div class="mm-time">
+                                    <strong>@sentAt.ToString("HH:mm")</strong>
+                                    <div class="mm-muted">
+                                        @sentAt.ToString("dd/MM/yyyy")
+                                    </div>
+                                </div>
+                            </td>
+
+                            <td>
+                                @if (item.ReadAtUtc.HasValue)
+                                {
+                                    var readAt = DateTime.SpecifyKind(
+                                    item.ReadAtUtc.Value,
+                                    DateTimeKind.Utc).AddHours(7);
+
+                                    <span class="mm-badge mm-read">
+                                        Đã đọc
+                                    </span>
+
+                                    <div class="mm-muted" style="margin-top: 6px;">
+                                        @readAt.ToString("dd/MM/yyyy HH:mm")
+                                    </div>
+                                }
+                                else
+                                {
+                                    <span class="mm-badge mm-unread">
+                                        Chưa đọc
+                                    </span>
+                                }
+                        </td>
+
+                        <td>
+                            <div class="mm-job">
+                                @(string.IsNullOrWhiteSpace(jobTitle)
+                                                                ? "Không gắn tin tuyển dụng"
+                                                                : jobTitle)
+                            </div>
+                        </td>
+
+                            <td>
+                                <a href="@Url.Action("Details", "MentorMessages", new { area = "Admin", id = item.MessageId })"
+                                   class="mm-detail">
+                                    Xem chi tiết
+                                </a>
+                            </td>
+                        </tr>
+                                        }
+
+                    <tr id="messageEmpty" hidden="@(messages.Count > 0)">
+                        <td colspan="7" class="mm-empty">
+                            <strong id="messageEmptyTitle">
+                                Chưa có tin nhắn
+                            </strong>
+                            <div id="messageEmptyText">
+                                Tin nhắn sẽ xuất hiện khi người dùng trao đổi.
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="mm-footer">
+            <div role="status" aria-live="polite">
+                Đang hiển thị
+                <strong id="messageVisibleCount">@messages.Count</strong>
+                / @messages.Count tin nhắn
+            </div>
+            Admin xem danh sách không làm thay đổi trạng thái đã đọc.
+        </div>
+    </div>
+</div>
+
+<script>
+    (() => {
+        const search = document.getElementById("messageSearch");
+        const status = document.getElementById("messageStatus");
+        const reset = document.getElementById("messageReset");
+        const empty = document.getElementById("messageEmpty");
+        const count = document.getElementById("messageVisibleCount");
+        const emptyTitle = document.getElementById("messageEmptyTitle");
+        const emptyText = document.getElementById("messageEmptyText");
+
+        function normalize(value) {
+            return (value || "")
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .replace(/[đĐ]/g, "d")
+                .toLowerCase()
+                .trim();
+        }
+
+        const rows = Array.from(
+            document.querySelectorAll(".message-admin .mm-row")
+        ).map(row => ({
+            element: row,
+            text: normalize(row.dataset.search),
+            status: row.dataset.status
+        }));
+
+        function filterMessages() {
+            const keyword = normalize(search.value);
+            let visible = 0;
+
+            rows.forEach(row => {
+                const matches =
+                    row.text.includes(keyword) &&
+                    (!status.value || row.status === status.value);
+
+                row.element.hidden = !matches;
+
+                if (matches) visible++;
+            });
+
+            count.textContent = visible;
+            empty.hidden = visible > 0;
+
+            emptyTitle.textContent = rows.length === 0
+                ? "Chưa có tin nhắn"
+                : "Không tìm thấy tin nhắn phù hợp";
+
+            emptyText.textContent = rows.length === 0
+                ? "Tin nhắn sẽ xuất hiện khi người dùng trao đổi."
+                : "Thử từ khóa khác hoặc bấm “Đặt lại”.";
+        }
+
+        search.addEventListener("input", filterMessages);
+        status.addEventListener("change", filterMessages);
+
+        reset.addEventListener("click", () => {
+            search.value = "";
+            status.value = "";
+            filterMessages();
+        });
+
+        filterMessages();
+    })();
+</script>
