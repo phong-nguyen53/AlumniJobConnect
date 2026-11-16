@@ -123,7 +123,9 @@ public class ApplicationsController : Controller
 
     [HttpGet]
     [Authorize(Roles = "Alumni")]
-    public async Task<IActionResult> Create(int companyId)
+    public async Task<IActionResult> Create(
+        int companyId,
+        int? jobPostId)
     {
         if (!await CurrentUserIsActiveAsync())
         {
@@ -143,11 +145,25 @@ public class ApplicationsController : Controller
             return NotFound("Không tìm thấy doanh nghiệp.");
         }
 
+        if (jobPostId.HasValue)
+        {
+            var jobExists = await AvailableJobs(companyId)
+                .AnyAsync(x =>
+                    x.JobPostId == jobPostId.Value);
+
+            if (!jobExists)
+            {
+                return NotFound(
+                    "Tin tuyển dụng không tồn tại hoặc đã ngừng nhận hồ sơ.");
+            }
+        }
+
         await LoadFormAsync(company);
 
         return View(new ApplyInput
         {
-            CompanyId = company.CompanyId
+            CompanyId = company.CompanyId,
+            JobPostId = jobPostId ?? 0
         });
     }
 

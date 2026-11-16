@@ -1,0 +1,768 @@
+﻿@model AlumniJobConnect.Models.JobPost
+
+@{
+    ViewData["Title"] = "Luyện phỏng vấn với AI";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+    .ai-page {
+        --ai-primary: #009b72;
+        --ai-primary-dark: #007f5d;
+        --ai-primary-soft: #e6f7ee;
+        --ai-ink: #1c3a30;
+        --ai-muted: #647a70;
+        --ai-line: #e1ebe5;
+        --ai-bg: #f5faf7;
+        --ai-danger: #b42f48;
+        max-width: 960px;
+        margin: 36px auto 60px;
+        padding: 0 16px;
+        color: var(--ai-ink);
+    }
+
+    .ai-card {
+        overflow: hidden;
+        border: 1px solid var(--ai-line);
+        border-radius: 24px;
+        background: #fff;
+        box-shadow: 0 18px 50px rgba(15, 80, 55, .08);
+    }
+
+    /* ---------- Header ---------- */
+    .ai-header {
+        position: relative;
+        padding: 32px 32px 28px;
+        color: #fff;
+        background: linear-gradient(135deg, #00a77a 0%, #007f5d 100%);
+        overflow: hidden;
+    }
+
+        .ai-header::after {
+            content: "";
+            position: absolute;
+            top: -70px;
+            right: -50px;
+            width: 220px;
+            height: 220px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, .09);
+        }
+
+    .ai-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 14px;
+        padding: 5px 12px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, .18);
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: .3px;
+    }
+
+    .ai-header h1 {
+        position: relative;
+        margin: 0 0 8px;
+        font-size: 28px;
+        font-weight: 800;
+        line-height: 1.25;
+    }
+
+    .ai-job {
+        position: relative;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 14px;
+    }
+
+    .ai-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 7px 14px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, .95);
+        color: var(--ai-ink);
+        font-size: 14px;
+        font-weight: 600;
+    }
+
+    .ai-chip-muted {
+        background: rgba(255, 255, 255, .18);
+        color: #fff;
+        font-weight: 500;
+    }
+
+    /* ---------- Notes ---------- */
+    .ai-notes {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        padding: 18px 32px;
+        border-bottom: 1px solid var(--ai-line);
+        background: var(--ai-bg);
+    }
+
+    .ai-note-item {
+        display: flex;
+        gap: 10px;
+        font-size: 13px;
+        line-height: 1.6;
+        color: var(--ai-muted);
+    }
+
+        .ai-note-item .ai-note-icon {
+            flex: none;
+            display: grid;
+            place-items: center;
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            background: #fff;
+            border: 1px solid var(--ai-line);
+            font-size: 14px;
+        }
+
+    .ai-note {
+        color: var(--ai-muted);
+        font-size: 13px;
+    }
+
+    /* ---------- Setup ---------- */
+    .ai-setup {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 14px;
+        padding: 20px 32px;
+        border-bottom: 1px solid var(--ai-line);
+    }
+
+        .ai-setup label {
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+    .ai-select,
+    .ai-answer {
+        border: 1.5px solid #d5e4db;
+        border-radius: 12px;
+        background: #fff;
+        color: var(--ai-ink);
+        font: inherit;
+        transition: border-color .15s, box-shadow .15s;
+    }
+
+    .ai-select {
+        min-width: 200px;
+        padding: 11px 14px;
+        cursor: pointer;
+    }
+
+        .ai-select:focus,
+        .ai-answer:focus {
+            outline: none;
+            border-color: var(--ai-primary);
+            box-shadow: 0 0 0 4px rgba(0, 155, 114, .14);
+        }
+
+        .ai-select:disabled {
+            background: var(--ai-bg);
+            cursor: not-allowed;
+        }
+
+    .ai-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 12px 22px;
+        border: 0;
+        border-radius: 12px;
+        background: var(--ai-primary);
+        color: #fff;
+        font: inherit;
+        font-weight: 700;
+        cursor: pointer;
+        box-shadow: 0 6px 16px rgba(0, 155, 114, .28);
+        transition: background .15s, transform .1s, box-shadow .15s;
+    }
+
+        .ai-button:hover:not(:disabled) {
+            background: var(--ai-primary-dark);
+            transform: translateY(-1px);
+        }
+
+        .ai-button:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        .ai-button:disabled {
+            opacity: .55;
+            cursor: wait;
+            box-shadow: none;
+        }
+
+    /* ---------- Chat ---------- */
+    .ai-chat {
+        min-height: 300px;
+        max-height: 580px;
+        overflow-y: auto;
+        padding: 28px 32px;
+        background: linear-gradient(180deg, #fafdfb, #f4f9f6);
+        scroll-behavior: smooth;
+    }
+
+    .ai-empty {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        min-height: 240px;
+        text-align: center;
+    }
+
+    .ai-empty-icon {
+        display: grid;
+        place-items: center;
+        width: 64px;
+        height: 64px;
+        border-radius: 20px;
+        background: var(--ai-primary-soft);
+        font-size: 30px;
+    }
+
+    .ai-message {
+        display: flex;
+        gap: 12px;
+        max-width: 88%;
+        margin-bottom: 22px;
+        animation: aiFade .25s ease;
+    }
+
+    .ai-avatar {
+        flex: none;
+        display: grid;
+        place-items: center;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: var(--ai-primary);
+        color: #fff;
+        font-size: 13px;
+        font-weight: 700;
+    }
+
+    .ai-body {
+        min-width: 0;
+    }
+
+        .ai-body strong {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 12px;
+            letter-spacing: .3px;
+            color: var(--ai-muted);
+        }
+
+    .ai-bubble {
+        padding: 14px 18px;
+        border: 1px solid var(--ai-line);
+        border-radius: 4px 18px 18px 18px;
+        background: #fff;
+        box-shadow: 0 2px 8px rgba(15, 80, 55, .04);
+        line-height: 1.8;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+    }
+
+    .ai-user {
+        flex-direction: row-reverse;
+        margin-left: auto;
+    }
+
+        .ai-user .ai-avatar {
+            background: #2f5d4c;
+        }
+
+        .ai-user .ai-body strong {
+            text-align: right;
+        }
+
+        .ai-user .ai-bubble {
+            border-color: #c9eadb;
+            border-radius: 18px 4px 18px 18px;
+            background: var(--ai-primary-soft);
+        }
+
+    .ai-typing {
+        display: inline-flex;
+        gap: 5px;
+        padding: 4px 0;
+    }
+
+        .ai-typing span {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--ai-primary);
+            opacity: .35;
+            animation: aiDot 1.2s infinite;
+        }
+
+            .ai-typing span:nth-child(2) {
+                animation-delay: .2s;
+            }
+
+            .ai-typing span:nth-child(3) {
+                animation-delay: .4s;
+            }
+
+    @@keyframes aiDot {
+        0%, 80%, 100% {
+            opacity: .35;
+            transform: translateY(0);
+        }
+
+        40% {
+            opacity: 1;
+            transform: translateY(-4px);
+        }
+    }
+
+    @@keyframes aiFade {
+        from {
+            opacity: 0;
+            transform: translateY(8px);
+        }
+
+        to {
+            opacity: 1;
+            transform: none;
+        }
+    }
+
+    /* ---------- Compose ---------- */
+    .ai-compose {
+        padding: 20px 32px 24px;
+        border-top: 1px solid var(--ai-line);
+        background: #fff;
+    }
+
+        .ai-compose > label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+    .ai-answer {
+        box-sizing: border-box;
+        width: 100%;
+        min-height: 120px;
+        padding: 14px 16px;
+        line-height: 1.7;
+        resize: vertical;
+    }
+
+        .ai-answer:disabled {
+            background: var(--ai-bg);
+        }
+
+    .ai-bottom {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 14px;
+    }
+
+    .ai-meta {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .ai-counter {
+        font-size: 12px;
+        color: var(--ai-muted);
+    }
+
+        .ai-counter.warn {
+            color: var(--ai-danger);
+            font-weight: 600;
+        }
+
+    .ai-hint {
+        font-size: 12px;
+        color: var(--ai-muted);
+    }
+
+    .ai-error {
+        margin: 16px 32px 0;
+        padding: 12px 16px;
+        border: 1px solid #f2c6cf;
+        border-left: 4px solid var(--ai-danger);
+        border-radius: 10px;
+        background: #fdf0f3;
+        color: var(--ai-danger);
+        line-height: 1.7;
+    }
+
+    /* ---------- Finished ---------- */
+    .ai-finished {
+        text-align: center;
+        padding: 28px 32px 32px;
+    }
+
+        .ai-finished .ai-done-icon {
+            display: inline-grid;
+            place-items: center;
+            width: 56px;
+            height: 56px;
+            margin-bottom: 10px;
+            border-radius: 50%;
+            background: var(--ai-primary-soft);
+            font-size: 26px;
+        }
+
+        .ai-finished p {
+            margin: 0 0 16px;
+            font-weight: 600;
+        }
+
+    .ai-link {
+        display: inline-block;
+        padding: 12px 24px;
+        border-radius: 12px;
+        background: var(--ai-primary);
+        color: #fff;
+        font-weight: 700;
+        text-decoration: none;
+        box-shadow: 0 6px 16px rgba(0, 155, 114, .28);
+    }
+
+        .ai-link:hover {
+            background: var(--ai-primary-dark);
+            color: #fff;
+        }
+
+    .ai-page [hidden] {
+        display: none !important;
+    }
+
+    @@media (max-width: 640px) {
+        .ai-header, .ai-notes, .ai-setup, .ai-chat, .ai-compose, .ai-finished {
+            padding-left: 18px;
+            padding-right: 18px;
+        }
+
+        .ai-error {
+            margin-left: 18px;
+            margin-right: 18px;
+        }
+
+        .ai-notes {
+            grid-template-columns: 1fr;
+        }
+
+        .ai-header h1 {
+            font-size: 23px;
+        }
+
+        .ai-message {
+            max-width: 100%;
+        }
+
+        .ai-select, .ai-setup .ai-button {
+            width: 100%;
+        }
+
+        .ai-bottom .ai-button {
+            width: 100%;
+        }
+    }
+</style>
+
+<div class="ai-page">
+    <div class="ai-card">
+        <div class="ai-header">
+            <span class="ai-badge">✨ AI Mock Interview</span>
+            <h1>Luyện phỏng vấn với AI</h1>
+
+            <div class="ai-job">
+                <span class="ai-chip">💼 @Model.Title</span>
+                @if (!string.IsNullOrWhiteSpace(Model.Company?.CompanyName))
+                {
+                    <span class="ai-chip ai-chip-muted">🏢 @Model.Company.CompanyName</span>
+                }
+            </div>
+        </div>
+
+        <div class="ai-notes">
+            <div class="ai-note-item">
+                <span class="ai-note-icon">📝</span>
+                <span>
+                    Buổi luyện tập gồm <b>5 câu hỏi</b>. AI góp ý để bạn ôn tập,
+                    không phải đánh giá tuyển dụng của doanh nghiệp.
+                </span>
+            </div>
+            <div class="ai-note-item">
+                <span class="ai-note-icon">🔒</span>
+                <span>
+                    Khi bắt đầu, mô tả công việc và câu trả lời của bạn được gửi
+                    đến OpenAI để xử lý. Không nhập thông tin bí mật.
+                </span>
+            </div>
+        </div>
+
+        <div class="ai-setup">
+            <label for="aiLevel">Mức kinh nghiệm</label>
+
+            <select id="aiLevel" class="ai-select">
+                <option value="intern">Thực tập sinh</option>
+                <option value="graduate" selected>Mới tốt nghiệp</option>
+                <option value="experienced">Có kinh nghiệm</option>
+            </select>
+
+            <button id="aiStart" type="button" class="ai-button">
+                Bắt đầu luyện tập
+            </button>
+        </div>
+
+        <div id="aiChat" class="ai-chat" aria-label="Nội dung luyện phỏng vấn">
+            <div id="aiWelcome" class="ai-empty">
+                <div class="ai-empty-icon">🎤</div>
+                <strong>Sẵn sàng chưa?</strong>
+                <p class="ai-note" style="margin:0">
+                    Chọn mức kinh nghiệm rồi bấm “Bắt đầu luyện tập”.
+                </p>
+            </div>
+        </div>
+
+        <div id="aiError" class="ai-error" role="alert" hidden></div>
+
+        <form id="aiForm" class="ai-compose" hidden>
+            @Html.AntiForgeryToken()
+
+            <label for="aiAnswer">Câu trả lời của bạn</label>
+            <textarea id="aiAnswer"
+                      class="ai-answer"
+                      maxlength="2000"
+                      required
+                      placeholder="Nhập câu trả lời, tối đa 2.000 ký tự..."></textarea>
+
+            <div class="ai-bottom">
+                <div class="ai-meta">
+                    <span id="aiStatus" class="ai-note" role="status"
+                          aria-live="polite"></span>
+                    <span class="ai-counter" id="aiCounter">0 / 2000</span>
+                    <span class="ai-hint">Nhấn Ctrl + Enter để gửi nhanh</span>
+                </div>
+
+                <button id="aiSend" type="submit" class="ai-button">
+                    Gửi câu trả lời ➤
+                </button>
+            </div>
+        </form>
+
+        <div id="aiFinished" class="ai-finished" hidden>
+            <div class="ai-done-icon">🎉</div>
+            <p>Đã hoàn thành buổi luyện phỏng vấn.</p>
+            <a class="ai-link" href="@Url.Action("Index", "AiInterview", new { area = "", jobPostId = Model.JobPostId })">
+                Luyện tập lại
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+    (() => {
+        const endpoint =
+            @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+                Url.Action("Chat", "AiInterview", new { area = "" })));
+
+        const jobPostId = @Model.JobPostId;
+        const chat = document.getElementById("aiChat");
+        const start = document.getElementById("aiStart");
+        const level = document.getElementById("aiLevel");
+        const form = document.getElementById("aiForm");
+        const answer = document.getElementById("aiAnswer");
+        const send = document.getElementById("aiSend");
+        const error = document.getElementById("aiError");
+        const status = document.getElementById("aiStatus");
+        const finished = document.getElementById("aiFinished");
+        const counter = document.getElementById("aiCounter");
+
+        let history = [];
+        let busy = false;
+        let completed = false;
+        let typingEl = null;
+
+        function updateCounter() {
+            const len = answer.value.length;
+            counter.textContent = len + " / 2000";
+            counter.classList.toggle("warn", len >= 1800);
+        }
+
+        function addMessage(role, content) {
+            const isUser = role === "user";
+
+            const wrapper = document.createElement("div");
+            wrapper.className = "ai-message" + (isUser ? " ai-user" : "");
+
+            const avatar = document.createElement("div");
+            avatar.className = "ai-avatar";
+            avatar.textContent = isUser ? "Bạn" : "AI";
+
+            const body = document.createElement("div");
+            body.className = "ai-body";
+
+            const label = document.createElement("strong");
+            label.textContent = isUser ? "Bạn" : "AI phỏng vấn";
+
+            const bubble = document.createElement("div");
+            bubble.className = "ai-bubble";
+            bubble.textContent = content;
+
+            body.append(label, bubble);
+            wrapper.append(avatar, body);
+            chat.appendChild(wrapper);
+            chat.scrollTop = chat.scrollHeight;
+        }
+
+        function showTyping() {
+            hideTyping();
+            typingEl = document.createElement("div");
+            typingEl.className = "ai-message";
+            typingEl.innerHTML =
+                '<div class="ai-avatar">AI</div>' +
+                '<div class="ai-body"><div class="ai-bubble">' +
+                '<div class="ai-typing"><span></span><span></span><span></span></div>' +
+                '</div></div>';
+            chat.appendChild(typingEl);
+            chat.scrollTop = chat.scrollHeight;
+        }
+
+        function hideTyping() {
+            if (typingEl) {
+                typingEl.remove();
+                typingEl = null;
+            }
+        }
+
+        async function requestReply(userAnswer) {
+            if (busy || completed) return;
+
+            busy = true;
+            start.disabled = true;
+            send.disabled = true;
+            answer.disabled = true;
+            level.disabled = true;
+            error.hidden = true;
+            status.textContent = "AI đang chuẩn bị phản hồi...";
+            start.textContent = history.length === 0
+                ? "AI đang chuẩn bị câu hỏi..."
+                : "Đang luyện tập";
+
+            const nextHistory = userAnswer
+                ? [...history, { role: "user", content: userAnswer }]
+                : [...history];
+
+            document.getElementById("aiWelcome")?.remove();
+
+            if (userAnswer) {
+                addMessage("user", userAnswer);
+            }
+            showTyping();
+
+            try {
+                const token = form.querySelector(
+                    'input[name="__RequestVerificationToken"]').value;
+
+                const response = await fetch(endpoint, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "RequestVerificationToken": token
+                    },
+                    body: JSON.stringify({
+                        jobPostId,
+                        level: level.value,
+                        history: nextHistory
+                    })
+                });
+
+                if (response.redirected) {
+                    throw new Error(
+                        "Phiên đăng nhập có thể đã hết hạn. Hãy đăng nhập lại.");
+                }
+
+                const data = await response.json().catch(() => null);
+
+                if (!response.ok || !data?.reply) {
+                    throw new Error(
+                        data?.error || "Chưa nhận được phản hồi. Bạn thử lại nhé.");
+                }
+
+                hideTyping();
+
+                if (userAnswer) {
+                    answer.value = "";
+                    updateCounter();
+                }
+
+                addMessage("assistant", data.reply);
+
+                history = [
+                    ...nextHistory,
+                    { role: "assistant", content: data.reply }
+                ];
+
+                completed = data.finished === true;
+                form.hidden = completed;
+                finished.hidden = !completed;
+                start.hidden = true;
+                status.textContent = "Nhập câu trả lời để tiếp tục.";
+            } catch (ex) {
+                hideTyping();
+                error.textContent = ex.message;
+                error.hidden = false;
+
+                if (history.length === 0) {
+                    start.disabled = false;
+                    start.textContent = "Thử bắt đầu lại";
+                    level.disabled = false;
+                }
+            } finally {
+                busy = false;
+                send.disabled = false;
+                answer.disabled = false;
+
+                if (!form.hidden) answer.focus();
+            }
+        }
+
+        start.addEventListener("click", () => requestReply(null));
+
+        answer.addEventListener("input", updateCounter);
+
+        answer.addEventListener("keydown", event => {
+            if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
+                event.preventDefault();
+                form.requestSubmit();
+            }
+        });
+
+        form.addEventListener("submit", event => {
+            event.preventDefault();
+            const text = answer.value.trim();
+            if (text) requestReply(text);
+        });
+    })();
+</script>

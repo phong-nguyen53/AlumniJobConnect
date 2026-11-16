@@ -56,16 +56,14 @@
 
                         <select asp-for="JobPostId"
                                 class="apply-input"
-                                required>
-                            <option value="">Chọn vị trí muốn ứng tuyển</option>
-
-                            @foreach (var job in jobs)
-                            {
-                                <option value="@job.JobPostId">
-                                    @job.Title
-                                </option>
-                            }
-                        </select>
+                                asp-items="@(new Microsoft.AspNetCore.Mvc.Rendering.SelectList(
+                                            jobs,
+                                            "JobPostId",
+                                            "Title",
+                                            Model.JobPostId))"
+                            required>
+                        <option value="">Chọn vị trí muốn ứng tuyển</option>
+                    </select>
 
                         <span asp-validation-for="JobPostId"
                               class="apply-field-error"></span>
