@@ -303,7 +303,7 @@ public class MentorChatController : Controller
         }));
     }
 
-    // Gửi tin nhắn.
+    // Lưu tin nhắn và lời xác nhận tự động trong cùng một giao dịch.
     [HttpPost("/MentorChat/Send", Name = "SendMentorChatMessage")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Send(
@@ -318,25 +318,47 @@ public class MentorChatController : Controller
         content = content?.Trim();
 
         if (!ModelState.IsValid ||
+            conversationId <= 0 ||
             string.IsNullOrWhiteSpace(content) ||
             content.Length > 2000)
         {
             return BadRequest(new
             {
-                error = "Tin nhắn cần từ 1 đến 2.000 ký tự."
+                error = "Cuộc trò chuyện phải hợp lệ và tin nhắn cần từ 1 đến 2.000 ký tự."
             });
         }
 
-        // Kiểm tra quyền ngay trong câu lệnh lưu.
+        await using var transaction = await _context.Database
+            .BeginTransactionAsync();
+
+        // Tuần tự hóa các lần gửi trong cùng cuộc trò chuyện.
+        var accessibleConversation = await _context.Database
+            .SqlQuery<int>($"""
+                SELECT c.ConversationId AS [Value]
+                FROM dbo.MentorConversations AS c WITH (UPDLOCK, HOLDLOCK)
+                WHERE c.ConversationId = {conversationId}
+                  AND (
+                      c.StudentUserId = {userId.Value}
+                      OR c.MentorUserId = {userId.Value}
+                  )
+                """)
+            .SingleOrDefaultAsync();
+
+        if (accessibleConversation == 0)
+            return NotFound();
+
+        var nowUtc = DateTime.UtcNow;
+
         // Người gửi luôn lấy từ tài khoản đăng nhập.
         var inserted = await _context.Database
             .ExecuteSqlInterpolatedAsync($"""
                 INSERT INTO dbo.MentorMessages
-                    (ConversationId, SenderUserId, Content)
+                    (ConversationId, SenderUserId, Content, SentAtUtc)
                 SELECT
                     c.ConversationId,
                     {userId.Value},
-                    {content}
+                    {content},
+                    {nowUtc}
                 FROM dbo.MentorConversations AS c
                 INNER JOIN dbo.Users AS recipient
                     ON recipient.UserId =
@@ -361,8 +383,16 @@ public class MentorChatController : Controller
             });
         }
 
+        await SendAutomaticReplyAsync(
+            conversationId,
+            userId.Value,
+            nowUtc);
+
+        await transaction.CommitAsync();
+
         return Ok(new { success = true });
     }
+
     // Đếm tin do người khác gửi mà mình chưa đọc.
     [HttpGet("/MentorChat/Unread", Name = "MentorChatUnread")]
     public async Task<IActionResult> Unread()
@@ -614,5 +644,36 @@ public class MentorChatController : Controller
         }
     }
 
+    private async Task SendAutomaticReplyAsync(
+        int conversationId,
+        int senderUserId,
+        DateTime nowUtc)
+    {
+        const string automaticReply =
+            "[Thông báo tự động] Chúng tôi đã nhận được tin nhắn của bạn. "
+            + "Chúng tôi sẽ phản hồi ngay khi có thể. "
+            + "Cảm ơn bạn đã liên hệ và vui lòng chờ phản hồi!";
 
+        await _context.Database.ExecuteSqlInterpolatedAsync($"""
+            INSERT INTO dbo.MentorMessages
+            (
+                ConversationId,
+                SenderUserId,
+                Content,
+                SentAtUtc
+            )
+            SELECT
+                c.ConversationId,
+                c.MentorUserId,
+                {automaticReply},
+                {nowUtc}
+            FROM dbo.MentorConversations AS c
+            INNER JOIN dbo.Users AS recipient
+                ON recipient.UserId = c.MentorUserId
+            WHERE c.ConversationId = {conversationId}
+              AND c.StudentUserId = {senderUserId}
+              AND c.MentorUserId <> {senderUserId}
+              AND recipient.IsActive = 1;
+            """);
+    }
 }

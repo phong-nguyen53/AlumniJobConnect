@@ -31,8 +31,16 @@
     <!-- Template Stylesheet -->
     <link href="~/assets/css/style.css" rel="stylesheet">
 
-    <!-- Layout enhancements -->
+    <!-- Layout enhancements (không đụng tới header / menu) -->
     <style>
+        :root {
+            --aj-primary: #00b074;
+            --aj-primary-dark: #008f68;
+            --aj-ink: #14232a;
+            --aj-ink-deep: #0b161b;
+            --aj-shadow-brand: 0 10px 26px rgba(0, 143, 104, .38);
+        }
+
         html {
             scroll-behavior: smooth;
         }
@@ -42,10 +50,41 @@
             text-rendering: optimizeLegibility;
         }
 
-        /* Footer */
-        .site-footer {
-            background: linear-gradient(180deg, #14232a 0%, #0e1a20 100%);
+        :focus-visible {
+            outline: 3px solid rgba(0, 176, 116, .45);
+            outline-offset: 2px;
         }
+
+        /* ============ FOOTER ============ */
+        .site-footer {
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(180deg, var(--aj-ink) 0%, var(--aj-ink-deep) 100%);
+        }
+
+            .site-footer::before {
+                content: "";
+                position: absolute;
+                inset: 0 0 auto 0;
+                height: 4px;
+                background: linear-gradient(90deg, #00b074, #4cd9a6 50%, #00b074);
+            }
+
+            .site-footer::after {
+                content: "";
+                position: absolute;
+                top: -160px;
+                right: -140px;
+                width: 420px;
+                height: 420px;
+                pointer-events: none;
+                background: radial-gradient(circle, rgba(0, 176, 116, .22), transparent 70%);
+            }
+
+            .site-footer > .container {
+                position: relative;
+                z-index: 1;
+            }
 
             .site-footer h5 {
                 position: relative;
@@ -61,32 +100,34 @@
                     width: 36px;
                     height: 3px;
                     border-radius: 3px;
-                    background: #00b074;
+                    background: var(--aj-primary);
                 }
 
             .site-footer .footer-brand {
                 font-family: 'Inter', sans-serif;
-                font-size: 1.5rem;
+                font-size: 1.6rem;
                 font-weight: 800;
                 color: #fff;
                 text-decoration: none;
+                letter-spacing: -.3px;
             }
 
                 .site-footer .footer-brand span {
-                    color: #00b074;
+                    color: var(--aj-primary);
                 }
 
             .site-footer .btn.btn-link {
                 display: block;
                 padding: .3rem 0;
                 text-align: left;
+                text-decoration: none;
                 transition: color .2s ease, padding-left .2s ease;
             }
 
                 .site-footer .btn.btn-link::before {
                     content: "›";
                     margin-right: .5rem;
-                    color: #00b074;
+                    color: var(--aj-primary);
                 }
 
                 .site-footer .btn.btn-link:hover {
@@ -95,70 +136,127 @@
                     letter-spacing: 0;
                 }
 
-            .site-footer .contact-line i {
-                width: 22px;
-                color: #00b074;
+            .site-footer .contact-line {
+                display: flex;
+                align-items: flex-start;
+                gap: 12px;
             }
 
+                .site-footer .contact-line i {
+                    flex: 0 0 34px;
+                    display: grid;
+                    place-items: center;
+                    width: 34px;
+                    height: 34px;
+                    margin: 0 !important;
+                    font-size: .85rem;
+                    color: var(--aj-primary);
+                    background: rgba(0, 176, 116, .12);
+                    border-radius: 10px;
+                }
+
             .site-footer .btn-social {
+                display: inline-grid;
+                place-items: center;
+                width: 40px;
+                height: 40px;
+                margin-right: 8px;
+                padding: 0;
+                border-radius: 50%;
                 transition: transform .2s ease, background .2s ease, border-color .2s ease;
             }
 
                 .site-footer .btn-social:hover {
                     transform: translateY(-3px);
-                    background: #00b074;
-                    border-color: #00b074;
+                    background: var(--aj-primary);
+                    border-color: var(--aj-primary);
                 }
 
             .site-footer .newsletter-box .form-control {
-                height: 52px;
+                height: 54px;
                 border-radius: 50rem;
                 color: #fff;
-                border-color: rgba(255, 255, 255, .25);
+                background: rgba(255, 255, 255, .06) !important;
+                border-color: rgba(255, 255, 255, .22);
             }
 
+                .site-footer .newsletter-box .form-control::placeholder {
+                    color: rgba(255, 255, 255, .5);
+                }
+
                 .site-footer .newsletter-box .form-control:focus {
-                    border-color: #00b074;
-                    box-shadow: 0 0 0 .2rem rgba(0, 176, 116, .2);
+                    border-color: var(--aj-primary);
+                    box-shadow: 0 0 0 .2rem rgba(0, 176, 116, .22);
                 }
 
             .site-footer .newsletter-box .btn {
                 border-radius: 50rem;
+                padding-inline: 18px;
+                font-weight: 600;
             }
 
             .site-footer .copyright {
+                padding: 22px 0;
+                font-size: .9rem;
                 border-top: 1px solid rgba(255, 255, 255, .1);
             }
 
-        /* Back to top */
+                .site-footer .copyright a {
+                    color: #fff;
+                    text-decoration: none;
+                }
+
+            .site-footer .footer-menu a {
+                margin-left: 18px;
+                color: rgba(255, 255, 255, .6);
+                text-decoration: none;
+                transition: color .2s ease;
+            }
+
+                .site-footer .footer-menu a:hover {
+                    color: #fff;
+                }
+
+        /* ============ NÚT NỔI ============ */
         .back-to-top {
             border-radius: 50%;
-            box-shadow: 0 8px 20px rgba(0, 176, 116, .35);
+            box-shadow: var(--aj-shadow-brand);
         }
 
-        /* Nút tin nhắn tư vấn */
-        .mentor-inbox {
+        .mentor-inbox,
+        .ai-assistant-link {
             position: fixed;
-            bottom: 90px;
-            right: 24px;
-            z-index: 1050;
-            display: flex;
+            z-index: 1040;
+            display: inline-flex;
             align-items: center;
             gap: 10px;
-            padding: 14px 20px;
+            padding: 13px 22px;
             color: #fff;
+            font-size: 15px;
             font-weight: 600;
             text-decoration: none;
-            background: linear-gradient(135deg, #00b074, #008f68);
-            border-radius: 30px;
-            box-shadow: 0 10px 26px rgba(0, 143, 104, .4);
+            border-radius: 50rem;
             transition: transform .2s ease, box-shadow .2s ease;
         }
 
             .mentor-inbox:hover,
-            .mentor-inbox:focus-visible {
+            .mentor-inbox:focus-visible,
+            .ai-assistant-link:hover,
+            .ai-assistant-link:focus-visible {
                 color: #fff;
+                text-decoration: none;
                 transform: translateY(-3px);
+            }
+
+        .mentor-inbox {
+            right: 24px;
+            bottom: 90px;
+            background: linear-gradient(135deg, #00b074, #008f68);
+            box-shadow: var(--aj-shadow-brand);
+        }
+
+            .mentor-inbox:hover,
+            .mentor-inbox:focus-visible {
                 box-shadow: 0 14px 32px rgba(0, 143, 104, .5);
             }
 
@@ -170,11 +268,24 @@
                 color: #fff;
                 background: #dc3545;
                 border-radius: 20px;
+                animation: ajPulse 2s infinite;
             }
 
                 .mentor-inbox .mentor-badge[hidden] {
                     display: none;
                 }
+
+        .ai-assistant-link {
+            left: 24px;
+            bottom: 24px;
+            background: linear-gradient(135deg, #1f8a6b, #10533f);
+            box-shadow: 0 10px 26px rgba(23, 107, 83, .35);
+        }
+
+            .ai-assistant-link .ai-spark {
+                display: inline-block;
+                animation: ajSpin 6s linear infinite;
+            }
 
         .visually-hidden-live {
             position: fixed;
@@ -184,11 +295,43 @@
             clip-path: inset(50%);
         }
 
+        @@keyframes ajPulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(220, 53, 69, .55);
+            }
+
+            70% {
+                box-shadow: 0 0 0 9px rgba(220, 53, 69, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(220, 53, 69, 0);
+            }
+        }
+
+        @@keyframes ajSpin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
         @@media (max-width: 575.98px) {
             .mentor-inbox {
                 right: 14px;
                 bottom: 80px;
                 padding: 12px 16px;
+                font-size: 14px;
+            }
+
+            .ai-assistant-link {
+                left: 12px;
+                bottom: 16px;
+                padding: 12px 16px;
+                font-size: 14px;
+            }
+
+            .site-footer .footer-menu a {
+                margin: 0 9px;
             }
         }
 
@@ -198,9 +341,15 @@
             }
 
             .mentor-inbox,
+            .ai-assistant-link,
             .site-footer .btn-social,
             .site-footer .btn.btn-link {
                 transition: none;
+            }
+
+            .mentor-badge,
+            .ai-spark {
+                animation: none !important;
             }
         }
     </style>
@@ -217,7 +366,7 @@
             </div>
         </div>
         <!-- Spinner End -->
-        <!-- Navbar Start -->
+        <!-- Navbar Start (giữ nguyên) -->
         <header class="ac-header">
             <div class="ac-header-inner">
 
@@ -273,14 +422,14 @@
                     </div>
                     <div class="col-lg-3 col-md-6">
                         <h5 class="text-white mb-4">Liên hệ</h5>
-                        <p class="mb-2 contact-line"><i class="fa fa-map-marker-alt me-2"></i>123 Đường Mẫu, Thành phố, Việt Nam</p>
-                        <p class="mb-2 contact-line"><i class="fa fa-phone-alt me-2"></i>+84 123 456 789</p>
-                        <p class="mb-2 contact-line"><i class="fa fa-envelope me-2"></i>info@example.com</p>
+                        <p class="mb-3 contact-line"><i class="fa fa-map-marker-alt"></i><span>123 Đường Mẫu, Thành phố, Việt Nam</span></p>
+                        <p class="mb-3 contact-line"><i class="fa fa-phone-alt"></i><span>+84 123 456 789</span></p>
+                        <p class="mb-2 contact-line"><i class="fa fa-envelope"></i><span>info@example.com</span></p>
                     </div>
                     <div class="col-lg-3 col-md-6">
                         <h5 class="text-white mb-4">Nhận tin mới</h5>
                         <p>Đăng ký để nhận thông tin việc làm và sự kiện mới nhất.</p>
-                        <div class="newsletter-box position-relative mx-auto" style="max-width: 400px;">
+                        <div class="newsletter-box position-relative" style="max-width: 400px;">
                             <input class="form-control bg-transparent w-100 py-3 ps-4 pe-5" type="email" placeholder="Email của bạn" aria-label="Email của bạn">
                             <button type="button" class="btn btn-primary py-2 position-absolute top-0 end-0 mt-2 me-2">Đăng ký</button>
                         </div>
@@ -325,6 +474,16 @@
     <!-- Template Javascript -->
     <script src="~/assets/js/main.js"></script>
     @await RenderSectionAsync("Scripts", required: false)
+
+    @if (User.Identity?.IsAuthenticated == true)
+    {
+        <a href="@Url.Action("Index", "AiChat", new { area = "" })"
+           class="ai-assistant-link"
+           aria-label="Mở trợ lý AI">
+            <span class="ai-spark" aria-hidden="true">✦</span>
+            Trợ lý AI
+        </a>
+    }
 
     @if (User.Identity?.IsAuthenticated == true &&
         (User.IsInRole("Alumni") || User.IsInRole("Employer")))
@@ -406,8 +565,6 @@
             })();
         </script>
     }
-
-
 </body>
 
 </html>
