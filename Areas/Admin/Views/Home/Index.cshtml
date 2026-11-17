@@ -100,7 +100,6 @@
 
 <div class="container-fluid page-body-wrapper">
 
-    @* ===== Thanh điều hướng bên ===== *@
     <nav class="sidebar sidebar-offcanvas" id="sidebar">
         <ul class="nav">
             <li class="nav-item nav-category">Tổng quan</li>
@@ -143,7 +142,6 @@
                     </span>
                 </a>
             </li>
-            <!-- Hồ sơ người tư vấn -->
             <li class="nav-item">
                 <a class="nav-link"
                    href="@Url.Action("Index", "MentorProfiles", new { area = "Admin" })">
@@ -152,8 +150,14 @@
                     <span class="menu-title">Hồ sơ tư vấn</span>
                 </a>
             </li>
-
-            <!-- Tin nhắn tư vấn -->
+            <li class="nav-item">
+                <a class="nav-link"
+                   href="@Url.Action("Index", "JobCategories", new { area = "Admin" })">
+                    <i class="mdi mdi-briefcase menu-icon"
+                       aria-hidden="true"></i>
+                    <span class="menu-title">Quản lý ngành nghề</span>
+                </a>
+            </li>
             <li class="nav-item">
                 <a class="nav-link"
                    href="@Url.Action("Index", "MentorMessages", new { area = "Admin" })">
@@ -183,7 +187,6 @@
     <div class="main-panel">
         <div class="content-wrapper admin-dash">
 
-            @* ===== Banner chào ===== *@
             <div class="hero p-4 p-md-5 mb-4 shadow-sm">
                 <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
                     <div>
@@ -197,7 +200,7 @@
                 </div>
             </div>
 
-            @* ===== Thẻ thống kê ===== *@
+        
             <div class="row g-3 mb-4">
                 @foreach (var stat in stats)
                 {
@@ -219,7 +222,6 @@
 
             <div class="row g-3">
 
-                @* ===== Tình trạng tin tuyển dụng ===== *@
                 <div class="col-lg-7">
                     <div class="card panel-card border-0 shadow-sm h-100">
                         <div class="card-body p-4">
@@ -270,7 +272,6 @@
                     </div>
                 </div>
 
-                @* ===== Lối tắt ===== *@
                 <div class="col-lg-5">
                     <div class="card panel-card border-0 shadow-sm h-100">
                         <div class="card-body p-4">

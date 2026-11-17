@@ -346,4 +346,80 @@ public class UsersController : Controller
 
         return RedirectToRoute("AdminUsers");
     }
+    [HttpPost("/Admin/Users/{id:int}/Delete", Name = "AdminDeleteUser")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Delete([FromRoute] int id)
+    {
+        var claim = User.FindFirst(
+            System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+        if (!int.TryParse(claim, out var currentUserId))
+        {
+            return Forbid();
+        }
+
+        var canDelete = await _context.Users.AnyAsync(user =>
+            user.UserId == currentUserId &&
+            user.IsActive &&
+            user.UserRoles.Any(link =>
+                link.Role.RoleName == "Admin"));
+
+        if (!canDelete)
+        {
+            return Forbid();
+        }
+
+        if (id == currentUserId)
+        {
+            TempData["UserError"] =
+                "Bạn không thể xóa tài khoản đang đăng nhập.";
+
+            return RedirectToRoute("AdminUsers");
+        }
+
+        await using var transaction =
+            await _context.Database.BeginTransactionAsync(
+                System.Data.IsolationLevel.Serializable);
+
+        var target = await _context.Users
+            .Include(user => user.UserRoles)
+            .ThenInclude(link => link.Role)
+            .SingleOrDefaultAsync(user => user.UserId == id);
+
+        if (target == null)
+        {
+            TempData["UserError"] = "Tài khoản không còn tồn tại.";
+            return RedirectToRoute("AdminUsers");
+        }
+
+        if (target.UserRoles.Any(link => link.Role.RoleName == "Admin"))
+        {
+            TempData["UserError"] =
+                "Không được xóa tài khoản có quyền quản trị.";
+
+            return RedirectToRoute("AdminUsers");
+        }
+
+        try
+        {
+            // Xóa liên kết vai trò trước khi xóa tài khoản.
+            _context.RemoveRange(target.UserRoles);
+            _context.Users.Remove(target);
+
+            await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
+
+            TempData["UserSuccess"] = "Đã xóa tài khoản.";
+        }
+        catch (DbUpdateException)
+        {
+            await transaction.RollbackAsync();
+
+            TempData["UserError"] =
+                "Không xóa được tài khoản. Tài khoản có thể đang "
+                + "liên kết với hồ sơ, doanh nghiệp hoặc dữ liệu khác.";
+        }
+
+        return RedirectToRoute("AdminUsers");
+    }
 }
