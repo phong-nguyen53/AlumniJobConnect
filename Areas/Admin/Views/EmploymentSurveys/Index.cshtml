@@ -1,0 +1,122 @@
+@model AlumniJobConnect.Features.EmploymentSurveys.SurveyListPage
+@using System.Linq
+@using AlumniJobConnect.Features.EmploymentSurveys
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+
+@{
+    ViewData["Title"] = "Khảo sát việc làm";
+    Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
+}
+
+<link rel="stylesheet"
+      href="~/admin/assets/css/employment-surveys.css"
+      asp-append-version="true" />
+
+<div class="es-page">
+    <div class="es-heading">
+        <div>
+            <span class="es-eyebrow">QUẢN LÝ CỰU SINH VIÊN</span>
+
+            <h1>Khảo sát tình hình việc làm</h1>
+
+            <p>
+                Theo dõi phản hồi và nhu cầu hỗ trợ
+                của cựu sinh viên theo từng đợt.
+            </p>
+        </div>
+
+        <a class="es-button"
+           href="@Url.Action("Create", "EmploymentSurveys",
+                                   new { area = "Admin" })">
+            ＋ Tạo đợt khảo sát
+        </a>
+    </div>
+
+    <div class="es-panel es-table-wrap">
+        <table class="es-table">
+            <thead>
+                <tr>
+                    <th>Đợt khảo sát</th>
+                    <th>Thời gian</th>
+                    <th>Phản hồi</th>
+                    <th>Trạng thái</th>
+                    <th>Thao tác</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                @foreach (var s in Model.Items)
+                {
+                    <tr>
+                        <td>
+                            <strong>@s.Title</strong>
+                            <small>@s.TargetCourseName</small>
+                        </td>
+
+                        <td>
+                            @s.StartsOn.ToString("dd/MM/yyyy")
+                            <br />
+                            → @s.EndsOn.ToString("dd/MM/yyyy")
+                        </td>
+
+                        <td>
+                            <strong>
+                                @s.ResponseCount / @s.RecipientCount
+                            </strong>
+
+                            <small>
+                                @SurveyLabels.Percent(
+                                s.ResponseCount,
+                                                        s.RecipientCount)% đã trả lời
+                        </small>
+                    </td>
+
+                    <td>
+                        <span class="es-badge @(s.IsOpen ? "es-green" : "")">
+                            @s.State
+                        </span>
+                    </td>
+
+                    <td>
+                        <a class="es-text-link"
+                           href="@Url.Action("Results", "EmploymentSurveys",
+                                                                       new { area = "Admin", id = s.SurveyId })">
+                            Xem kết quả →
+                        </a>
+                    </td>
+                </tr>
+                                }
+
+                @if (!Model.Items.Any())
+                {
+                    <tr>
+                        <td colspan="5" class="es-empty">
+                            Chưa có đợt khảo sát nào.
+                            Bấm “Tạo đợt khảo sát” để bắt đầu.
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <nav class="es-pagination" aria-label="Phân trang">
+        @if (Model.Page > 1)
+        {
+            <a href="@Url.Action("Index", "EmploymentSurveys",
+                                        new { area = "Admin", page = Model.Page - 1 })">
+            ← Trang trước
+        </a>
+                }
+
+        <span>Trang @Model.Page</span>
+
+        @if (Model.HasMore)
+        {
+            <a href="@Url.Action("Index", "EmploymentSurveys",
+                                        new { area = "Admin", page = Model.Page + 1 })">
+            Trang sau →
+        </a>
+                }
+    </nav>
+</div>

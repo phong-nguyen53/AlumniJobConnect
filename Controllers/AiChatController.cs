@@ -12,7 +12,7 @@ namespace AlumniJobConnect.Controllers;
 
 [Authorize]
 [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
-public class AiChatController : Controller
+public partial class AiChatController : Controller
 {
     private readonly AlumniJobConnectContext _context;
     private readonly IConfiguration _config;
@@ -22,8 +22,10 @@ public class AiChatController : Controller
         PartitionedRateLimiter.Create<int, int>(id =>
             RateLimitPartition.GetFixedWindowLimiter(id, _ => new FixedWindowRateLimiterOptions
             {
-                PermitLimit = 10, Window = TimeSpan.FromMinutes(1),
-                AutoReplenishment = true, QueueLimit = 0
+                PermitLimit = 10,
+                Window = TimeSpan.FromMinutes(1),
+                AutoReplenishment = true,
+                QueueLimit = 0
             }));
     private static readonly SemaphoreSlim Capacity = new(3);
 
@@ -43,7 +45,7 @@ public class AiChatController : Controller
     public sealed class ChatInput
     {
         public string Message { get; set; } = "";
-        public List<Turn> History { get; set; } = new();
+        public Guid? ConversationId { get; set; }
     }
     public sealed record Source(string Label, string Url);
 
@@ -86,11 +88,14 @@ public class AiChatController : Controller
 
     private static object Tool() => new
     {
-        type = "function", name = "search_database", strict = true,
+        type = "function",
+        name = "search_database",
+        strict = true,
         description = "Tra công ty và tin còn tuyển trong SQL. Tách tên công ty, kỹ năng/vị trí, địa điểm khỏi câu hỏi. Chuỗi rỗng nếu không lọc. Dùng mã đã biết khi hỏi tiếp.",
         parameters = new
         {
-            type = "object", additionalProperties = false,
+            type = "object",
+            additionalProperties = false,
             properties = new
             {
                 companyName = new { type = "string" },
@@ -178,18 +183,35 @@ public class AiChatController : Controller
             .ThenByDescending(j => j.JobPostId).Take(8)
             .Select(j => new
             {
-                j.JobPostId, j.CompanyId, j.Company.CompanyName, j.Title,
-                j.JobDescription, j.Requirements, j.Benefits, j.WorkLocation,
-                j.EmploymentType, j.SalaryMin, j.SalaryMax, j.CurrencyCode,
-                j.Quantity, j.Deadline
+                j.JobPostId,
+                j.CompanyId,
+                j.Company.CompanyName,
+                j.Title,
+                j.JobDescription,
+                j.Requirements,
+                j.Benefits,
+                j.WorkLocation,
+                j.EmploymentType,
+                j.SalaryMin,
+                j.SalaryMax,
+                j.CurrencyCode,
+                j.Quantity,
+                j.Deadline
             }).ToListAsync(ct);
 
         if (keyword.Length > 0 || location.Length > 0 || salary.HasValue)
             companies = companies.Where(c => jobs.Any(j => j.CompanyId == c.CompanyId));
         var companiesTotal = await companies.CountAsync(ct);
         var foundCompanies = await companies.OrderBy(c => c.CompanyName).Take(8)
-            .Select(c => new { c.CompanyId, c.CompanyName, c.Industry, c.Address,
-                c.Website, c.Description, c.VerificationStatus }).ToListAsync(ct);
+            .Select(c => new {
+                c.CompanyId,
+                c.CompanyName,
+                c.Industry,
+                c.Address,
+                c.Website,
+                c.Description,
+                c.VerificationStatus
+            }).ToListAsync(ct);
 
         foreach (var c in foundCompanies)
             sources.Add(new(c.CompanyName, Url.Action("Details", "CompanyProfile",
@@ -200,17 +222,34 @@ public class AiChatController : Controller
 
         return new
         {
-            companiesTotal, jobsTotal,
+            companiesTotal,
+            jobsTotal,
             companies = foundCompanies.Select(c => new
-            { c.CompanyId, c.CompanyName, c.Industry, c.Address, c.Website,
-                Description = Short(c.Description), c.VerificationStatus }),
+            {
+                c.CompanyId,
+                c.CompanyName,
+                c.Industry,
+                c.Address,
+                c.Website,
+                Description = Short(c.Description),
+                c.VerificationStatus
+            }),
             jobs = foundJobs.Select(j => new
             {
-                j.JobPostId, j.CompanyId, j.CompanyName, j.Title,
+                j.JobPostId,
+                j.CompanyId,
+                j.CompanyName,
+                j.Title,
                 Description = Short(j.JobDescription),
-                Requirements = Short(j.Requirements), Benefits = Short(j.Benefits),
-                j.WorkLocation, j.EmploymentType, j.SalaryMin, j.SalaryMax,
-                j.CurrencyCode, j.Quantity, j.Deadline
+                Requirements = Short(j.Requirements),
+                Benefits = Short(j.Benefits),
+                j.WorkLocation,
+                j.EmploymentType,
+                j.SalaryMin,
+                j.SalaryMax,
+                j.CurrencyCode,
+                j.Quantity,
+                j.Deadline
             })
         };
     }
@@ -225,14 +264,26 @@ public class AiChatController : Controller
                 u.UserId == userId && u.IsActive, ct)) return Forbid();
         if (!ModelState.IsValid || input == null ||
             string.IsNullOrWhiteSpace(input.Message) || input.Message.Length > 1500 ||
-            input.History == null || input.History.Count > 12 || input.History.Count % 2 != 0)
-            return BadRequest(new { error = "Câu hỏi tối đa 1.500 ký tự; lịch sử không hợp lệ." });
-        for (var i = 0; i < input.History.Count; i++)
+            input.ConversationId == Guid.Empty)
+            return BadRequest(new { error = "Câu hỏi tối đa 1.500 ký tự." });
+
+        SavedConversation? conversation = null;
+        var turns = new List<Turn>();
+        if (input.ConversationId.HasValue)
         {
-            var t = input.History[i];
-            if (t == null || t.Role != (i % 2 == 0 ? "user" : "assistant") ||
-                string.IsNullOrWhiteSpace(t.Content) || t.Content.Length > 5000)
-                return BadRequest(new { error = "Lịch sử trò chuyện không hợp lệ." });
+            conversation = await FindConversationAsync(input.ConversationId.Value, userId, ct);
+            if (conversation == null) return NotFound(new { error = "Không tìm thấy cuộc trò chuyện." });
+            var recent = await _context.Database.SqlQuery<SavedMessage>($"""
+                SELECT TOP (12) MessageId, Role, Content, SourcesJson, CreatedAtUtc
+                FROM dbo.AiChatMessages WHERE ConversationId = {conversation.ConversationId}
+                ORDER BY MessageId DESC
+                """).ToListAsync(ct);
+            recent.Reverse();
+            turns = recent.Select(m => new Turn
+            {
+                Role = m.Role,
+                Content = m.Content.Length > 5000 ? m.Content[..5000] : m.Content
+            }).ToList();
         }
         var key = _config["OpenAI:ApiKey"];
         if (string.IsNullOrWhiteSpace(key))
@@ -248,7 +299,7 @@ public class AiChatController : Controller
             timeout.CancelAfter(TimeSpan.FromSeconds(110));
             var token = timeout.Token;
             var messages = new List<object>();
-            messages.AddRange(input.History.Select(t =>
+            messages.AddRange(turns.Select(t =>
                 (object)new { role = t.Role, content = t.Content }));
             messages.Add(new { role = "user", content = input.Message.Trim() });
             var sources = new List<Source>();
@@ -262,10 +313,13 @@ public class AiChatController : Controller
                 request.Content = JsonContent.Create(new
                 {
                     model = _config["OpenAI:Model"] ?? "gpt-4.1-mini",
-                    instructions = Instructions, input = messages,
-                    tools = new[] { Tool() }, parallel_tool_calls = false,
+                    instructions = Instructions,
+                    input = messages,
+                    tools = new[] { Tool() },
+                    parallel_tool_calls = false,
                     tool_choice = round == 0 ? "required" : round == 2 ? "none" : "auto",
-                    max_output_tokens = 1300, store = false
+                    max_output_tokens = 1300,
+                    store = false
                 });
                 using var response = await Client.SendAsync(request, token);
                 if (!response.IsSuccessStatusCode)
@@ -295,9 +349,12 @@ public class AiChatController : Controller
                             throw new JsonException();
                         using var args = JsonDocument.Parse(call.GetProperty("arguments").GetString()!);
                         var result = await SearchAsync(args.RootElement, sources, token);
-                        messages.Add(new { type = "function_call_output",
+                        messages.Add(new
+                        {
+                            type = "function_call_output",
                             call_id = call.GetProperty("call_id").GetString(),
-                            output = JsonSerializer.Serialize(result) });
+                            output = JsonSerializer.Serialize(result)
+                        });
                     }
                     continue;
                 }
@@ -308,12 +365,23 @@ public class AiChatController : Controller
                             text.Add(part.GetProperty("text").GetString() ?? "");
                 var reply = string.Join("\n", text).Trim();
                 if (reply.Length == 0) throw new JsonException();
-                return Json(new { reply, sources = sources.DistinctBy(s => s.Url).Take(16) });
+                var references = sources.DistinctBy(s => s.Url).Take(16).ToList();
+                var saved = await SaveExchangeAsync(userId, conversation,
+                    input.Message.Trim(), reply, references, token);
+                return Json(new
+                {
+                    reply,
+                    sources = references,
+                    conversationId = saved.ConversationId,
+                    title = saved.Title
+                });
             }
             return StatusCode(502, new { error = "Chưa tổng hợp được dữ liệu, hãy hỏi cụ thể hơn." });
         }
         catch (OperationCanceledException) when (!ct.IsCancellationRequested)
         { return StatusCode(504, new { error = "AI phản hồi chậm. Bạn vui lòng thử lại." }); }
+        catch (HistoryConflictException)
+        { return StatusCode(409, new { error = "Cuộc trò chuyện đã thay đổi hoặc bị xóa ở cửa sổ khác. Hãy mở lại lịch sử trước khi gửi." }); }
         catch (HttpRequestException)
         { return StatusCode(502, new { error = "Không kết nối được OpenAI." }); }
         catch (JsonException)

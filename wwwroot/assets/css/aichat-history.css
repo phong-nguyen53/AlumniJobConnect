@@ -1,0 +1,65 @@
+/* Mọi kiểu giao diện được giới hạn trong .aichat-page để không ảnh hưởng navbar. */
+.aichat-page{--ai-green:#008e69;--ai-ink:#193a30;--ai-muted:#708279;--ai-line:#dfebe5;box-sizing:border-box;width:min(1370px,100%);margin:36px auto 52px;padding:0 24px;color:var(--ai-ink)}
+.aichat-page *{box-sizing:border-box}.aichat-page [hidden]{display:none!important}
+.aichat-page .aichat-intro{display:flex;align-items:center;justify-content:space-between;gap:20px;margin-bottom:26px}
+.aichat-page .aichat-eyebrow{font-size:11px;letter-spacing:1.5px;font-weight:700;color:var(--ai-green)}
+.aichat-page .aichat-intro h1{font-size:clamp(23px,2.3vw,32px);line-height:1.35;font-weight:750;margin:10px 0;color:var(--ai-ink)}
+.aichat-page .aichat-intro p{font-size:14px;color:var(--ai-muted);margin:0}
+.aichat-page .aichat-label{flex:none;color:#077755;background:#e8f7ef;padding:9px 16px;border:1px solid #d4ebde;border-radius:30px;font-size:13px}
+.aichat-page .aichat-workspace{display:grid;grid-template-columns:280px minmax(0,1fr);border:1px solid var(--ai-line);border-radius:22px;background:white;overflow:hidden;box-shadow:0 15px 60px #234d3610}
+.aichat-page button,.aichat-page textarea{font:inherit}.aichat-page button{cursor:pointer}.aichat-page button:disabled{opacity:.55;cursor:wait}
+.aichat-page button:focus-visible,.aichat-page a:focus-visible{outline:3px solid #86d8ba;outline-offset:2px}
+.aichat-page .aichat-sidebar{min-width:0;background:#f6f9f7;padding:22px 16px;display:flex;flex-direction:column;border-right:1px solid var(--ai-line)}
+.aichat-page .aichat-new{display:block;width:100%;padding:13px 10px;border:0;border-radius:11px;background:var(--ai-green);color:white;font-size:14px;font-weight:650}
+.aichat-page .aichat-new:hover{background:#007e5d}.aichat-page .aichat-history-heading{display:flex;align-items:center;justify-content:space-between;margin:26px 5px 4px}
+.aichat-page .aichat-history-heading h2{font-size:14px;font-weight:700;margin:0;color:var(--ai-ink)}
+.aichat-page .aichat-icon-button{border:0;background:transparent;color:#6b8175;font-size:21px;border-radius:7px;min-width:32px;min-height:32px}
+.aichat-page .aichat-sidebar-note{font-size:12px;margin:0 5px 16px;color:var(--ai-muted)}
+.aichat-page .aichat-history-list{max-height:460px;overflow:auto;scrollbar-width:thin;display:flex;flex-direction:column;gap:8px}
+.aichat-page .aichat-history-row{display:flex;align-items:center;min-width:0;border:1px solid transparent;border-radius:11px;padding-right:4px}
+.aichat-page .aichat-history-row:hover{background:#eaf2ed}.aichat-page .aichat-history-row.is-active{background:#e4f3eb;border-color:#bcdccc}
+.aichat-page .aichat-history-open{min-width:0;flex:1;text-align:left;padding:12px 10px;border:0;background:transparent;color:#345548;border-radius:10px}
+.aichat-page .aichat-history-open strong{display:block;font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.aichat-page .aichat-history-open small{display:block;font-size:11px;color:#7a8d83;margin-top:5px}
+.aichat-page .aichat-history-delete{flex:none;border:0;background:transparent;color:#85968b;font-size:16px;width:30px;height:34px;border-radius:7px}
+.aichat-page .aichat-history-delete:hover{background:#fbe9e9;color:#b8334a}
+.aichat-page .aichat-history-empty{color:var(--ai-muted);font-size:13px;line-height:1.8;text-align:center;padding:24px 5px}
+.aichat-page .aichat-more{border:1px solid var(--ai-line);background:white;color:#527262;border-radius:9px;padding:9px 14px;font-size:12px;margin-top:12px}
+.aichat-page .aichat-saved-note{display:flex;gap:10px;align-items:flex-start;margin-top:auto;padding:25px 5px 0;color:#83958a}
+.aichat-page .aichat-saved-note p{font-size:11px;line-height:1.7;margin:0}
+.aichat-page .aichat-main{min-width:0;display:flex;flex-direction:column}
+.aichat-page .aichat-chat-header{padding:21px 26px;border-bottom:1px solid var(--ai-line);display:flex;align-items:center;gap:13px;background:white}
+.aichat-page .aichat-assistant-icon{width:43px;height:43px;flex:none;display:grid;place-items:center;background:#e8f6ee;color:var(--ai-green);font-size:25px;border:1px solid #cce9d9;border-radius:13px}
+.aichat-page .aichat-header-copy{min-width:0}.aichat-page .aichat-chat-header h2{color:var(--ai-ink);font-size:17px;font-weight:700;margin:0 0 6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.aichat-page .aichat-chat-header p{font-size:12px;color:var(--ai-muted);margin:0;line-height:1.5}
+.aichat-page .aichat-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:#23ac7b;vertical-align:middle;margin-right:4px}
+.aichat-page .aichat-timeline{height:450px;overflow:auto;padding:26px;background:#fbfdfb;scrollbar-width:thin}
+.aichat-page .aichat-older{display:block;margin:0 auto 20px}
+.aichat-page .aichat-welcome{text-align:center;padding:25px 12px 20px;max-width:580px;margin:auto}
+.aichat-page .aichat-welcome-icon{display:grid;place-items:center;width:65px;height:65px;border-radius:22px;background:#e8f6ee;color:var(--ai-green);font-size:35px;margin:0 auto 18px}
+.aichat-page .aichat-welcome h3{font-size:23px;color:var(--ai-ink);font-weight:700;margin:0 0 13px}
+.aichat-page .aichat-welcome p{font-size:14px;color:#6a8073;line-height:1.8;margin:0}
+.aichat-page .aichat-capabilities{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-top:22px}
+.aichat-page .aichat-capabilities span{font-size:12px;background:white;border:1px solid var(--ai-line);padding:8px 12px;border-radius:8px;color:#527262}
+.aichat-page .aichat-message{display:flex;gap:10px;margin-bottom:23px;max-width:94%}.aichat-page .aichat-message-avatar{display:grid;place-items:center;width:30px;height:30px;flex:none;border-radius:10px;background:#e2f3e9;color:var(--ai-green);font-size:17px}
+.aichat-page .aichat-message-body{min-width:0}.aichat-page .aichat-message-label{font-size:11px;color:#829389;display:block;margin:0 0 6px 2px}
+.aichat-page .aichat-message-bubble{font-size:14px;line-height:1.8;white-space:pre-wrap;overflow-wrap:anywhere;border:1px solid var(--ai-line);border-radius:0 14px 14px 14px;background:white;padding:13px 17px;color:#294b3e}
+.aichat-page .aichat-message.is-user{margin-left:auto;flex-direction:row-reverse}.aichat-page .is-user .aichat-message-label{text-align:right}
+.aichat-page .is-user .aichat-message-avatar{background:#d9e8e0;color:#426c56;font-size:10px;font-weight:bold}
+.aichat-page .is-user .aichat-message-bubble{background:#008e69;border-color:#008e69;color:white;border-radius:14px 0 14px 14px}
+.aichat-page .aichat-sources{display:flex;flex-wrap:wrap;gap:7px;margin-top:9px}
+.aichat-page .aichat-sources a{font-size:11px;color:#087b56;border:1px solid #d0e9db;background:#f0f9f4;padding:5px 9px;border-radius:7px;text-decoration:none;overflow-wrap:anywhere}
+.aichat-page .aichat-suggestions{display:flex;flex-wrap:wrap;align-items:center;gap:7px;padding:14px 24px 4px;border-top:1px solid var(--ai-line)}
+.aichat-page .aichat-suggestions>span{font-size:11px;color:#8a9c90;margin-right:3px}.aichat-page .aichat-suggestions button{font-size:11px;border:1px solid var(--ai-line);border-radius:25px;padding:7px 10px;color:#547363;background:#fff}
+.aichat-page .aichat-suggestions button:hover{border-color:#88c7a7;background:#f2faf5}
+.aichat-page .aichat-form{padding:13px 24px 18px;margin:0}.aichat-page .aichat-compose{border:1px solid #d4e4da;border-radius:14px;background:white;overflow:hidden}
+.aichat-page .aichat-compose:focus-within{border-color:#3aac80;box-shadow:0 0 0 3px #0c9d6a12}
+.aichat-page .aichat-compose textarea{width:100%;resize:none;min-height:65px;max-height:150px;border:0;outline:0;padding:14px 16px 4px;font-size:14px;line-height:1.6;background:transparent;color:var(--ai-ink)}
+.aichat-page .aichat-compose textarea::placeholder{color:#8c9f93}.aichat-page .aichat-compose-bottom{display:flex;align-items:center;justify-content:space-between;padding:8px 10px 10px 16px}
+.aichat-page #aichat-count{font-size:11px;color:#95a59b}.aichat-page #aichat-send{border:0;border-radius:9px;background:var(--ai-green);color:white;padding:10px 15px;font-size:12px;font-weight:650}
+.aichat-page #aichat-send span{margin-left:10px}.aichat-page .aichat-helper{display:flex;justify-content:space-between;gap:10px;font-size:10px;color:#8a9e90;margin-top:9px}
+.aichat-page .aichat-disclosure{font-size:10px;line-height:1.7;color:#8b9b91;margin:12px 0 0}
+.aichat-page .aichat-error{margin:14px 24px 0;padding:12px;border:1px solid #efc8cf;background:#fff4f5;color:#a02f45;font-size:13px;border-radius:9px}
+.aichat-page .aichat-visually-hidden{position:absolute;width:1px;height:1px;padding:0;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+@media(max-width:950px){.aichat-page{padding:0 15px}.aichat-page .aichat-workspace{grid-template-columns:230px minmax(0,1fr)}.aichat-page .aichat-label{display:none}.aichat-page .aichat-timeline{padding:20px 15px}.aichat-page .aichat-form{padding:13px 16px 18px}.aichat-page .aichat-suggestions{padding:12px 16px 3px}}
+@media(max-width:680px){.aichat-page{margin-top:22px;padding:0 12px}.aichat-page .aichat-eyebrow{font-size:9px;letter-spacing:.8px}.aichat-page .aichat-workspace{grid-template-columns:minmax(0,1fr)}.aichat-page .aichat-sidebar{padding:15px;border-right:0;border-bottom:1px solid var(--ai-line)}.aichat-page .aichat-history-heading{margin-top:12px}.aichat-page .aichat-history-list{max-height:155px}.aichat-page .aichat-saved-note,.aichat-page .aichat-sidebar-note{display:none}.aichat-page .aichat-history-empty{padding:6px;margin:5px}.aichat-page .aichat-chat-header{padding:16px}.aichat-page .aichat-chat-header h2{font-size:15px}.aichat-page .aichat-timeline{height:400px}.aichat-page .aichat-message{max-width:100%;gap:7px}.aichat-page .aichat-message-bubble{padding:11px 13px}.aichat-page .aichat-helper>span:last-child{display:none}}

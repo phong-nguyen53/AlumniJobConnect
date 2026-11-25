@@ -7,7 +7,7 @@ using System.Security.Claims;
 
 namespace AlumniJobConnect.Controllers;
 
-[Authorize]
+[Authorize(Roles = "Employer,Admin")]
 public class CompanyProfileController : Controller
 {
     private readonly AlumniJobConnectContext _context;

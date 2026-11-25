@@ -1,19 +1,20 @@
-﻿@{
+﻿@using System
+@{
     Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
     ViewData["Title"] = "Tổng quan quản trị";
 
-    var totalUsers = (int)ViewBag.TotalUsers;
-    var totalCompanies = (int)ViewBag.TotalCompanies;
-    var totalJobPosts = (int)ViewBag.TotalJobPosts;
-    var pendingJobPosts = (int)ViewBag.PendingJobPosts;
-    var approvedOrOther = Math.Max(totalJobPosts - pendingJobPosts, 0);
+    var totalUsers = Convert.ToInt32(ViewBag.TotalUsers);
+    var totalCompanies = Convert.ToInt32(ViewBag.TotalCompanies);
+    var totalJobPosts = Convert.ToInt32(ViewBag.TotalJobPosts);
+    var pendingJobPosts = Convert.ToInt32(ViewBag.PendingJobPosts);
+    var nonPendingJobs = Math.Max(totalJobPosts - pendingJobPosts, 0);
     var pendingPercent = totalJobPosts == 0 ? 0 : (int)Math.Round(pendingJobPosts * 100.0 / totalJobPosts);
 
-    var jobPostsUrl = Url.RouteUrl("AdminJobPosts");
-    var pendingUrl = Url.RouteUrl("AdminJobPosts", new { status = "Pending" });
-    var usersUrl = Url.RouteUrl("AdminUsers");
-    var companiesUrl = Url.RouteUrl("AdminCompanies");
-    var createUserUrl = Url.RouteUrl("AdminCreateUser");
+    var jobPostsUrl = Url.RouteUrl("AdminJobPosts") ?? Url.Content("~/Admin/JobPosts");
+    var pendingUrl = Url.RouteUrl("AdminJobPosts", new { status = "Pending" }) ?? Url.Content("~/Admin/JobPosts?status=Pending");
+    var usersUrl = Url.RouteUrl("AdminUsers") ?? Url.Content("~/Admin/Users");
+    var companiesUrl = Url.RouteUrl("AdminCompanies") ?? Url.Content("~/Admin/Companies");
+    var createUserUrl = Url.RouteUrl("AdminCreateUser") ?? Url.Content("~/Admin/Users/Create");
 
     var stats = new[]
     {
@@ -98,233 +99,179 @@
         }
 </style>
 
-<div class="container-fluid page-body-wrapper">
+<style>
+    .admin-dash .hero h1, .admin-dash .hero p {
+        color: #fff
+    }
 
-    <nav class="sidebar sidebar-offcanvas" id="sidebar">
-        <ul class="nav">
-            <li class="nav-item nav-category">Tổng quan</li>
-            <li class="nav-item">
-                <a class="nav-link active" href="@Url.Content("~/Admin")">
-                    <i class="mdi mdi-view-dashboard-outline menu-icon" aria-hidden="true"></i>
-                    <span class="menu-title">Bảng điều khiển</span>
-                </a>
-            </li>
+    .admin-dash .hero .btn-outline-light {
+        color: #fff !important;
+        border-color: rgba(255,255,255,.8)
+    }
 
-            <li class="nav-item nav-category">Quản lý</li>
-            <li class="nav-item">
-                <a class="nav-link" href="@jobPostsUrl">
-                    <i class="mdi mdi-briefcase-outline menu-icon" aria-hidden="true"></i>
-                    <span class="menu-title">Tin tuyển dụng</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="@companiesUrl">
-                    <i class="mdi mdi-domain menu-icon" aria-hidden="true"></i>
-                    <span class="menu-title">Doanh nghiệp</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link"
-                   href="@Url.Action("Index", "Menus", new { area = "Admin" })">
-                    <i class="mdi mdi-menu menu-icon"
-                       aria-hidden="true"></i>
-                    <span class="menu-title">Quản lý menu</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link"
-                   href="@Url.Action("Index", "AlumniProfiles", new { area = "Admin" })">
-                    <i class="mdi mdi-account-multiple menu-icon"
-                       aria-hidden="true"></i>
+        .admin-dash .hero .btn-outline-light:hover {
+            background: #fff;
+            color: #2645b8 !important
+        }
 
-                    <span class="menu-title">
-                        Sinh viên / Cựu sinh viên
-                    </span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link"
-                   href="@Url.Action("Index", "MentorProfiles", new { area = "Admin" })">
-                    <i class="mdi mdi-account-multiple menu-icon"
-                       aria-hidden="true"></i>
-                    <span class="menu-title">Hồ sơ tư vấn</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link"
-                   href="@Url.Action("Index", "JobCategories", new { area = "Admin" })">
-                    <i class="mdi mdi-briefcase menu-icon"
-                       aria-hidden="true"></i>
-                    <span class="menu-title">Quản lý ngành nghề</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link"
-                   href="@Url.Action("Index", "MentorMessages", new { area = "Admin" })">
-                    <i class="mdi mdi-message-text menu-icon"
-                       aria-hidden="true"></i>
-                    <span class="menu-title">Tin nhắn tư vấn</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link"
-                   href="@Url.Action("Index", "Applications", new { area = "Admin" })">
-                    <i class="mdi mdi-file-document menu-icon"
-                       aria-hidden="true"></i>
+    .admin-dash .hero .btn-light {
+        color: #203b59 !important
+    }
 
-                    <span class="menu-title">Đơn ứng tuyển</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="@usersUrl">
-                    <i class="mdi mdi-account-multiple-outline menu-icon" aria-hidden="true"></i>
-                    <span class="menu-title">Tài khoản</span>
-                </a>
-            </li>
-        </ul>
-    </nav>
+    .admin-dash .stat-card .card-body {
+        min-height: 140px
+    }
 
-    <div class="main-panel">
-        <div class="content-wrapper admin-dash">
+    .admin-dash .quick-link span {
+        min-width: 0
+    }
 
-            <div class="hero p-4 p-md-5 mb-4 shadow-sm">
-                <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
-                    <div>
-                        <h1 class="h3 fw-bold mb-1">Tổng quan quản trị</h1>
-                        <p class="mb-0 opacity-75">Theo dõi nhanh tài khoản, doanh nghiệp và tin tuyển dụng của hệ thống.</p>
-                    </div>
-                    <div class="d-flex flex-wrap gap-2">
-                        <a href="@createUserUrl" class="btn btn-light fw-semibold">+ Thêm tài khoản</a>
-                        <a href="@pendingUrl" class="btn btn-outline-light fw-semibold">Duyệt tin (@pendingJobPosts)</a>
-                    </div>
-                </div>
+    .admin-dash .hero {
+        margin-top: 0
+    }
+
+    @@media(max-width:1199px) {
+        .admin-dash .hero {
+            padding: 24px !important
+        }
+
+        .admin-dash .stat-card .card-body {
+            padding: 18px !important
+        }
+    }
+</style>
+<div class="admin-dash">
+
+
+    <div class="hero p-4 p-md-5 mb-4 shadow-sm">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+            <div>
+                <h1 class="h3 fw-bold mb-1">Tổng quan quản trị</h1>
+                <p class="mb-0 opacity-75">Theo dõi nhanh tài khoản, doanh nghiệp và tin tuyển dụng của hệ thống.</p>
             </div>
-
-        
-            <div class="row g-3 mb-4">
-                @foreach (var stat in stats)
-                {
-                    <div class="col-12 col-sm-6 col-xl-3">
-                        <a href="@stat.Url" class="card stat-card h-100 border-0 shadow-sm text-decoration-none">
-                            <div class="card-body p-4 d-flex align-items-center gap-3">
-                                <span class="stat-icon d-inline-flex align-items-center justify-content-center flex-shrink-0 @stat.Tone">
-                                    <i class="mdi @stat.Icon" aria-hidden="true"></i>
-                                </span>
-                                <div>
-                                    <div class="text-muted small">@stat.Label</div>
-                                    <div class="h3 fw-bold mb-0 text-dark">@stat.Count.ToString("N0")</div>
-                                </div>
-                            </div>
-                        </a>
-                    </div>
-                }
+            <div class="d-flex flex-wrap gap-2">
+                <a href="@createUserUrl" class="btn btn-light fw-semibold">+ Thêm tài khoản</a>
+                <a href="@pendingUrl" class="btn btn-outline-light fw-semibold">Duyệt tin (@pendingJobPosts)</a>
             </div>
+        </div>
+    </div>
 
-            <div class="row g-3">
 
-                <div class="col-lg-7">
-                    <div class="card panel-card border-0 shadow-sm h-100">
-                        <div class="card-body p-4">
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <h2 class="h5 fw-bold mb-0">Tình trạng tin tuyển dụng</h2>
-                                <a href="@jobPostsUrl" class="small text-primary text-decoration-none">Xem tất cả →</a>
-                            </div>
-
-                            @if (totalJobPosts == 0)
-                            {
-                                <div class="text-center text-muted py-4">Chưa có tin tuyển dụng nào.</div>
-                            }
-                            else
-                            {
-                                <div class="d-flex justify-content-between small mb-1">
-                                    <span class="text-muted">Chờ duyệt</span>
-                                    <span class="fw-semibold">@pendingJobPosts / @totalJobPosts (@pendingPercent%)</span>
-                                </div>
-                                <div class="progress mb-4" style="height: 10px;" role="progressbar"
-                                     aria-valuenow="@pendingPercent" aria-valuemin="0" aria-valuemax="100">
-                                    <div class="progress-bar bg-warning" style="width: @pendingPercent%"></div>
-                                </div>
-
-                                <div class="row g-3">
-                                    <div class="col-6">
-                                        <div class="border rounded-3 p-3">
-                                            <div class="small text-muted">Chờ duyệt</div>
-                                            <div class="h4 fw-bold text-warning mb-0">@pendingJobPosts</div>
-                                        </div>
-                                    </div>
-                                    <div class="col-6">
-                                        <div class="border rounded-3 p-3">
-                                            <div class="small text-muted">Đã xử lý</div>
-                                            <div class="h4 fw-bold text-success mb-0">@approvedOrOther</div>
-                                        </div>
-                                    </div>
-                                </div>
-                            }
-
-                            @if (pendingJobPosts > 0)
-                            {
-                                <div class="alert alert-warning border-0 mt-4 mb-0 d-flex flex-wrap justify-content-between align-items-center gap-2" role="status">
-                                    <span>Có <strong>@pendingJobPosts</strong> tin đang chờ bạn duyệt.</span>
-                                    <a href="@pendingUrl" class="btn btn-warning btn-sm">Duyệt ngay</a>
-                                </div>
-                            }
+    <div class="row g-3 mb-4">
+        @foreach (var stat in stats)
+        {
+            <div class="col-12 col-sm-6 col-xl-3">
+                <a href="@stat.Url" class="card stat-card h-100 border-0 shadow-sm text-decoration-none">
+                    <div class="card-body p-4 d-flex align-items-center gap-3">
+                        <span class="stat-icon d-inline-flex align-items-center justify-content-center flex-shrink-0 @stat.Tone">
+                            <i class="mdi @stat.Icon" aria-hidden="true"></i>
+                        </span>
+                        <div>
+                            <div class="text-muted small">@stat.Label</div>
+                            <div class="h3 fw-bold mb-0 text-dark">@stat.Count.ToString("N0")</div>
                         </div>
                     </div>
-                </div>
+                </a>
+            </div>
+        }
+    </div>
 
-                <div class="col-lg-5">
-                    <div class="card panel-card border-0 shadow-sm h-100">
-                        <div class="card-body p-4">
-                            <h2 class="h5 fw-bold mb-3">Lối tắt</h2>
-                            <div class="d-flex flex-column gap-2">
-                                <a class="quick-link" href="@jobPostsUrl">
-                                    <span class="qi tone-success d-inline-flex align-items-center justify-content-center">
-                                        <i class="mdi mdi-briefcase-outline" aria-hidden="true"></i>
-                                    </span>
-                                    <span>
-                                        <span class="d-block fw-semibold">Quản lý tin tuyển dụng</span>
-                                        <small class="text-muted">Xem, duyệt và chỉnh sửa tin</small>
-                                    </span>
-                                </a>
-                                <a class="quick-link" href="@companiesUrl">
-                                    <span class="qi tone-info d-inline-flex align-items-center justify-content-center">
-                                        <i class="mdi mdi-domain" aria-hidden="true"></i>
-                                    </span>
-                                    <span>
-                                        <span class="d-block fw-semibold">Danh sách doanh nghiệp</span>
-                                        <small class="text-muted">Thông tin các doanh nghiệp đối tác</small>
-                                    </span>
-                                </a>
-                                <a class="quick-link" href="@usersUrl">
-                                    <span class="qi tone-primary d-inline-flex align-items-center justify-content-center">
-                                        <i class="mdi mdi-account-multiple-outline" aria-hidden="true"></i>
-                                    </span>
-                                    <span>
-                                        <span class="d-block fw-semibold">Quản lý tài khoản</span>
-                                        <small class="text-muted">Quản trị viên, sinh viên, doanh nghiệp</small>
-                                    </span>
-                                </a>
-                                <a class="quick-link" href="@createUserUrl">
-                                    <span class="qi tone-warning d-inline-flex align-items-center justify-content-center">
-                                        <i class="mdi mdi-account-plus-outline" aria-hidden="true"></i>
-                                    </span>
-                                    <span>
-                                        <span class="d-block fw-semibold">Thêm tài khoản mới</span>
-                                        <small class="text-muted">Tạo nhanh một tài khoản</small>
-                                    </span>
-                                </a>
+    <div class="row g-3">
+
+        <div class="col-lg-7">
+            <div class="card panel-card border-0 shadow-sm h-100">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h2 class="h5 fw-bold mb-0">Tình trạng tin tuyển dụng</h2>
+                        <a href="@jobPostsUrl" class="small text-primary text-decoration-none">Xem tất cả →</a>
+                    </div>
+
+                    @if (totalJobPosts == 0)
+                    {
+                        <div class="text-center text-muted py-4">Chưa có tin tuyển dụng nào.</div>
+                    }
+                    else
+                    {
+                        <div class="d-flex justify-content-between small mb-1">
+                            <span class="text-muted">Chờ duyệt</span>
+                            <span class="fw-semibold">@pendingJobPosts / @totalJobPosts (@pendingPercent%)</span>
+                        </div>
+                        <div class="progress mb-4" style="height: 10px;" role="progressbar"
+                             aria-valuenow="@pendingPercent" aria-valuemin="0" aria-valuemax="100">
+                            <div class="progress-bar bg-warning" style="width: @pendingPercent%"></div>
+                        </div>
+
+                        <div class="row g-3">
+                            <div class="col-6">
+                                <div class="border rounded-3 p-3">
+                                    <div class="small text-muted">Chờ duyệt</div>
+                                    <div class="h4 fw-bold text-warning mb-0">@pendingJobPosts</div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="border rounded-3 p-3">
+                                    <div class="small text-muted">Không ở trạng thái chờ duyệt</div>
+                                    <div class="h4 fw-bold text-success mb-0">@nonPendingJobs</div>
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    }
+
+                    @if (pendingJobPosts > 0)
+                    {
+                        <div class="alert alert-warning border-0 mt-4 mb-0 d-flex flex-wrap justify-content-between align-items-center gap-2" role="status">
+                            <span>Có <strong>@pendingJobPosts</strong> tin đang chờ bạn duyệt.</span>
+                            <a href="@pendingUrl" class="btn btn-warning btn-sm">Duyệt ngay</a>
+                        </div>
+                    }
                 </div>
             </div>
         </div>
 
-        <footer class="footer">
-            <div class="d-sm-flex justify-content-center justify-content-sm-between">
-                <span class="text-muted text-center text-sm-start d-block d-sm-inline-block">AlumniJobConnect – Trang quản trị</span>
-                <span class="d-block mt-1 mt-sm-0 text-center text-muted">© @DateTime.Now.Year. All rights reserved.</span>
+        <div class="col-lg-5">
+            <div class="card panel-card border-0 shadow-sm h-100">
+                <div class="card-body p-4">
+                    <h2 class="h5 fw-bold mb-3">Lối tắt</h2>
+                    <div class="d-flex flex-column gap-2">
+                        <a class="quick-link" href="@jobPostsUrl">
+                            <span class="qi tone-success d-inline-flex align-items-center justify-content-center">
+                                <i class="mdi mdi-briefcase-outline" aria-hidden="true"></i>
+                            </span>
+                            <span>
+                                <span class="d-block fw-semibold">Quản lý tin tuyển dụng</span>
+                                <small class="text-muted">Xem, duyệt và chỉnh sửa tin</small>
+                            </span>
+                        </a>
+                        <a class="quick-link" href="@companiesUrl">
+                            <span class="qi tone-info d-inline-flex align-items-center justify-content-center">
+                                <i class="mdi mdi-domain" aria-hidden="true"></i>
+                            </span>
+                            <span>
+                                <span class="d-block fw-semibold">Danh sách doanh nghiệp</span>
+                                <small class="text-muted">Thông tin các doanh nghiệp đối tác</small>
+                            </span>
+                        </a>
+                        <a class="quick-link" href="@usersUrl">
+                            <span class="qi tone-primary d-inline-flex align-items-center justify-content-center">
+                                <i class="mdi mdi-account-multiple-outline" aria-hidden="true"></i>
+                            </span>
+                            <span>
+                                <span class="d-block fw-semibold">Quản lý tài khoản</span>
+                                <small class="text-muted">Quản trị viên, sinh viên, doanh nghiệp</small>
+                            </span>
+                        </a>
+                        <a class="quick-link" href="@createUserUrl">
+                            <span class="qi tone-warning d-inline-flex align-items-center justify-content-center">
+                                <i class="mdi mdi-account-plus-outline" aria-hidden="true"></i>
+                            </span>
+                            <span>
+                                <span class="d-block fw-semibold">Thêm tài khoản mới</span>
+                                <small class="text-muted">Tạo nhanh một tài khoản</small>
+                            </span>
+                        </a>
+                    </div>
+                </div>
             </div>
-        </footer>
+        </div>
     </div>
 </div>

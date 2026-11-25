@@ -11,7 +11,8 @@ using System.Text.Json;
 namespace AlumniJobConnect.Controllers;
 
 [Authorize]
-public class AiInterviewController : Controller
+[ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
+public partial class AiInterviewController : Controller
 {
     private readonly AlumniJobConnectContext _context;
     private readonly IConfiguration _configuration;
@@ -47,7 +48,9 @@ public class AiInterviewController : Controller
 
         public string Level { get; set; } = "graduate";
 
-        public List<ChatTurn> History { get; set; } = new();
+        public Guid? SessionId { get; set; }
+        public int? Version { get; set; }
+        public string? Answer { get; set; }
     }
 
     private IQueryable<JobPost> AvailableJobs()
@@ -65,10 +68,24 @@ public class AiInterviewController : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> Index(int jobPostId)
+    public async Task<IActionResult> Index(int jobPostId, Guid? sessionId, CancellationToken ct)
     {
+        var userId = await CurrentActiveUserAsync(ct);
+        if (!userId.HasValue) return Forbid();
+        if (sessionId.HasValue)
+        {
+            var saved = await FindSessionAsync(sessionId.Value, userId.Value, ct);
+            if (saved == null) return NotFound("Không tìm thấy buổi luyện tập.");
+            ViewBag.InitialSessionId = saved.SessionId;
+            return View(new JobPost
+            {
+                JobPostId = saved.JobPostId,
+                Title = saved.JobTitle,
+                Company = new Company { CompanyName = saved.CompanyName }
+            });
+        }
         var job = await AvailableJobs()
-            .FirstOrDefaultAsync(x => x.JobPostId == jobPostId);
+            .FirstOrDefaultAsync(x => x.JobPostId == jobPostId, ct);
 
         if (job == null)
         {
@@ -85,60 +102,50 @@ public class AiInterviewController : Controller
         [FromBody] InterviewInput input,
         CancellationToken cancellationToken)
     {
-        if (!ModelState.IsValid ||
-            input.History == null ||
-            input.History.Count > 10)
+        var userId = await CurrentActiveUserAsync(cancellationToken);
+        if (!userId.HasValue) return StatusCode(403, new { error = "Tài khoản không hợp lệ hoặc đã bị khóa." });
+        if (!ModelState.IsValid || input == null || input.SessionId == Guid.Empty ||
+            input.Answer?.Length > 2000)
+            return BadRequest(new { error = "Câu trả lời tối đa 2.000 ký tự." });
+
+        InterviewSession? session = null;
+        var history = new List<ChatTurn>();
+        string context;
+        var answers = 0;
+        var answer = input.Answer?.Trim();
+        var level = input.Level;
+        JobPost? job = null;
+        if (input.SessionId.HasValue)
         {
-            return BadRequest(new { error = "Dữ liệu hội thoại không hợp lệ." });
+            session = await FindSessionAsync(input.SessionId.Value, userId.Value, cancellationToken);
+            if (session == null) return NotFound(new { error = "Không tìm thấy buổi luyện tập." });
+            if (session.IsCompleted || session.AnswersCount >= 5)
+                return Conflict(new { error = "Buổi luyện tập này đã hoàn thành. Bạn có thể xem lại hoặc bắt đầu buổi mới." });
+            if (input.Version != session.Version)
+                return Conflict(new { error = "Buổi luyện tập đã thay đổi. Hãy mở lại từ lịch sử trước khi gửi." });
+            if (string.IsNullOrWhiteSpace(answer))
+                return BadRequest(new { error = "Bạn cần nhập câu trả lời." });
+            history = await ReadTurnsAsync(session.SessionId, userId.Value, cancellationToken);
+            history.Add(new ChatTurn { Role = "user", Content = answer });
+            answers = session.AnswersCount + 1;
+            context = session.ContextJson;
+            level = session.Level;
         }
-
-        var level = input.Level switch
+        else
         {
-            "intern" => "Thực tập sinh",
-            "graduate" => "Mới tốt nghiệp",
-            "experienced" => "Có kinh nghiệm",
-            _ => null
-        };
-
-        if (level == null)
-        {
-            return BadRequest(new { error = "Mức độ không hợp lệ." });
-        }
-
-        // Lịch sử phải xen kẽ: AI hỏi, người dùng trả lời.
-        if (input.History.Count % 2 != 0)
-        {
-            return BadRequest(new { error = "Thứ tự hội thoại không hợp lệ." });
-        }
-
-        for (var i = 0; i < input.History.Count; i++)
-        {
-            var turn = input.History[i];
-            var expectedRole = i % 2 == 0 ? "assistant" : "user";
-
-            if (turn == null ||
-                turn.Role != expectedRole ||
-                string.IsNullOrWhiteSpace(turn.Content) ||
-                turn.Content.Length > 6000 ||
-                (turn.Role == "user" && turn.Content.Length > 2000))
+            if (!string.IsNullOrEmpty(answer))
+                return BadRequest(new { error = "Hãy bắt đầu một buổi luyện tập trước." });
+            var levelName = LevelName(input.Level);
+            if (levelName == null) return BadRequest(new { error = "Mức kinh nghiệm không hợp lệ." });
+            job = await AvailableJobs().FirstOrDefaultAsync(x => x.JobPostId == input.JobPostId, cancellationToken);
+            if (job == null) return NotFound(new { error = "Tin tuyển dụng không còn khả dụng để bắt đầu buổi mới." });
+            context = JsonSerializer.Serialize(new
             {
-                return BadRequest(new
-                {
-                    error = "Câu trả lời không hợp lệ hoặc quá dài."
-                });
-            }
-        }
-
-        var job = await AvailableJobs()
-            .FirstOrDefaultAsync(
-                x => x.JobPostId == input.JobPostId,
-                cancellationToken);
-
-        if (job == null)
-        {
-            return NotFound(new
-            {
-                error = "Tin tuyển dụng không còn khả dụng."
+                Position = job.Title,
+                Company = job.Company?.CompanyName,
+                Description = Cut(job.JobDescription, 7000),
+                Requirements = Cut(job.Requirements, 5000),
+                ExperienceLevel = levelName
             });
         }
 
@@ -162,7 +169,6 @@ public class AiInterviewController : Controller
 
         try
         {
-            var answers = input.History.Count / 2;
 
             var task = answers == 0
                 ? "Hãy chào ngắn gọn rồi đặt Câu 1/5. Chỉ hỏi một câu."
@@ -187,15 +193,6 @@ public class AiInterviewController : Controller
                 Mỗi lần trả lời tối đa khoảng 250 từ.
                 """;
 
-            var context = JsonSerializer.Serialize(new
-            {
-                Position = job.Title,
-                Company = job.Company?.CompanyName,
-                Description = Cut(job.JobDescription, 7000),
-                Requirements = Cut(job.Requirements, 5000),
-                ExperienceLevel = level
-            });
-
             var messages = new List<object>
             {
                 new
@@ -205,7 +202,7 @@ public class AiInterviewController : Controller
                 }
             };
 
-            foreach (var turn in input.History)
+            foreach (var turn in history)
             {
                 messages.Add(new
                 {
@@ -303,10 +300,15 @@ public class AiInterviewController : Controller
                 });
             }
 
+            var saved = await PersistTurnAsync(userId.Value, session, job,
+                level, context, answer, reply, answers, cancellationToken);
             return Json(new
             {
                 reply,
-                finished = answers >= 5
+                finished = saved.IsCompleted,
+                sessionId = saved.SessionId,
+                version = saved.Version,
+                answersCount = saved.AnswersCount
             });
         }
         catch (OperationCanceledException)
@@ -316,6 +318,15 @@ public class AiInterviewController : Controller
             {
                 error = "AI phản hồi quá lâu. Bạn thử lại nhé."
             });
+        }
+        catch (InterviewConflictException)
+        {
+            return Conflict(new { error = "Buổi luyện tập đã thay đổi hoặc bị xóa. Hãy mở lại lịch sử trước khi gửi." });
+        }
+        catch (Exception ex) when (ex is not HttpRequestException && ex is not JsonException && ex is not OperationCanceledException)
+        {
+            _logger.LogError(ex, "Cannot save AI interview exchange");
+            return StatusCode(500, new { error = "Chưa lưu được buổi luyện tập. Kiểm tra bảng lịch sử và Output của ứng dụng." });
         }
         catch (HttpRequestException)
         {

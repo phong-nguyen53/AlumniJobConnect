@@ -261,7 +261,49 @@
                     <span aria-hidden="true">›</span>
                 </a>
             }
+            @if (User.IsInRole("Admin"))
+            {
+                <a href="@Url.Content("~/Admin")"
+                   class="ac-profile-link">
+                    <span>
+                        <i class="fa fa-cog me-2"
+                           aria-hidden="true"></i>
+                        Trang quản trị
+                    </span>
 
+                    <span aria-hidden="true">›</span>
+                </a>
+            }
+
+            @if (User.IsInRole("Alumni"))
+            {
+                <a href="@Url.Action("Index", "EmploymentSurveys",
+                                    new { area = "" })"
+           class="ac-profile-link">
+            <span>
+                <i class="fa fa-list-alt me-2"
+                   aria-hidden="true"></i>
+                Khảo sát việc làm
+            </span>
+
+                    <span aria-hidden="true">›</span>
+                </a>
+                }
+
+            @if (User.IsInRole("Admin"))
+            {
+                <a href="@Url.Action("Index", "EmploymentSurveys",
+                                    new { area = "Admin" })"
+           class="ac-profile-link">
+            <span>
+                <i class="fa fa-list-alt me-2"
+                   aria-hidden="true"></i>
+                Quản lý khảo sát
+            </span>
+
+                    <span aria-hidden="true">›</span>
+                </a>
+                }
             <form action="@Url.Action("Logout", "Account")"
                   method="post"
                   class="ac-logout-form">

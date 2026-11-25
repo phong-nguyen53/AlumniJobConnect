@@ -1,0 +1,197 @@
+@model AlumniJobConnect.Features.EmploymentSurveys.SurveyForm
+@using Microsoft.AspNetCore.Mvc.Rendering
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+
+@{
+    var editing = Model.SurveyId > 0;
+
+    ViewData["Title"] = editing
+        ? "Sửa đợt khảo sát"
+        : "Tạo đợt khảo sát";
+
+    Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
+
+    var formUrl = Url.Action(
+        editing ? "Edit" : "Create",
+        "EmploymentSurveys",
+        new
+        {
+            area = "Admin",
+            id = editing ? Model.SurveyId : (int?)null
+        });
+
+    var backUrl = Url.Action(
+        "Index",
+        "EmploymentSurveys",
+        new { area = "Admin" });
+}
+
+<link rel="stylesheet"
+      href="@Url.Content("~/admin/assets/css/employment-surveys.css")"
+      asp-append-version="true" />
+
+<div class="es-page es-form-page">
+    <a href="@backUrl" class="es-text-link">
+        ← Danh sách khảo sát
+    </a>
+
+    <div class="es-heading">
+        <div>
+            <span class="es-eyebrow">
+                KHẢO SÁT VIỆC LÀM
+            </span>
+
+            <h1>@ViewData["Title"]</h1>
+
+            <p>
+                Đặt thời gian, lựa chọn đối tượng và
+                theo dõi phản hồi của cựu sinh viên.
+            </p>
+        </div>
+    </div>
+
+    <form action="@formUrl"
+          method="post"
+          asp-antiforgery="false"
+          class="es-panel es-form">
+
+        @Html.AntiForgeryToken()
+
+        <div asp-validation-summary="All"
+             class="es-validation"
+             role="alert">
+        </div>
+
+        <input asp-for="SurveyId" type="hidden" />
+        <input asp-for="Version" type="hidden" />
+
+        <div class="es-field">
+            <label asp-for="Title">
+                Tên đợt khảo sát *
+            </label>
+
+            <input asp-for="Title"
+                   maxlength="200"
+                   placeholder="Ví dụ: Khảo sát việc làm cựu sinh viên năm 2026"
+                   required />
+
+            <span asp-validation-for="Title"
+                  class="es-validation"></span>
+        </div>
+
+        <div class="es-field">
+            <label asp-for="Description">
+                Nội dung giới thiệu
+            </label>
+
+            <textarea asp-for="Description"
+                      rows="4"
+                      maxlength="2000"
+                      placeholder="Nhập mục đích và hướng dẫn tham gia khảo sát..."></textarea>
+
+            <span asp-validation-for="Description"
+                  class="es-validation"></span>
+        </div>
+
+        <div class="es-grid-two">
+            <div class="es-field">
+                <label asp-for="StartsOn">
+                    Ngày bắt đầu *
+                </label>
+
+                <input asp-for="StartsOn"
+                       type="date"
+                       asp-format="{0:yyyy-MM-dd}"
+                       required />
+
+                <span asp-validation-for="StartsOn"
+                      class="es-validation"></span>
+            </div>
+
+            <div class="es-field">
+                <label asp-for="EndsOn">
+                    Ngày kết thúc *
+                </label>
+
+                <input asp-for="EndsOn"
+                       type="date"
+                       asp-format="{0:yyyy-MM-dd}"
+                       required />
+
+                <span asp-validation-for="EndsOn"
+                      class="es-validation"></span>
+            </div>
+        </div>
+
+        @if (!editing)
+        {
+            <div class="es-field">
+                <label asp-for="TargetCourseId">
+                    Khóa nhận khảo sát
+                </label>
+
+                <select asp-for="TargetCourseId"
+                        asp-items="@(new SelectList(
+                                                    Model.Courses,
+                                                    "AcademicCourseId",
+                                                    "CourseName"))">
+                <option value="">
+                    Tất cả khóa đủ điều kiện
+                </option>
+            </select>
+
+                <span asp-validation-for="TargetCourseId"
+                      class="es-validation"></span>
+            </div>
+
+            <div class="es-note">
+                <strong>Đối tượng nhận khảo sát</strong>
+
+                <p>
+                    Tài khoản có quyền Alumni, đang hoạt động,
+                    có hồ sơ và năm tốt nghiệp không lớn hơn
+                    năm hiện tại.
+                </p>
+
+                <p>
+                    Nếu hồ sơ chưa có năm tốt nghiệp, hệ thống
+                    dùng năm tốt nghiệp của khóa. Người thiếu
+                    cả hai thông tin sẽ không được chọn.
+                </p>
+
+                <p class="mb-0">
+                    Khi tạo đợt, hệ thống chốt danh sách người nhận
+                    và gửi thông báo trong website. Hạn trả lời
+                    tính đến hết ngày kết thúc theo giờ Việt Nam.
+                </p>
+            </div>
+                }
+        else
+        {
+            <div class="es-note">
+                <p>
+                    Đối tượng đã chốt:
+                    <strong>@Model.TargetCourseName</strong>
+                </p>
+
+                <p class="mb-0">
+                    Việc chỉnh sửa không thay đổi danh sách
+                    người nhận và không gửi lại thông báo ban đầu.
+                </p>
+            </div>
+        }
+
+        <div class="es-actions">
+            <button type="submit" class="es-button">
+                @(editing
+                                ? "Lưu thay đổi"
+                                : "Tạo đợt và gửi thông báo")
+            </button>
+
+            <a href="@backUrl"
+               class="es-button es-outline">
+                Quay lại
+            </a>
+        </div>
+    </form>
+</div>

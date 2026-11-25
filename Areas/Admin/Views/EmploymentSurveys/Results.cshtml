@@ -1,0 +1,65 @@
+@model AlumniJobConnect.Features.EmploymentSurveys.SurveyResultsPage
+@using AlumniJobConnect.Features.EmploymentSurveys
+@using System.Globalization
+@{
+    ViewData["Title"]="Kết quả khảo sát";
+    Layout="~/Areas/Admin/Views/Shared/_Layout.cshtml";
+    var s=Model.Survey;
+}
+<link rel="stylesheet" href="~/admin/assets/css/employment-surveys.css" asp-append-version="true" />
+<div class="es-page">
+    <a class="es-text-link" asp-action="Index">← Danh sách khảo sát</a>
+    <div class="es-heading"><div><span class="es-eyebrow">KẾT QUẢ KHẢO SÁT</span><h1>@s.Title</h1><p>@s.TargetCourseName · @s.StartsOn.ToString("dd/MM/yyyy") – @s.EndsOn.ToString("dd/MM/yyyy")</p></div><span class="es-badge @(s.IsOpen ? "es-green":"")">@s.State</span></div>
+    @if(TempData["SurveySuccess"] is string ok){<div class="es-success" role="status">@ok</div>}
+    @if(TempData["SurveyError"] is string error){<div class="es-validation" role="alert">@error</div>}
+    <div class="es-actions es-panel es-toolbar"><a class="es-button es-outline" asp-action="Edit" asp-route-id="@s.SurveyId">Sửa thông tin / thời gian</a>
+        <form asp-action="SetClosed" asp-route-id="@s.SurveyId" method="post">
+            <input type="hidden" name="version" value="@s.Version"/><input type="hidden" name="closed" value="@((!s.IsClosed).ToString().ToLowerInvariant())"/>
+            <button class="es-button @(s.IsClosed ? "":"es-danger")" type="submit">@(s.IsClosed ? "Bỏ đóng thủ công" : "Đóng đợt khảo sát")</button>
+        </form>
+        <span class="es-muted">Đóng đợt sẽ ngừng nhận và sửa câu trả lời.</span>
+    </div>
+    <div class="es-metrics">
+        <div class="es-metric"><span>Đã phản hồi</span><strong>@Model.Responded / @Model.Total</strong><small>@SurveyLabels.Percent(Model.Responded,Model.Total)% người được mời</small></div>
+        <div class="es-metric"><span>Đã có việc</span><strong>@SurveyLabels.Percent(Model.Employed,Model.Responded)%</strong><small>@Model.Employed / @Model.Responded người phản hồi</small></div>
+        <div class="es-metric"><span>Làm đúng ngành</span><strong>@SurveyLabels.Percent(Model.Related,Model.Employed)%</strong><small>@Model.Related / @Model.Employed người có việc</small></div>
+        <div class="es-metric"><span>Cần hỗ trợ tìm việc</span><strong>@Model.NeedSupport</strong><small>Trong số người đã phản hồi</small></div>
+    </div>
+    <div class="es-grid-two es-section">
+        <section class="es-panel es-chart"><h2>Tình trạng việc làm</h2>
+            @foreach(var pair in SurveyLabels.Statuses){
+                var count=Model.Participants.Count(p=>p.EmploymentStatus==pair.Key);
+                var percent=SurveyLabels.Percent(count,Model.Responded);
+                <div class="es-bar-row"><div><span>@pair.Value</span><strong>@count · @percent%</strong></div><div class="es-bar-track"><span style="width:@(percent.ToString(CultureInfo.InvariantCulture))%"></span></div></div>
+            }
+            <p class="es-muted">Mẫu số: @Model.Responded người đã phản hồi. Không coi người chưa phản hồi là thất nghiệp.</p>
+        </section>
+        <section class="es-panel es-chart"><h2>Thu nhập của người có việc</h2>
+            @foreach(var pair in SurveyLabels.Salaries){
+                var count=Model.Participants.Count(p=>p.EmploymentStatus=="Employed" && p.SalaryRange==pair.Key);
+                var percent=SurveyLabels.Percent(count,Model.Employed);
+                <div class="es-bar-row"><div><span>@pair.Value</span><strong>@count</strong></div><div class="es-bar-track"><span style="width:@(percent.ToString(CultureInfo.InvariantCulture))%"></span></div></div>
+            }
+            <p class="es-muted">Không cung cấp thu nhập: @Model.Participants.Count(p=>p.EmploymentStatus=="Employed" && p.SalaryRange==null) người. Chưa phản hồi: @(Model.Total-Model.Responded) người.</p>
+        </section>
+    </div>
+    <section class="es-panel es-section"><div class="es-panel-heading"><h2>Danh sách người nhận</h2><form asp-action="Results" method="get" class="es-filter"><input name="id" type="hidden" value="@s.SurveyId"/>
+        <select name="filter" aria-label="Lọc người nhận">
+            @foreach(var f in new[]{("all","Tất cả"),("responded","Đã trả lời"),("missing","Chưa trả lời"),("support","Cần hỗ trợ")}){
+                if(f.Item1==Model.Filter){<option value="@f.Item1" selected>@f.Item2</option>}else{<option value="@f.Item1">@f.Item2</option>}
+            }
+        </select><button class="es-button es-outline" type="submit">Lọc</button></form></div>
+        <div class="es-table-wrap"><table class="es-table"><thead><tr><th>Cựu sinh viên</th><th>Khóa</th><th>Tình trạng</th><th>Hỗ trợ</th><th></th></tr></thead><tbody>
+        @foreach(var p in Model.FilteredParticipants){<tr><td><strong>@p.FullName</strong><small>@p.Email · @(p.StudentCode??"Chưa có mã SV")</small></td><td>@p.CourseName</td>
+            <td>@(p.HasResponded ? SurveyLabels.Status(p.EmploymentStatus!) : "Chưa trả lời")</td><td>@(p.HasResponded ? (p.NeedsSupport==true ? "Có":"Không") : "—")</td>
+            <td>@if(p.HasResponded){<a class="es-text-link" asp-action="Response" asp-route-id="@s.SurveyId" asp-route-userId="@p.UserId">Xem trả lời</a>}</td></tr>}
+        @if(!Model.FilteredParticipants.Any()){<tr><td colspan="5" class="es-empty">Không có người nhận phù hợp bộ lọc.</td></tr>}
+        </tbody></table></div>
+        <nav class="es-pagination" aria-label="Phân trang người nhận">
+            @if(Model.Page>1){<a asp-action="Results" asp-route-id="@s.SurveyId" asp-route-filter="@Model.Filter" asp-route-page="@(Model.Page-1)">← Trang trước</a>}
+            <span>Trang @Model.Page / @Model.TotalPages · @Model.FilteredCount người</span>
+            @if(Model.Page<Model.TotalPages){<a asp-action="Results" asp-route-id="@s.SurveyId" asp-route-filter="@Model.Filter" asp-route-page="@(Model.Page+1)">Trang sau →</a>}
+        </nav>
+    </section>
+    <p class="es-muted">Danh sách người nhận, tên và khóa được ghi nhận lúc tạo đợt. Dữ liệu khảo sát không tự ghi đè hồ sơ cá nhân. Thống kê phản ánh thông tin tự khai trong từng đợt.</p>
+</div>

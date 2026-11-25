@@ -1,0 +1,129 @@
+@model AlumniJobConnect.Areas.Admin.ViewModels.AdminDashboardViewModel
+@using System
+@using System.Linq
+@using System.Globalization
+@{
+    ViewData["Title"] = "Thống kê tổng quan";
+    Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
+    var vi = CultureInfo.GetCultureInfo("vi-VN");
+    string Number(int value) => value.ToString("N0", vi);
+    string Percent(int value, int total) => (total == 0 ? 0 : (double)value * 100 / total).ToString("0.##", CultureInfo.InvariantCulture);
+    var maxMonth = Math.Max(1, Model.Months.Select(x => x.Count).DefaultIfEmpty(0).Max());
+    var allCards = new[] {
+        ("Tài khoản", Model.TotalUsers, "Users"),
+        ("Hồ sơ sinh viên / cựu sinh viên", Model.TotalProfiles, "AlumniProfiles"),
+        ("Doanh nghiệp", Model.TotalCompanies, "Companies"),
+        ("Tin tuyển dụng", Model.TotalJobPosts, "JobPosts"),
+        ("Đơn ứng tuyển", Model.TotalApplications, "Applications")
+    };
+    var periodCards = new[] {
+        ("Tài khoản mới", Model.PeriodUsers), ("Doanh nghiệp mới", Model.PeriodCompanies),
+        ("Tin được tạo", Model.PeriodJobs), ("Đơn được gửi", Model.PeriodApplications)
+    };
+}
+<style>
+    .stats-page{--green:#009b72;--ink:#213e36;--muted:#657c73;--line:#e0ebe5;color:var(--ink);max-width:1450px;margin:auto;padding:24px 12px;font-size:14px}
+    .stats-page *{box-sizing:border-box}.stats-page h1{font-size:28px;font-weight:750;margin:6px 0 10px}.stats-page h2{font-size:18px;font-weight:700;margin:0 0 8px}.stats-page p{line-height:1.65}.st-eyebrow{color:var(--green);font-size:12px;font-weight:750;letter-spacing:1.5px;text-transform:uppercase}
+    .st-muted{color:var(--muted)}.st-header{margin-bottom:24px}.st-grid{display:grid;gap:16px}.st-totals{grid-template-columns:repeat(5,minmax(0,1fr));margin:16px 0 28px}.st-card,.st-panel{border:1px solid var(--line);background:#fff;border-radius:16px;padding:22px;box-shadow:0 6px 22px rgba(31,65,49,.035)}
+    a.st-card{color:var(--ink);text-decoration:none;transition:transform .18s,border-color .18s}a.st-card:hover{transform:translateY(-3px);border-color:var(--green)}.st-number{font-size:31px;font-weight:750;display:block;margin-top:12px;color:var(--green);line-height:1.2}.st-card small{display:block;margin-top:10px;color:var(--muted)}
+    .st-filter{display:flex;align-items:flex-end;flex-wrap:wrap;gap:14px;margin-top:18px}.st-filter label{display:block;font-weight:650;margin-bottom:7px}.st-filter input{padding:11px 13px;border:1px solid #cbded3;border-radius:9px;min-height:44px;background:#fff;color:var(--ink);font:inherit}.st-btn{padding:11px 18px;background:var(--green);color:#fff!important;border:1px solid var(--green);border-radius:9px;text-decoration:none;cursor:pointer;min-height:44px;font:inherit;font-weight:650;display:inline-flex;align-items:center}.st-btn.secondary{background:white;color:var(--green)!important}.st-period{grid-template-columns:repeat(4,minmax(0,1fr));margin:18px 0}.st-period .st-card{background:#f2faf6;padding:18px;box-shadow:none}.st-period strong{font-size:25px;display:block;margin-top:8px}.st-columns{grid-template-columns:1.4fr 1fr;margin-top:18px}.st-panel{min-width:0}.st-chart{display:flex;gap:14px;align-items:flex-end;height:220px;overflow-x:auto;padding:22px 0 4px;margin-top:18px;border-bottom:1px solid var(--line)}.st-month{display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;min-width:55px;flex:1;gap:8px}.st-bar-track{height:150px;width:30px;display:flex;align-items:flex-end;background:#f0f6f3;border-radius:7px}.st-bar{width:100%;background:linear-gradient(0deg,#009b72,#41cda1);border-radius:7px;min-height:0}.st-month small{font-size:11px;white-space:nowrap;color:var(--muted)}.st-month strong{font-size:12px}
+    .st-row{margin-top:20px}.st-row-head{display:flex;justify-content:space-between;gap:14px;margin-bottom:8px;line-height:1.5}.st-track{height:9px;border-radius:20px;background:#edf4ef;overflow:hidden}.st-fill{background:var(--green);height:100%;border-radius:20px}.st-empty{padding:25px 12px;border:1px dashed var(--line);border-radius:12px;margin-top:20px;color:var(--muted);text-align:center}.st-badge{padding:5px 10px;background:#fff3db;color:#8b5a10;border-radius:30px;font-size:12px;font-weight:700}.st-panel-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}.st-link{color:var(--green);font-weight:650;text-decoration:none}.st-item{padding:17px 0;border-bottom:1px solid var(--line)}.st-item:last-child{border-bottom:0}.st-item strong{display:block;margin-bottom:7px;overflow-wrap:anywhere}.st-item small{color:var(--muted);line-height:1.7}.st-table-wrap{overflow-x:auto}.st-table{width:100%;border-collapse:collapse;margin-top:18px}.st-table th,.st-table td{text-align:left;padding:14px 10px;border-bottom:1px solid var(--line)}.st-table th{background:#f5faf7;color:var(--muted);font-size:12px}.st-note{font-size:12px;color:var(--muted);margin-top:14px}.st-validation:empty{display:none}.st-validation{color:#a82c43;background:#fff1f3;border:1px solid #f2cbd2;border-radius:10px;margin-bottom:15px;padding:12px}.st-validation ul{margin:0;padding-left:20px}
+    @@media(max-width:1100px){.st-totals{grid-template-columns:repeat(3,minmax(0,1fr))}.st-columns{grid-template-columns:1fr}}
+    @@media(max-width:650px){.stats-page{padding:16px 0}.stats-page h1{font-size:24px}.st-totals,.st-period{grid-template-columns:repeat(2,minmax(0,1fr))}.st-card,.st-panel{padding:16px}.st-number{font-size:26px}.st-filter>div{width:100%}.st-filter input{width:100%}}
+</style>
+<div class="stats-page">
+    <header class="st-header">
+        <div class="st-eyebrow">AlumniJobConnect · Quản trị</div>
+        <h1>Thống kê tổng quan</h1>
+        <p class="st-muted">Theo dõi hồ sơ, hoạt động tuyển dụng và các nội dung đang chờ xử lý.</p>
+    </header>
+    <h2>Toàn hệ thống</h2>
+    <p class="st-muted">Tổng dữ liệu hiện có, không phụ thuộc bộ lọc ngày.</p>
+    <div class="st-grid st-totals">
+        @foreach(var card in allCards)
+        {
+            <a class="st-card" href="@Url.Action("Index", card.Item3, new { area = "Admin" })">
+                <span>@card.Item1</span><strong class="st-number">@Number(card.Item2)</strong><small>Mở danh sách →</small>
+            </a>
+        }
+    </div>
+    <section class="st-panel">
+        <h2>Hoạt động theo thời gian</h2>
+        <p class="st-muted">Chọn tối đa 36 tháng. Đến ngày bao gồm cả ngày cuối đã chọn.</p>
+        @if (!ViewData.ModelState.IsValid)
+        {
+            <div class="st-validation" role="alert">
+                <ul>@foreach(var error in ViewData.ModelState.Values.SelectMany(x => x.Errors)) { <li>@(string.IsNullOrEmpty(error.ErrorMessage) ? "Ngày nhập chưa hợp lệ." : error.ErrorMessage)</li> }</ul>
+            </div>
+        }
+        <form action="@Url.Content("~/Admin/Statistics")" method="get" class="st-filter">
+            <div><label for="st-from">Từ ngày</label><input id="st-from" name="from" type="date" value="@Model.From.ToString("yyyy-MM-dd")" required /></div>
+            <div><label for="st-to">Đến ngày</label><input id="st-to" name="to" type="date" value="@Model.To.ToString("yyyy-MM-dd")" required /></div>
+            <button type="submit" class="st-btn">Xem thống kê</button>
+            <a href="@Url.Content("~/Admin/Statistics")" class="st-btn secondary">12 tháng gần nhất</a>
+        </form>
+        <div class="st-grid st-period">
+            @foreach(var card in periodCards) { <div class="st-card"><span>@card.Item1</span><strong>@Number(card.Item2)</strong></div> }
+        </div>
+        <div class="st-note">Khoảng thống kê: @Model.From.ToString("dd/MM/yyyy") – @Model.To.ToString("dd/MM/yyyy").</div>
+    </section>
+    <div class="st-grid st-columns">
+        <section class="st-panel">
+            <h2>Đơn ứng tuyển theo tháng</h2>
+            <p class="st-muted">Đếm theo ngày gửi đơn. Các tháng không phát sinh được hiển thị bằng 0.</p>
+            @if(Model.PeriodApplications == 0) { <div class="st-empty">Chưa có đơn ứng tuyển trong khoảng ngày này.</div> }
+            <div class="st-chart" role="group" aria-label="Số đơn ứng tuyển từng tháng; có thể cuộn ngang">
+                @foreach(var month in Model.Months)
+                {
+                    <div class="st-month" title="@month.Label: @month.Count đơn">
+                        <strong>@Number(month.Count)</strong>
+                        <div class="st-bar-track"><div class="st-bar" style="height:@(Percent(month.Count, maxMonth))%"></div></div>
+                        <small>@month.Label</small>
+                    </div>
+                }
+            </div>
+            <p class="st-note">Nếu chọn giữa tháng, cột chỉ tính những ngày nằm trong bộ lọc. Cuộn ngang để xem thêm tháng.</p>
+        </section>
+        <section class="st-panel">
+            <h2>Trạng thái hồ sơ</h2>
+            <p class="st-muted">Trạng thái hiện tại của các đơn gửi trong khoảng ngày đã chọn.</p>
+            @if(Model.Statuses.Count == 0) { <div class="st-empty">Chưa có dữ liệu trạng thái.</div> }
+            @foreach(var status in Model.Statuses)
+            {
+                <div class="st-row">
+                    <div class="st-row-head"><span>@status.Label</span><strong>@Number(status.Count) · @(Percent(status.Count, Model.PeriodApplications))%</strong></div>
+                    <div class="st-track"><div class="st-fill" style="width:@(Percent(status.Count, Model.PeriodApplications))%"></div></div>
+                </div>
+            }
+            <p class="st-note">Không phải lịch sử thay đổi trạng thái theo tháng.</p>
+        </section>
+    </div>
+    <section class="st-panel" style="margin-top:18px">
+        <h2>Doanh nghiệp nhận nhiều hồ sơ nhất</h2>
+        <p class="st-muted">Tối đa 5 doanh nghiệp, tính theo ngày gửi đơn trong bộ lọc.</p>
+        @if(Model.TopCompanies.Count == 0) { <div class="st-empty">Chưa có hồ sơ để xếp hạng.</div> }
+        else
+        {
+            <div class="st-table-wrap"><table class="st-table">
+                <thead><tr><th>Thứ hạng</th><th>Doanh nghiệp</th><th>Số đơn nhận được</th></tr></thead>
+                <tbody>@for(var i = 0; i < Model.TopCompanies.Count; i++) { var company = Model.TopCompanies[i]; <tr><td>@(i + 1)</td><td>@company.Name</td><td><strong>@Number(company.Applications)</strong></td></tr> }</tbody>
+            </table></div>
+        }
+    </section>
+    <div class="st-grid st-columns">
+        <section class="st-panel">
+            <div class="st-panel-head"><h2>Tin tuyển dụng chờ duyệt</h2><span class="st-badge">@Number(Model.PendingJobPosts) tin</span></div>
+            <p class="st-muted">Tình trạng hiện tại toàn hệ thống · 5 tin mới nhất.</p>
+            @if(Model.PendingJobs.Count == 0) { <div class="st-empty">Không có tin đang chờ duyệt.</div> }
+            @foreach(var item in Model.PendingJobs) { <div class="st-item"><strong>@item.Title</strong><small>@item.Description · @item.CreatedAt.ToString("dd/MM/yyyy HH:mm")</small></div> }
+            <p><a class="st-link" href="@Url.Action("Index", "JobPosts", new { area = "Admin" })">Mở quản lý tin tuyển dụng →</a></p>
+        </section>
+        <section class="st-panel">
+            <div class="st-panel-head"><h2>Doanh nghiệp chờ xác minh</h2><span class="st-badge">@Number(Model.PendingCompanies) đơn vị</span></div>
+            <p class="st-muted">Tình trạng hiện tại toàn hệ thống · 5 hồ sơ mới nhất.</p>
+            @if(Model.PendingBusinesses.Count == 0) { <div class="st-empty">Không có doanh nghiệp đang chờ xác minh.</div> }
+            @foreach(var item in Model.PendingBusinesses) { <div class="st-item"><strong>@item.Title</strong><small>@item.Description · @item.CreatedAt.ToString("dd/MM/yyyy HH:mm")</small></div> }
+            <p><a class="st-link" href="@Url.Action("Index", "Companies", new { area = "Admin" })">Mở quản lý doanh nghiệp →</a></p>
+        </section>
+    </div>
+</div>

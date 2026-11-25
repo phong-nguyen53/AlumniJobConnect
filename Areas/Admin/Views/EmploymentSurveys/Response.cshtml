@@ -1,0 +1,17 @@
+@model AlumniJobConnect.Features.EmploymentSurveys.ParticipantRow
+@using AlumniJobConnect.Features.EmploymentSurveys
+@{
+    var survey=(SurveyRow)ViewBag.Survey;
+    ViewData["Title"]="Chi tiết câu trả lời";
+    Layout="~/Areas/Admin/Views/Shared/_Layout.cshtml";
+}
+<link rel="stylesheet" href="~/admin/assets/css/employment-surveys.css" asp-append-version="true" />
+<div class="es-page es-form-page"><a class="es-text-link" asp-action="Results" asp-route-id="@survey.SurveyId">← Kết quả khảo sát</a>
+    <div class="es-heading"><div><span class="es-eyebrow">@survey.Title</span><h1>@Model.FullName</h1><p>@Model.Email · @Model.CourseName</p></div></div>
+    <div class="es-panel es-form"><dl class="es-details"><dt>Tình trạng việc làm</dt><dd>@SurveyLabels.Status(Model.EmploymentStatus!)</dd>
+        @if(Model.EmploymentStatus=="Employed"){
+            <dt>Công ty / đơn vị</dt><dd>@Model.CompanyName</dd><dt>Vị trí công việc</dt><dd>@Model.JobTitle</dd><dt>Phù hợp ngành học</dt><dd>@(Model.IsMajorRelated==true ? "Có":"Không")</dd><dt>Thu nhập hàng tháng</dt><dd>@SurveyLabels.Salary(Model.SalaryRange)</dd>
+        }
+        <dt>Cần hỗ trợ tìm việc</dt><dd>@(Model.NeedsSupport==true ? "Có":"Không")</dd><dt>Ghi chú / nhu cầu hỗ trợ</dt><dd class="es-pre">@(string.IsNullOrWhiteSpace(Model.Notes) ? "Không có" : Model.Notes)</dd>
+        <dt>Cập nhật gần nhất</dt><dd>@Model.UpdatedAt?.ToString("dd/MM/yyyy HH:mm") (giờ Việt Nam)</dd></dl></div>
+</div>

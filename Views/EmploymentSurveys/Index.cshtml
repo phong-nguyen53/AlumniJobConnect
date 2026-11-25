@@ -1,0 +1,15 @@
+@model AlumniJobConnect.Features.EmploymentSurveys.SurveyListPage
+@{
+    ViewData["Title"]="Khảo sát việc làm";
+    Layout="~/Views/Shared/_Layout.cshtml";
+}
+<link rel="stylesheet" href="~/assets/css/employment-surveys.css" asp-append-version="true" />
+<div class="es-page"><div class="es-heading"><div><span class="es-eyebrow">KẾT NỐI CỰU SINH VIÊN</span><h1>Khảo sát tình hình việc làm</h1><p>Chia sẻ tình hình công việc để nhà trường có cơ sở hỗ trợ bạn tốt hơn.</p></div></div>
+    @if(User.IsInRole("Admin")){<div class="es-note">Đây là danh sách khảo sát tài khoản của bạn được mời. Để quản lý các đợt và xem kết quả, <a asp-area="Admin" asp-controller="EmploymentSurveys" asp-action="Index">vào trang quản trị khảo sát →</a></div>}
+    @foreach(var s in Model.Items){
+        <article class="es-panel es-survey-card"><div class="es-heading"><div><span class="es-badge @(s.IsOpen ? "es-green":"")">@s.State</span><h2>@s.Title</h2><p>@s.StartsOn.ToString("dd/MM/yyyy") – hết ngày @s.EndsOn.ToString("dd/MM/yyyy")</p></div><span class="es-response-state">@(s.HasResponded ? "✓ Đã trả lời" : "Chưa trả lời")</span></div>
+            <p class="es-pre">@s.Description</p><a class="es-button @(s.HasResponded ? "es-outline":"")" asp-area="" asp-action="Answer" asp-route-id="@s.SurveyId">@(s.HasResponded ? (s.IsOpen ? "Xem / sửa câu trả lời":"Xem câu trả lời") : (s.IsOpen ? "Tham gia khảo sát":"Xem đợt khảo sát")) →</a></article>
+    }
+    @if(!Model.Items.Any()){<div class="es-panel es-empty">Bạn chưa có khảo sát được mời trong trang này. Đối tượng của mỗi đợt được nhà trường chốt khi tạo khảo sát.</div>}
+    <nav class="es-pagination" aria-label="Phân trang khảo sát">@if(Model.Page>1){<a asp-action="Index" asp-route-page="@(Model.Page-1)">← Trang trước</a>}<span>Trang @Model.Page</span>@if(Model.HasMore){<a asp-action="Index" asp-route-page="@(Model.Page+1)">Trang sau →</a>}</nav>
+</div>

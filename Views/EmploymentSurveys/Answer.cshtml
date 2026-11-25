@@ -1,0 +1,34 @@
+@model AlumniJobConnect.Features.EmploymentSurveys.SurveyAnswerPage
+@using AlumniJobConnect.Features.EmploymentSurveys
+@using Microsoft.AspNetCore.Mvc.Rendering
+@{
+    ViewData["Title"]=Model.Survey.Title;
+    Layout="~/Views/Shared/_Layout.cshtml";
+    var open=Model.Survey.IsOpen;
+}
+<link rel="stylesheet" href="~/assets/css/employment-surveys.css" asp-append-version="true" />
+<div class="es-page es-form-page"><a class="es-text-link" asp-action="Index">← Khảo sát của tôi</a>
+    <div class="es-heading"><div><span class="es-eyebrow">KHẢO SÁT VIỆC LÀM CỰU SINH VIÊN</span><h1>@Model.Survey.Title</h1><p>Từ @Model.Survey.StartsOn.ToString("dd/MM/yyyy") đến hết @Model.Survey.EndsOn.ToString("dd/MM/yyyy") · @Model.Survey.State</p></div></div>
+    @if(TempData["SurveySuccess"] is string message){<div class="es-success" role="status">@message</div>}
+    @if(!open){<div class="es-note">Đợt khảo sát hiện không nhận câu trả lời. Bạn có thể xem lại nội dung đã gửi.</div>}
+    @if(!string.IsNullOrWhiteSpace(Model.Survey.Description)){<p class="es-pre">@Model.Survey.Description</p>}
+    <form asp-action="Answer" asp-route-id="@Model.Survey.SurveyId" method="post" class="es-panel es-form" id="es-answer-form">
+        <div asp-validation-summary="All" class="es-validation" role="alert"></div>
+        <input type="hidden" asp-for="Input.SurveyId"/><input type="hidden" asp-for="Input.Version"/>
+        <fieldset disabled="@(!open)">
+            <div class="es-field"><label asp-for="Input.EmploymentStatus">Tình trạng việc làm hiện tại *</label><select asp-for="Input.EmploymentStatus" id="es-employment-status" asp-items="@(SurveyLabels.Statuses.Select(p=>new SelectListItem(p.Value,p.Key)))" required><option value="">Chọn tình trạng việc làm</option></select><span asp-validation-for="Input.EmploymentStatus" class="es-validation"></span></div>
+            <div id="es-work-fields">
+                <div class="es-field"><label asp-for="Input.CompanyName">Tên công ty / đơn vị đang làm việc *</label><input asp-for="Input.CompanyName" maxlength="200"/><span asp-validation-for="Input.CompanyName" class="es-validation"></span></div>
+                <div class="es-field"><label asp-for="Input.JobTitle">Vị trí công việc *</label><input asp-for="Input.JobTitle" maxlength="150"/><span asp-validation-for="Input.JobTitle" class="es-validation"></span></div>
+                <div class="es-grid-two"><div class="es-field"><label asp-for="Input.IsMajorRelated">Công việc phù hợp ngành học? *</label><select asp-for="Input.IsMajorRelated"><option value="">Chọn câu trả lời</option><option value="true">Có</option><option value="false">Không</option></select><span asp-validation-for="Input.IsMajorRelated" class="es-validation"></span></div>
+                    <div class="es-field"><label asp-for="Input.SalaryRange">Thu nhập hàng tháng (VND)</label><select asp-for="Input.SalaryRange" asp-items="@(SurveyLabels.Salaries.Select(p=>new SelectListItem(p.Value,p.Key)))"><option value="">Không muốn cung cấp</option></select><small class="es-muted">Thông tin tự nguyện, không bắt buộc.</small></div></div>
+            </div>
+            <div class="es-field es-check"><input asp-for="Input.NeedsSupport"/><label asp-for="Input.NeedsSupport">Tôi cần hỗ trợ tìm kiếm việc làm</label></div>
+            <div class="es-field"><label asp-for="Input.Notes">Ghi chú hoặc nhu cầu hỗ trợ</label><textarea asp-for="Input.Notes" rows="4" maxlength="1000" placeholder="Bạn muốn được hỗ trợ về vị trí, kỹ năng hoặc định hướng nào?"></textarea><span asp-validation-for="Input.Notes" class="es-validation"></span></div>
+            @if(open){<button type="submit" class="es-button">@(Model.Input.Version>0 ? "Lưu thay đổi":"Gửi câu trả lời")</button>}
+        </fieldset>
+        <p class="es-muted es-small">Câu trả lời chỉ hiển thị cho bạn và quản trị viên để thống kê, hỗ trợ việc làm. Thông tin này không tự thay đổi hồ sơ cá nhân.</p>
+        @if(Model.UpdatedAt.HasValue){<p class="es-muted es-small">Đã cập nhật: @Model.UpdatedAt.Value.ToString("dd/MM/yyyy HH:mm") (giờ Việt Nam)</p>}
+    </form>
+</div>
+<script src="~/assets/js/employment-surveys.js" asp-append-version="true" defer></script>

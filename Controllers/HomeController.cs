@@ -73,7 +73,7 @@ namespace AlumniJobConnect.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> jobs(
+        public async Task<IActionResult> Jobs(
             string? keyword,
             int? categoryId,
             string? location)
@@ -82,6 +82,12 @@ namespace AlumniJobConnect.Controllers
 
             keyword = keyword?.Trim();
             location = location?.Trim();
+
+            // Tải toàn bộ ngành nghề để hiển thị trong bộ lọc.
+            ViewBag.Categories = await _context.JobCategories
+                .AsNoTracking()
+                .OrderBy(x => x.CategoryName)
+                .ToListAsync();
 
             var query = _context.JobPosts
                 .AsNoTracking()
@@ -98,21 +104,25 @@ namespace AlumniJobConnect.Controllers
 
             if (categoryId.HasValue)
             {
-                query = query.Where(x => x.JobCategoryId == categoryId.Value);
+                query = query.Where(x =>
+                    x.JobCategoryId == categoryId.Value);
             }
 
             if (!string.IsNullOrWhiteSpace(location))
             {
                 query = query.Where(x =>
                     x.WorkLocation != null
-                    && x.WorkLocation.Trim() == location);
+                    && x.WorkLocation.Contains(location));
             }
 
             var jobs = await query
                 .OrderByDescending(x => x.CreatedAt)
                 .ToListAsync();
 
+            // Giữ lại điều kiện đã nhập sau khi tìm kiếm.
             ViewBag.Keyword = keyword;
+            ViewBag.CategoryId = categoryId;
+            ViewBag.Location = location;
 
             return View(jobs);
         }

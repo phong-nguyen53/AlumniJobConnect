@@ -1,151 +1,67 @@
 @{
-    ViewData["Title"] = "Trợ lý AI doanh nghiệp";
+    ViewData["Title"] = "Trợ lý AI doanh nghiệp & việc làm";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
-<style>
-    .ac-page{max-width:1080px;margin:35px auto;padding:0 18px;color:#183e33}
-    .ac-card{background:white;border:1px solid #dceae4;border-radius:22px;overflow:hidden;box-shadow:0 14px 45px #123d3010}
-    .ac-header{padding:28px;background:#effaf5;border-bottom:1px solid #dceae4;display:flex;gap:18px;justify-content:space-between;align-items:center}
-    .ac-header h1{font-size:25px;margin:0 0 9px;font-weight:700}
-    .ac-header p{margin:0;line-height:1.6;color:#426556}
-    .ac-reset{background:white;color:#176b51;border:1px solid #bedace;border-radius:10px;padding:10px 16px;white-space:nowrap;cursor:pointer}
-    .ac-chat{height:480px;overflow:auto;padding:24px;background:#fbfefc}
-    .ac-msg{max-width:90%;margin-bottom:22px}
-    .ac-msg strong{display:block;font-size:13px;margin-bottom:8px}
-    .ac-bubble{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.75;padding:15px 19px;background:white;border:1px solid #dceae4;border-radius:3px 17px 17px}
-    .ac-mine{margin-left:auto}
-    .ac-mine strong{text-align:right}
-    .ac-mine .ac-bubble{background:#008d69;border-color:#008d69;color:white;border-radius:17px 3px 17px 17px}
-    .ac-links{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}
-    .ac-links a{border:1px solid #cce6d9;border-radius:8px;padding:6px 10px;color:#087752;background:#f0faf5;font-size:13px;text-decoration:none}
-    .ac-suggest{display:flex;flex-wrap:wrap;gap:8px;padding:15px 24px;border-top:1px solid #e4eee8}
-    .ac-suggest button{border:1px solid #d4e8dd;background:white;border-radius:20px;padding:8px 13px;color:#1f614b;cursor:pointer}
-    .ac-form{padding:0 24px 22px}
-    .ac-compose{display:flex;gap:12px}
-    .ac-compose textarea{flex:1;min-width:0;border:1px solid #bedace;border-radius:12px;padding:13px;resize:vertical;min-height:65px;font:inherit}
-    .ac-send{border:0;background:#009b72;color:white;border-radius:12px;padding:0 24px;font-weight:700;cursor:pointer}
-    .ac-status{min-height:24px;font-size:13px;color:#536e62;margin:9px 0}
-    .ac-error{color:#b62343;background:#fff0f3;padding:12px;border-radius:9px;margin-bottom:12px}
-    .ac-note{font-size:12px;color:#576f63;line-height:1.6;margin:12px 0 0}
-    .ac-page button:disabled{opacity:.55;cursor:wait}
-    @@media(max-width:600px){.ac-header{padding:20px;align-items:flex-start;flex-direction:column}.ac-chat{height:420px;padding:16px}.ac-msg{max-width:96%}.ac-form{padding:0 16px 16px}.ac-suggest{padding:12px 16px}.ac-send{padding:0 15px}}
-</style>
-<main class="ac-page">
-    <div class="ac-card">
-        <header class="ac-header">
-            <div>
-                <h1>Trợ lý AI doanh nghiệp &amp; việc làm</h1>
-                <p>Bạn hỏi, AI tra cứu dữ liệu trên AlumniJobConnect và trả lời.</p>
-            </div>
-            <button type="button" class="ac-reset" id="ac-reset">Cuộc trò chuyện mới</button>
-        </header>
-        <div id="ac-chat" class="ac-chat" role="log" aria-live="polite" aria-label="Nội dung trò chuyện">
-            <div class="ac-msg">
-                <strong>Trợ lý AI</strong>
-                <div class="ac-bubble">Chào bạn! Bạn muốn tìm hiểu công ty nào hoặc tìm công việc như thế nào? Bạn có thể hỏi về địa chỉ, lĩnh vực, vị trí đang tuyển, mức lương và yêu cầu.</div>
-            </div>
+<link rel="stylesheet" href="~/assets/css/aichat-history.css" asp-append-version="true" />
+<div class="aichat-page" id="aichat-app"
+     data-send="@Url.Action("Send", "AiChat", new { area = "" })"
+     data-history="@Url.Action("History", "AiChat", new { area = "" })"
+     data-messages="@Url.Action("Messages", "AiChat", new { area = "" })"
+     data-delete="@Url.Action("Delete", "AiChat", new { area = "" })">
+    <div class="aichat-intro">
+        <div>
+            <span class="aichat-eyebrow">ALUMNIJOBCONNECT / TRỢ LÝ NGHỀ NGHIỆP</span>
+            <h1>Cơ hội phù hợp, bắt đầu từ một câu hỏi.</h1>
+            <p>Tìm hiểu doanh nghiệp và việc làm qua dữ liệu trên hệ thống.</p>
         </div>
-        <div class="ac-suggest">
-            <button type="button" data-question="Có việc lập trình ở Vinh không?">Việc lập trình ở Vinh</button>
-            <button type="button" data-question="Có những doanh nghiệp nào trên hệ thống?">Danh sách doanh nghiệp</button>
-            <button type="button" data-question="Có tin nào với khoảng lương đạt từ 10 triệu đồng không?">Việc lương từ 10 triệu</button>
-        </div>
-        <form id="ac-form" class="ac-form">
-            @Html.AntiForgeryToken()
-            <div id="ac-error" class="ac-error" role="alert" hidden></div>
-            <div id="ac-status" class="ac-status" role="status"></div>
-            <div class="ac-compose">
-                <textarea id="ac-question" maxlength="1500" required aria-label="Câu hỏi"
-                          placeholder="Nhập câu hỏi của bạn… Enter để gửi, Shift + Enter để xuống dòng."></textarea>
-                <button id="ac-send" class="ac-send" type="submit">Gửi</button>
-            </div>
-            <p class="ac-note">AI có thể nhầm; hãy đối chiếu đường dẫn dữ liệu. Nội dung câu hỏi và dữ liệu liên quan được gửi đến OpenAI. Không nhập thông tin bí mật. Chat không gửi tin cho doanh nghiệp. Tải lại trang sẽ bắt đầu cuộc trò chuyện mới.</p>
-        </form>
+        <span class="aichat-label">✦ Hỗ trợ bằng AI</span>
     </div>
-</main>
-<script>
-(() => {
-    const endpoint = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Url.Action("Send", "AiChat", new { area = "" })));
-    const form = document.getElementById('ac-form');
-    const chat = document.getElementById('ac-chat');
-    const question = document.getElementById('ac-question');
-    const send = document.getElementById('ac-send');
-    const reset = document.getElementById('ac-reset');
-    const error = document.getElementById('ac-error');
-    const status = document.getElementById('ac-status');
-    const suggestions = [...document.querySelectorAll('[data-question]')];
-    const welcome = chat.innerHTML;
-    let history = [], busy = false;
-    function add(role, text, sources = []) {
-        const row = document.createElement('div');
-        row.className = 'ac-msg' + (role === 'user' ? ' ac-mine' : '');
-        const label = document.createElement('strong');
-        label.textContent = role === 'user' ? 'Bạn' : 'Trợ lý AI';
-        const bubble = document.createElement('div');
-        bubble.className = 'ac-bubble'; bubble.textContent = text;
-        row.append(label, bubble);
-        if (sources.length) {
-            const links = document.createElement('div'); links.className = 'ac-links';
-            for (const source of sources) {
-                const url = new URL(source.url, window.location.origin);
-                if (url.origin !== window.location.origin ||
-                    !/^\/(Jobs|CompanyProfile)\/Details(?:\/|\?)/i.test(url.pathname + url.search)) continue;
-                const a = document.createElement('a');
-                a.href = url.href; a.textContent = 'Xem: ' + source.label;
-                links.appendChild(a);
-            }
-            row.appendChild(links);
-        }
-        chat.appendChild(row); chat.scrollTop = chat.scrollHeight;
-        return row;
-    }
-    form.addEventListener('submit', async e => {
-        e.preventDefault();
-        const message = question.value.trim();
-        if (busy || !message) return;
-        busy = true;
-        send.disabled = reset.disabled = question.disabled = true;
-        suggestions.forEach(b => b.disabled = true);
-        error.hidden = true; status.textContent = 'Đang tra cứu và soạn câu trả lời…';
-        const pending = add('user', message);
-        try {
-            const response = await fetch(endpoint, {
-                method: 'POST', credentials: 'same-origin',
-                headers: {'Content-Type':'application/json',
-                    'RequestVerificationToken': form.querySelector('[name="__RequestVerificationToken"]').value},
-                body: JSON.stringify({message, history})
-            });
-            if (response.redirected) throw new Error('Phiên đăng nhập đã hết. Vui lòng đăng nhập lại.');
-            const data = await response.json().catch(() => ({}));
-            if (!response.ok) throw new Error(data.error || 'Chưa gửi được câu hỏi. Hãy tải lại trang và thử lại.');
-            if (!data.reply) throw new Error('Chưa nhận được nội dung trả lời.');
-            add('assistant', data.reply, data.sources || []);
-            history.push({role:'user',content:message},
-                {role:'assistant',content:data.reply.slice(0,5000)});
-            history = history.slice(-12);
-            question.value = '';
-        } catch (ex) {
-            pending.remove();
-            error.textContent = ex.message || 'Lỗi kết nối. Vui lòng thử lại.';
-            error.hidden = false;
-        } finally {
-            busy = false; send.disabled = reset.disabled = question.disabled = false;
-            suggestions.forEach(b => b.disabled = false);
-            status.textContent = ''; question.focus();
-        }
-    });
-    question.addEventListener('keydown', e => {
-        if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) {
-            e.preventDefault(); form.requestSubmit();
-        }
-    });
-    suggestions.forEach(b => b.addEventListener('click', () => {
-        question.value = b.dataset.question; form.requestSubmit();
-    }));
-    reset.addEventListener('click', () => {
-        if (busy) return;
-        history = []; chat.innerHTML = welcome; question.value = '';
-        error.hidden = true; question.focus();
-    });
-})();
-</script>
+    <div class="aichat-workspace">
+        <aside class="aichat-sidebar" aria-label="Lịch sử trò chuyện">
+            <button class="aichat-new" id="aichat-new" type="button">＋ Cuộc trò chuyện mới</button>
+            <div class="aichat-history-heading">
+                <h2>Lịch sử trò chuyện</h2>
+                <button type="button" id="aichat-refresh" class="aichat-icon-button" aria-label="Tải lại lịch sử" title="Tải lại lịch sử">↻</button>
+            </div>
+            <p class="aichat-sidebar-note">Các cuộc trò chuyện của riêng bạn.</p>
+            <div id="aichat-history-list" class="aichat-history-list"></div>
+            <p id="aichat-history-empty" class="aichat-history-empty" hidden>Chưa có cuộc trò chuyện.<br>Hãy gửi câu hỏi đầu tiên nhé.</p>
+            <button type="button" id="aichat-more-history" class="aichat-more" hidden>Xem thêm lịch sử</button>
+            <div class="aichat-saved-note"><span>◷</span><p>Lịch sử được lưu theo tài khoản.<br>Bạn có thể quay lại và hỏi tiếp.</p></div>
+        </aside>
+        <section class="aichat-main" aria-label="Trợ lý AI">
+            <header class="aichat-chat-header">
+                <div class="aichat-assistant-icon" aria-hidden="true">✦</div>
+                <div class="aichat-header-copy">
+                    <h2 id="aichat-title">Trợ lý AI doanh nghiệp & việc làm</h2>
+                    <p><span class="aichat-dot"></span> Hỏi về công ty, vị trí tuyển dụng và yêu cầu công việc</p>
+                </div>
+            </header>
+            <div id="aichat-error" class="aichat-error" role="alert" hidden></div>
+            <div class="aichat-timeline" id="aichat-timeline">
+                <button id="aichat-older" type="button" class="aichat-more aichat-older" hidden>Xem tin nhắn trước</button>
+                <div id="aichat-log" role="log" aria-live="polite" aria-label="Nội dung cuộc trò chuyện"></div>
+            </div>
+            <div class="aichat-suggestions" id="aichat-suggestions">
+                <span>Thử hỏi</span>
+                <button type="button" data-question="Có những doanh nghiệp nào trên hệ thống?">Doanh nghiệp trên hệ thống</button>
+                <button type="button" data-question="Có việc lập trình ở Vinh không?">Việc lập trình ở Vinh</button>
+                <button type="button" data-question="Có tin nào với khoảng lương đạt từ 10 triệu đồng không?">Việc lương từ 10 triệu</button>
+            </div>
+            <form id="aichat-form" class="aichat-form">
+                @Html.AntiForgeryToken()
+                <label class="aichat-visually-hidden" for="aichat-question">Câu hỏi của bạn</label>
+                <div class="aichat-compose">
+                    <textarea id="aichat-question" rows="2" maxlength="1500" required placeholder="Bạn muốn tìm hiểu điều gì về doanh nghiệp hoặc việc làm?"></textarea>
+                    <div class="aichat-compose-bottom">
+                        <span id="aichat-count">0 / 1500</span>
+                        <button id="aichat-send" type="submit">Gửi câu hỏi <span aria-hidden="true">↗</span></button>
+                    </div>
+                </div>
+                <div class="aichat-helper"><span id="aichat-status" role="status">Enter để gửi · Shift + Enter để xuống dòng</span><span>Lưu lịch sử tự động</span></div>
+                <p class="aichat-disclosure">AI có thể nhầm; hãy đối chiếu nguồn tham khảo. Câu hỏi và dữ liệu liên quan được gửi đến OpenAI để xử lý. Không nhập thông tin bí mật. Đây là trợ lý AI, không phải tin nhắn gửi doanh nghiệp.</p>
+            </form>
+        </section>
+    </div>
+</div>
+<script src="~/assets/js/aichat-history.js" asp-append-version="true" defer></script>
