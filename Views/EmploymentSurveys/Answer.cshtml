@@ -2,33 +2,149 @@
 @using AlumniJobConnect.Features.EmploymentSurveys
 @using Microsoft.AspNetCore.Mvc.Rendering
 @{
-    ViewData["Title"]=Model.Survey.Title;
-    Layout="~/Views/Shared/_Layout.cshtml";
-    var open=Model.Survey.IsOpen;
+    ViewData["Title"] = Model.Survey.Title;
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var open = Model.Survey.IsOpen;
+    var notesLength = Model.Input.Notes?.Length ?? 0;
 }
 <link rel="stylesheet" href="~/assets/css/employment-surveys.css" asp-append-version="true" />
-<div class="es-page es-form-page"><a class="es-text-link" asp-action="Index">← Khảo sát của tôi</a>
-    <div class="es-heading"><div><span class="es-eyebrow">KHẢO SÁT VIỆC LÀM CỰU SINH VIÊN</span><h1>@Model.Survey.Title</h1><p>Từ @Model.Survey.StartsOn.ToString("dd/MM/yyyy") đến hết @Model.Survey.EndsOn.ToString("dd/MM/yyyy") · @Model.Survey.State</p></div></div>
-    @if(TempData["SurveySuccess"] is string message){<div class="es-success" role="status">@message</div>}
-    @if(!open){<div class="es-note">Đợt khảo sát hiện không nhận câu trả lời. Bạn có thể xem lại nội dung đã gửi.</div>}
-    @if(!string.IsNullOrWhiteSpace(Model.Survey.Description)){<p class="es-pre">@Model.Survey.Description</p>}
+
+<div class="es-page es-form-page">
+
+    <a class="es-back" asp-action="Index">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
+        Khảo sát của tôi
+    </a>
+
+    <header class="es-hero es-hero-compact">
+        <span class="es-eyebrow">KHẢO SÁT VIỆC LÀM CỰU SINH VIÊN</span>
+        <h1>@Model.Survey.Title</h1>
+        <div class="es-hero-meta">
+            <span class="es-chip">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="3" /><path d="M16 2v4M8 2v4M3 10h18" /></svg>
+                @Model.Survey.StartsOn.ToString("dd/MM/yyyy") – hết ngày @Model.Survey.EndsOn.ToString("dd/MM/yyyy")
+            </span>
+            <span class="es-chip @(open ? "es-chip-live" : "")"><i class="es-dot"></i>@Model.Survey.State</span>
+        </div>
+    </header>
+
+    @if (TempData["SurveySuccess"] is string message)
+    {
+        <div class="es-success" role="status">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10" /><path d="M8 12.5l3 3 5-6" /></svg>
+            <span>@message</span>
+        </div>
+    }
+
+    @if (!open)
+    {
+        <div class="es-note es-closed-note">Đợt khảo sát hiện không nhận câu trả lời. Bạn có thể xem lại nội dung đã gửi.</div>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(Model.Survey.Description))
+    {
+        <div class="es-intro"><p class="es-pre">@Model.Survey.Description</p></div>
+    }
+
     <form asp-action="Answer" asp-route-id="@Model.Survey.SurveyId" method="post" class="es-panel es-form" id="es-answer-form">
         <div asp-validation-summary="All" class="es-validation" role="alert"></div>
-        <input type="hidden" asp-for="Input.SurveyId"/><input type="hidden" asp-for="Input.Version"/>
+        <input type="hidden" asp-for="Input.SurveyId" /><input type="hidden" asp-for="Input.Version" />
+
         <fieldset disabled="@(!open)">
-            <div class="es-field"><label asp-for="Input.EmploymentStatus">Tình trạng việc làm hiện tại *</label><select asp-for="Input.EmploymentStatus" id="es-employment-status" asp-items="@(SurveyLabels.Statuses.Select(p=>new SelectListItem(p.Value,p.Key)))" required><option value="">Chọn tình trạng việc làm</option></select><span asp-validation-for="Input.EmploymentStatus" class="es-validation"></span></div>
-            <div id="es-work-fields">
-                <div class="es-field"><label asp-for="Input.CompanyName">Tên công ty / đơn vị đang làm việc *</label><input asp-for="Input.CompanyName" maxlength="200"/><span asp-validation-for="Input.CompanyName" class="es-validation"></span></div>
-                <div class="es-field"><label asp-for="Input.JobTitle">Vị trí công việc *</label><input asp-for="Input.JobTitle" maxlength="150"/><span asp-validation-for="Input.JobTitle" class="es-validation"></span></div>
-                <div class="es-grid-two"><div class="es-field"><label asp-for="Input.IsMajorRelated">Công việc phù hợp ngành học? *</label><select asp-for="Input.IsMajorRelated"><option value="">Chọn câu trả lời</option><option value="true">Có</option><option value="false">Không</option></select><span asp-validation-for="Input.IsMajorRelated" class="es-validation"></span></div>
-                    <div class="es-field"><label asp-for="Input.SalaryRange">Thu nhập hàng tháng (VND)</label><select asp-for="Input.SalaryRange" asp-items="@(SurveyLabels.Salaries.Select(p=>new SelectListItem(p.Value,p.Key)))"><option value="">Không muốn cung cấp</option></select><small class="es-muted">Thông tin tự nguyện, không bắt buộc.</small></div></div>
-            </div>
-            <div class="es-field es-check"><input asp-for="Input.NeedsSupport"/><label asp-for="Input.NeedsSupport">Tôi cần hỗ trợ tìm kiếm việc làm</label></div>
-            <div class="es-field"><label asp-for="Input.Notes">Ghi chú hoặc nhu cầu hỗ trợ</label><textarea asp-for="Input.Notes" rows="4" maxlength="1000" placeholder="Bạn muốn được hỗ trợ về vị trí, kỹ năng hoặc định hướng nào?"></textarea><span asp-validation-for="Input.Notes" class="es-validation"></span></div>
-            @if(open){<button type="submit" class="es-button">@(Model.Input.Version>0 ? "Lưu thay đổi":"Gửi câu trả lời")</button>}
+
+            <section class="es-block">
+                <div class="es-block-head">
+                    <span class="es-step">1</span>
+                    <div>
+                        <h2>Tình hình việc làm</h2>
+                        <p>Cho nhà trường biết bạn đang ở giai đoạn nào của sự nghiệp.</p>
+                    </div>
+                </div>
+
+                <div class="es-field">
+                    <label asp-for="Input.EmploymentStatus">Tình trạng việc làm hiện tại *</label>
+                    <select asp-for="Input.EmploymentStatus" id="es-employment-status" aria-controls="es-work-fields" asp-items="@(SurveyLabels.Statuses.Select(p => new SelectListItem(p.Value, p.Key)))" required>
+                        <option value="">Chọn tình trạng việc làm</option>
+                    </select>
+                    <span asp-validation-for="Input.EmploymentStatus" class="es-validation"></span>
+                </div>
+
+                <div id="es-work-fields" class="es-work-fields">
+                    <div class="es-field">
+                        <label asp-for="Input.CompanyName">Tên công ty / đơn vị đang làm việc *</label>
+                        <input asp-for="Input.CompanyName" maxlength="200" placeholder="VD: Công ty TNHH ABC" autocomplete="organization" />
+                        <span asp-validation-for="Input.CompanyName" class="es-validation"></span>
+                    </div>
+                    <div class="es-field" style="margin-top:22px">
+                        <label asp-for="Input.JobTitle">Vị trí công việc *</label>
+                        <input asp-for="Input.JobTitle" maxlength="150" placeholder="VD: Lập trình viên, Kế toán…" autocomplete="organization-title" />
+                        <span asp-validation-for="Input.JobTitle" class="es-validation"></span>
+                    </div>
+                    <div class="es-grid-two">
+                        <div class="es-field">
+                            <label asp-for="Input.IsMajorRelated">Công việc phù hợp ngành học? *</label>
+                            <select asp-for="Input.IsMajorRelated">
+                                <option value="">Chọn câu trả lời</option>
+                                <option value="true">Có</option>
+                                <option value="false">Không</option>
+                            </select>
+                            <span asp-validation-for="Input.IsMajorRelated" class="es-validation"></span>
+                        </div>
+                        <div class="es-field">
+                            <label asp-for="Input.SalaryRange">Thu nhập hàng tháng (VND)</label>
+                            <select asp-for="Input.SalaryRange" asp-items="@(SurveyLabels.Salaries.Select(p => new SelectListItem(p.Value, p.Key)))">
+                                <option value="">Không muốn cung cấp</option>
+                            </select>
+                            <small class="es-muted">Thông tin tự nguyện, không bắt buộc.</small>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="es-block">
+                <div class="es-block-head">
+                    <span class="es-step">2</span>
+                    <div>
+                        <h2>Nhu cầu hỗ trợ</h2>
+                        <p>Giúp nhà trường và doanh nghiệp đồng hành cùng bạn tốt hơn.</p>
+                    </div>
+                </div>
+
+                <div class="es-field es-check es-check-card">
+                    <input asp-for="Input.NeedsSupport" />
+                    <label asp-for="Input.NeedsSupport">Tôi cần hỗ trợ tìm kiếm việc làm</label>
+                </div>
+
+                <div class="es-field">
+                    <label asp-for="Input.Notes">Ghi chú hoặc nhu cầu hỗ trợ</label>
+                    <textarea asp-for="Input.Notes" rows="4" maxlength="1000" placeholder="Bạn muốn được hỗ trợ về vị trí, kỹ năng hoặc định hướng nào?"></textarea>
+                    <div class="es-counter"><span id="es-notes-count">@notesLength</span>/1000</div>
+                    <span asp-validation-for="Input.Notes" class="es-validation"></span>
+                </div>
+            </section>
+
+            @if (open)
+            {
+                <div class="es-submit-row">
+                    <button type="submit" class="es-button es-button-lg">
+                        <span class="es-spinner" aria-hidden="true"></span>
+                        @(Model.Input.Version > 0 ? "Lưu thay đổi" : "Gửi câu trả lời")
+                        <span class="es-arrow" aria-hidden="true">→</span>
+                    </button>
+                </div>
+            }
         </fieldset>
-        <p class="es-muted es-small">Câu trả lời chỉ hiển thị cho bạn và quản trị viên để thống kê, hỗ trợ việc làm. Thông tin này không tự thay đổi hồ sơ cá nhân.</p>
-        @if(Model.UpdatedAt.HasValue){<p class="es-muted es-small">Đã cập nhật: @Model.UpdatedAt.Value.ToString("dd/MM/yyyy HH:mm") (giờ Việt Nam)</p>}
+
+        <div class="es-privacy">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2.5" /><path d="M8 11V7a4 4 0 0 1 8 0v4" /></svg>
+            <div>
+                <p>Câu trả lời chỉ hiển thị cho bạn và quản trị viên để thống kê, hỗ trợ việc làm. Thông tin này không tự thay đổi hồ sơ cá nhân.</p>
+                @if (Model.UpdatedAt.HasValue)
+                {
+                    <p>Đã cập nhật: @Model.UpdatedAt.Value.ToString("dd/MM/yyyy HH:mm") (giờ Việt Nam)</p>
+                }
+            </div>
+        </div>
     </form>
 </div>
 <script src="~/assets/js/employment-surveys.js" asp-append-version="true" defer></script>
