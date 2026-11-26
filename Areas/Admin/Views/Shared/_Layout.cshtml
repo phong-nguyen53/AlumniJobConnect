@@ -409,7 +409,7 @@
                     <li class="nav-item">
                         <a class="nav-link"
                            href="@Url.Action("Index", "EmploymentSurveys",
-                                               new { area = "Admin" })">
+                                                                                                     new { area = "Admin" })">
                             <i class="mdi mdi-clipboard-text menu-icon"
                                aria-hidden="true"></i>
 
@@ -420,6 +420,12 @@
                         <a class="nav-link" href="@Url.Action("Index", "Menus", new { area = "Admin" })" title="Quản lý menu">
                             <i class="mdi mdi-menu menu-icon" aria-hidden="true"></i>
                             <span class="menu-title">Quản lý menu</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="@Url.Action("Index", "JobReports", new { area = "Admin" })" title="Báo cáo vi phạm">
+                            <i class="mdi mdi-flag menu-icon" aria-hidden="true"></i>
+                            <span class="menu-title">Báo cáo vi phạm</span>
                         </a>
                     </li>
                 </ul>

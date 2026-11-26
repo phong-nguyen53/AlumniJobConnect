@@ -1,0 +1,27 @@
+@model AlumniJobConnect.Features.JobReports.ReportInput
+@using AlumniJobConnect.Features.JobReports
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@{ ViewData["Title"] = "Báo cáo tin tuyển dụng"; }
+<link rel="stylesheet" href="@Url.Content("~/assets/css/job-reports.css")" asp-append-version="true" />
+<section class="jr-page">
+    <a class="jr-link" href="@Url.Action("Details", "Jobs", new { area="", id=Model.JobPostId })">← Quay lại tin tuyển dụng</a>
+    <div class="jr-heading"><div><span class="jr-eyebrow">CÙNG XÂY DỰNG MÔI TRƯỜNG TUYỂN DỤNG AN TOÀN</span><h1>Báo cáo tin tuyển dụng</h1><p>@Model.JobTitle · @Model.CompanyName</p></div></div>
+    <form method="post" action="@Url.Action("Create", "JobReports", new { area="" })" asp-antiforgery="false" class="jr-panel jr-form">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="JobPostId" value="@Model.JobPostId" />
+        <div asp-validation-summary="All" class="jr-error" role="alert"></div>
+        <label for="reportReason">Lý do báo cáo <span>*</span></label>
+        <select id="reportReason" name="Reason" required>
+            <option value="">Chọn lý do cần kiểm tra</option>
+            @foreach (var reason in ReportLabels.Reasons)
+            {
+                <option value="@reason.Key" selected="@(reason.Key == Model.Reason)">@reason.Value</option>
+            }
+        </select>
+        <label for="reportDetails">Nội dung phản ánh <span>*</span></label>
+        <textarea id="reportDetails" name="Details" rows="6" maxlength="2000" required placeholder="Mô tả thông tin bạn cho rằng cần kiểm tra…">@Model.Details</textarea>
+        <small>Tối đa 2.000 ký tự. Không đưa mật khẩu hoặc thông tin thanh toán vào báo cáo.</small>
+        <div class="jr-note">Quản trị viên sẽ kiểm tra trước khi quyết định giữ hoặc gỡ tin. Mỗi tài khoản gửi một báo cáo cho một tin tuyển dụng.</div>
+        <div class="jr-actions"><button class="jr-button" type="submit">Gửi báo cáo</button><a class="jr-button jr-outline" href="@Url.Action("Index", "JobReports", new { area="" })">Báo cáo của tôi</a></div>
+    </form>
+</section>

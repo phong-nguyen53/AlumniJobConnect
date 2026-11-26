@@ -1,561 +1,680 @@
 ﻿@using System.Linq
 @model System.Collections.Generic.IReadOnlyList<AlumniJobConnect.Models.Company>
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
 
 @{
     Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
-    ViewData["Title"] = "Danh sách doanh nghiệp";
-
-    var totalCompanies = Model.Count;
-    var allPosts = Model.Sum(c => c.JobPosts.Count);
-    var allApproved = Model.Sum(c => c.JobPosts.Count(j => j.ApprovalStatus == "Approved"));
-    var noPostCount = Model.Count(c => c.JobPosts.Count == 0);
+    ViewData["Title"] = "Quản lý doanh nghiệp";
 
     var industries = Model
         .Where(c => !string.IsNullOrWhiteSpace(c.Industry))
         .Select(c => c.Industry!.Trim())
         .Distinct()
-        .OrderBy(i => i)
+        .OrderBy(name => name)
         .ToList();
 
-    // Bảng màu avatar xoay vòng theo mã doanh nghiệp
-    var avatarPalette = new[]
-    {
-        "linear-gradient(135deg,#4f8cff,#6f5bff)",
-        "linear-gradient(135deg,#16c79a,#0ea5a4)",
-        "linear-gradient(135deg,#ff9a5a,#ff5f6d)",
-        "linear-gradient(135deg,#a855f7,#ec4899)",
-        "linear-gradient(135deg,#f59e0b,#f97316)",
-        "linear-gradient(135deg,#0ea5e9,#2563eb)"
-    };
+    var verifiedCount = Model.Count(c =>
+        c.VerificationStatus == "Verified");
+
+    var rejectedCount = Model.Count(c =>
+        c.VerificationStatus == "Rejected");
+
+    var pendingCount = Model.Count - verifiedCount - rejectedCount;
 }
 
 <style>
-    .cp-page {
-        --cp-radius: 1.1rem;
-        --cp-border: #e8ebf2;
+    .cvs-page {
+        color: #294637;
+        font-family: "Segoe UI", Arial, sans-serif;
     }
 
-    /* ===== Thẻ thống kê ===== */
-    .cp-stat {
-        border: 1px solid var(--cp-border);
-        border-radius: var(--cp-radius);
-        transition: transform .18s ease, box-shadow .18s ease;
-        overflow: hidden;
-        position: relative;
+        .cvs-page * {
+            box-sizing: border-box;
+        }
+
+    .cvs-heading {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 18px;
+        margin-bottom: 25px;
     }
 
-        .cp-stat::after {
-            content: "";
-            position: absolute;
-            right: -18px;
-            top: -18px;
-            width: 86px;
-            height: 86px;
-            border-radius: 50%;
-            background: currentColor;
-            opacity: .07;
-        }
-
-        .cp-stat:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 .75rem 1.5rem rgba(31,45,61,.09) !important;
-        }
-
-        .cp-stat .cp-bar {
-            width: 6px;
-            height: 46px;
-            border-radius: 99px;
-            display: inline-block;
-            flex-shrink: 0;
-        }
-
-        .cp-stat .cp-num {
-            font-size: 1.65rem;
-            line-height: 1.1;
-            font-weight: 700;
-            color: #1f2d3d;
-        }
-
-    /* ===== Khung chính ===== */
-    .cp-main {
-        border: 1px solid var(--cp-border);
-        border-radius: var(--cp-radius);
-        overflow: hidden;
+    .cvs-page h1 {
+        margin: 0 0 9px;
+        color: #244532;
+        font: 700 29px/1.4 "Segoe UI", Arial, sans-serif;
     }
 
-    .cp-head {
-        padding: 1.5rem 1.5rem 1.25rem;
-        background: linear-gradient(135deg, #f4f7ff 0%, #ffffff 70%);
-        border-bottom: 1px solid var(--cp-border);
+    .cvs-heading p {
+        margin: 0;
+        color: #7a8c80;
+        font-size: 14px;
     }
 
-    .cp-add-btn {
-        border: 0;
-        border-radius: .75rem;
-        padding: .65rem 1.4rem;
-        font-weight: 600;
-        background: linear-gradient(135deg, #3b82f6, #4f46e5);
-        box-shadow: 0 .4rem 1rem rgba(79,70,229,.28);
-        transition: transform .15s ease, box-shadow .15s ease;
+    .cvs-stats {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 16px;
+        margin-bottom: 24px;
     }
 
-        .cp-add-btn:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 .6rem 1.2rem rgba(79,70,229,.35);
-        }
-
-    /* ===== Thanh công cụ ===== */
-    .cp-toolbar {
-        padding: 1.1rem 1.5rem;
-        border-bottom: 1px solid var(--cp-border);
+    .cvs-stat {
+        padding: 21px;
         background: #fff;
+        border: 1px solid #e0e9e3;
+        border-radius: 15px;
     }
 
-        .cp-toolbar .input-group-text,
-        .cp-toolbar .form-control,
-        .cp-toolbar .form-select {
-            border-color: #dfe4ee;
-            background-color: #f8f9fc;
-            height: 44px;
+        .cvs-stat span {
+            display: block;
+            color: #7a8c80;
+            font-size: 12px;
         }
 
-        .cp-toolbar .input-group-text {
-            border-radius: .75rem 0 0 .75rem;
+        .cvs-stat strong {
+            display: block;
+            margin-top: 10px;
+            color: #00996d;
+            font-size: 29px;
         }
 
-        .cp-toolbar .form-control {
-            border-radius: .75rem;
+    .cvs-panel {
+        background: #fff;
+        border: 1px solid #e0e9e3;
+        border-radius: 17px;
+        overflow: hidden;
+    }
+
+    .cvs-toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 11px;
+        padding: 20px;
+        border-bottom: 1px solid #e7eee8;
+    }
+
+        .cvs-toolbar input,
+        .cvs-toolbar select {
+            min-width: 140px;
+            padding: 11px 12px;
+            border: 1px solid #d6e3da;
+            border-radius: 9px;
+            background: #fbfdfb;
+            color: #395b47;
+            font: 13px "Segoe UI", Arial, sans-serif;
         }
 
-        .cp-toolbar .form-select, .cp-toolbar .btn {
-            border-radius: .75rem;
+        .cvs-toolbar input {
+            flex: 1 1 240px;
         }
 
-            .cp-toolbar .form-control:focus,
-            .cp-toolbar .form-select:focus {
-                background: #fff;
-                border-color: #86b7fe;
-                box-shadow: 0 0 0 .2rem rgba(13,110,253,.12);
+            .cvs-toolbar input:focus,
+            .cvs-toolbar select:focus {
+                outline: 2px solid #9ad8b9;
+                outline-offset: 2px;
             }
 
-    /* ===== Bảng ===== */
-    .cp-table-wrap {
-        max-height: 640px;
-        overflow: auto;
+    .cvs-table-wrap {
+        overflow-x: auto;
     }
 
-    .cp-table {
-        margin: 0;
+    .cvs-table {
+        width: 100%;
+        min-width: 1040px;
+        border-collapse: collapse;
+        font-size: 13px;
     }
 
-        .cp-table thead th {
-            position: sticky;
-            top: 0;
-            z-index: 1;
-            background: #f8f9fc;
-            font-size: .72rem;
-            letter-spacing: .06em;
-            text-transform: uppercase;
-            color: #7b8794;
-            font-weight: 700;
-            border-bottom: 1px solid var(--cp-border);
-            padding: .85rem 1rem;
+        .cvs-table th {
+            padding: 17px;
+            background: #f5faf6;
+            text-align: left;
+            color: #7c8e81;
+            font-weight: 600;
             white-space: nowrap;
         }
 
-        .cp-table tbody td {
-            padding: 1rem;
-            border-color: #f0f2f7;
+        .cvs-table td {
+            padding: 19px 17px;
+            border-top: 1px solid #edf2ee;
+            vertical-align: middle;
         }
 
-        .cp-table tbody tr {
-            transition: background-color .12s ease;
-        }
-
-            .cp-table tbody tr:hover {
-                background-color: #f6f9ff;
-            }
-
-    .cp-avatar {
-        width: 44px;
-        height: 44px;
-        border-radius: .85rem;
-        color: #fff;
-        font-weight: 700;
-        font-size: 1.05rem;
-        display: inline-flex;
+    .cvs-company {
+        display: flex;
         align-items: center;
-        justify-content: center;
+        gap: 12px;
+        min-width: 200px;
+        max-width: 320px;
+    }
+
+    .cvs-avatar {
+        display: grid;
+        place-items: center;
         flex-shrink: 0;
-        box-shadow: 0 .3rem .7rem rgba(0,0,0,.12);
-    }
-
-    .cp-name {
-        color: #1f2d3d;
-        font-weight: 600;
-    }
-
-    .cp-pill {
-        border-radius: 999px;
-        padding: .4rem .85rem;
-        font-weight: 600;
-        font-size: .78rem;
-    }
-
-    .cp-count {
-        min-width: 38px;
-        display: inline-block;
-        padding: .3rem .6rem;
-        border-radius: .6rem;
-        background: #f1f4f9;
+        width: 43px;
+        height: 43px;
+        border-radius: 12px;
+        background: #e4f5eb;
+        color: #00966a;
         font-weight: 700;
-        color: #3a4a5c;
+        font-size: 18px;
     }
 
-    /* ===== Nút thao tác ===== */
-    .cp-act {
-        padding: .38rem .85rem;
-        border-radius: .65rem;
-        font-weight: 500;
+    .cvs-company strong {
+        color: #2b4e39;
+        overflow-wrap: anywhere;
     }
 
-    .cp-lock {
-        display: inline-flex;
-        align-items: center;
-        gap: .35rem;
-        padding: .4rem .8rem;
-        border-radius: 999px;
-        background: #f6f7fa;
-        border: 1px dashed #d5dae4;
-        color: #7b8794;
-        font-size: .78rem;
+    .cvs-company small {
+        display: block;
+        margin-top: 5px;
+        color: #8b998f;
+        font-size: 11px;
+    }
+
+    .cvs-badge {
+        display: inline-block;
+        padding: 6px 10px;
+        border-radius: 25px;
+        font-size: 11px;
+        font-weight: 600;
         white-space: nowrap;
     }
 
-    .cp-footer {
-        padding: .85rem 1.5rem;
-        border-top: 1px solid var(--cp-border);
-        background: #fafbfd;
+    .cvs-verified {
+        background: #e5f6eb;
+        color: #16814d;
+    }
+
+    .cvs-pending {
+        background: #fff5dd;
+        color: #a47616;
+    }
+
+    .cvs-rejected {
+        background: #fff0ed;
+        color: #bd4a39;
+    }
+
+    .cvs-actions {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 7px;
+        min-width: 240px;
+    }
+
+        .cvs-actions form {
+            display: inline-flex;
+            flex-wrap: wrap;
+            gap: 7px;
+            margin: 0;
+        }
+
+    .cvs-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 8px 12px;
+        border: 1px solid #d5e4d9;
+        border-radius: 8px;
+        background: #fff;
+        color: #486552;
+        text-decoration: none !important;
+        font: 600 12px/1.5 "Segoe UI", Arial, sans-serif;
+        cursor: pointer;
+        white-space: nowrap;
+    }
+
+        .cvs-button:hover {
+            background: #f0f7f2;
+            color: #264b34;
+        }
+
+    .cvs-primary {
+        background: #009b72;
+        border-color: #009b72;
+        color: #fff !important;
+    }
+
+        .cvs-primary:hover {
+            background: #007d5b;
+        }
+
+    .cvs-danger {
+        color: #b64c3e;
+        border-color: #efd5ce;
+    }
+
+    .cvs-disabled {
+        color: #94a095;
+        font-size: 11px;
+    }
+
+    .cvs-message,
+    .cvs-error {
+        padding: 15px 18px;
+        border-radius: 11px;
+        margin-bottom: 20px;
+        font-size: 13px;
+        line-height: 1.8;
+    }
+
+    .cvs-message {
+        color: #226841;
+        background: #eaf7ee;
+        border: 1px solid #cfe8d7;
+    }
+
+    .cvs-error {
+        color: #a54836;
+        background: #fff2ee;
+        border: 1px solid #efd1c7;
+    }
+
+    .cvs-footer {
+        padding: 15px 20px;
+        background: #fbfdfb;
+        border-top: 1px solid #e8efe9;
+        color: #859388;
+        font-size: 12px;
+    }
+
+    .cvs-empty {
+        text-align: center;
+        padding: 45px !important;
+        color: #8b988f;
+    }
+
+    .cvs-page [hidden] {
+        display: none !important;
+    }
+
+    .cvs-page a:focus-visible,
+    .cvs-page button:focus-visible {
+        outline: 3px solid #8fd3ad;
+        outline-offset: 3px;
+    }
+
+    @@media (max-width: 800px) {
+        .cvs-stats {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .cvs-toolbar select {
+            flex: 1 1 160px;
+        }
+
+        .cvs-page h1 {
+            font-size: 25px;
+        }
     }
 </style>
 
-<div class="container-fluid py-4 cp-page">
-
-    @* ===== Thông báo ===== *@
-    @if (TempData["CompanySuccess"] is string successMessage)
-    {
-        <div class="alert alert-success alert-dismissible fade show border-0 shadow-sm" role="status">
-            @successMessage
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Đóng"></button>
+<section class="cvs-page">
+    <div class="cvs-heading">
+        <div>
+            <h1>Quản lý doanh nghiệp</h1>
+            <p>Kiểm tra hồ sơ và cập nhật trạng thái xác minh.</p>
         </div>
+
+        <a class="cvs-button cvs-primary"
+           href="@Url.RouteUrl("AdminCreateCompany")">
+            ＋ Thêm doanh nghiệp
+        </a>
+    </div>
+
+    @if (TempData["CompanySuccess"] is string success)
+    {
+        <div class="cvs-message" role="status">@success</div>
     }
 
-    @if (TempData["CompanyError"] is string errorMessage)
+    @if (TempData["CompanyError"] is string error)
     {
-        <div class="alert alert-warning alert-dismissible fade show border-0 shadow-sm" role="alert">
-            @errorMessage
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Đóng"></button>
-        </div>
+        <div class="cvs-error" role="alert">@error</div>
     }
 
-    @* ===== Thống kê nhanh ===== *@
-    <div class="row g-3 mb-4">
-        <div class="col-6 col-xl-3">
-            <div class="card cp-stat shadow-sm h-100 text-primary">
-                <div class="card-body d-flex align-items-center gap-3">
-                    <span class="cp-bar" style="background:linear-gradient(135deg,#4f8cff,#6f5bff)"></span>
-                    <div>
-                        <div class="text-muted small">Doanh nghiệp</div>
-                        <div class="cp-num">@totalCompanies</div>
-                    </div>
-                </div>
-            </div>
+    <div class="cvs-stats">
+        <div class="cvs-stat">
+            <span>Tổng doanh nghiệp</span>
+            <strong>@Model.Count</strong>
         </div>
-        <div class="col-6 col-xl-3">
-            <div class="card cp-stat shadow-sm h-100 text-info">
-                <div class="card-body d-flex align-items-center gap-3">
-                    <span class="cp-bar" style="background:linear-gradient(135deg,#0ea5e9,#2563eb)"></span>
-                    <div>
-                        <div class="text-muted small">Tổng số tin</div>
-                        <div class="cp-num">@allPosts</div>
-                    </div>
-                </div>
-            </div>
+        <div class="cvs-stat">
+            <span>Đã xác minh</span>
+            <strong>@verifiedCount</strong>
         </div>
-        <div class="col-6 col-xl-3">
-            <div class="card cp-stat shadow-sm h-100 text-success">
-                <div class="card-body d-flex align-items-center gap-3">
-                    <span class="cp-bar" style="background:linear-gradient(135deg,#16c79a,#0ea5a4)"></span>
-                    <div>
-                        <div class="text-muted small">Tin đã duyệt</div>
-                        <div class="cp-num">@allApproved</div>
-                    </div>
-                </div>
-            </div>
+        <div class="cvs-stat">
+            <span>Chưa xác minh</span>
+            <strong>@pendingCount</strong>
         </div>
-        <div class="col-6 col-xl-3">
-            <div class="card cp-stat shadow-sm h-100 text-warning">
-                <div class="card-body d-flex align-items-center gap-3">
-                    <span class="cp-bar" style="background:linear-gradient(135deg,#f59e0b,#f97316)"></span>
-                    <div>
-                        <div class="text-muted small">Chưa đăng tin</div>
-                        <div class="cp-num">@noPostCount</div>
-                    </div>
-                </div>
-            </div>
+        <div class="cvs-stat">
+            <span>Đã từ chối</span>
+            <strong>@rejectedCount</strong>
         </div>
     </div>
 
-    <div class="card cp-main shadow-sm">
+    <div class="cvs-panel">
+        <div class="cvs-toolbar">
+            <input id="cvsSearch"
+                   type="search"
+                   placeholder="Tìm tên doanh nghiệp hoặc ngành nghề..."
+                   aria-label="Tìm doanh nghiệp" />
 
-        @* ===== Tiêu đề + nút thêm ===== *@
-        <div class="cp-head d-flex flex-wrap justify-content-between align-items-center gap-3">
-            <div>
-                <h1 class="h4 fw-bold mb-1">Danh sách doanh nghiệp</h1>
-                <p class="text-muted mb-0">Xem hồ sơ và số tin tuyển dụng của từng doanh nghiệp.</p>
-            </div>
+            <select id="cvsIndustry" aria-label="Lọc ngành nghề">
+                <option value="">Mọi ngành nghề</option>
+                @foreach (var industry in industries)
+                {
+                    <option value="@industry">@industry</option>
+                }
+            </select>
 
+            <select id="cvsStatus" aria-label="Lọc xác minh">
+                <option value="">Mọi trạng thái</option>
+                <option value="Verified">Đã xác minh</option>
+                <option value="Pending">Chưa xác minh</option>
+                <option value="Rejected">Đã từ chối</option>
+            </select>
+
+            <select id="cvsPosts" aria-label="Lọc tin tuyển dụng">
+                <option value="">Mọi doanh nghiệp</option>
+                <option value="has">Đã có tin</option>
+                <option value="none">Chưa có tin</option>
+            </select>
+
+            <select id="cvsSort" aria-label="Sắp xếp">
+                <option value="default">Mặc định</option>
+                <option value="name-asc">Tên A → Z</option>
+                <option value="name-desc">Tên Z → A</option>
+                <option value="posts-desc">Nhiều tin nhất</option>
+                <option value="approved-desc">Nhiều tin đã duyệt nhất</option>
+            </select>
+
+            <button id="cvsReset" type="button" class="cvs-button">
+                Đặt lại
+            </button>
         </div>
 
-        @* ===== Thanh tìm kiếm + bộ lọc ===== *@
-        <div class="cp-toolbar">
-            <div class="row g-2">
-                <div class="col-12 col-xl">
-                    <div class="input-group">
+        <div class="cvs-table-wrap">
+            <table class="cvs-table">
+                <thead>
+                    <tr>
+                        <th>Doanh nghiệp</th>
+                        <th>Ngành nghề</th>
+                        <th>Tổng tin</th>
+                        <th>Tin đã duyệt</th>
+                        <th>Xác minh</th>
+                        <th>Thao tác</th>
+                    </tr>
+                </thead>
 
-                        <input type="search"
-                               id="companySearch"
-                               class="form-control"
-                               placeholder="Tìm theo tên doanh nghiệp hoặc ngành nghề..."
-                               autocomplete="off" />
-                    </div>
-                </div>
-                <div class="col-6 col-md-4 col-xl-2">
-                    <select id="industryFilter" class="form-select" aria-label="Lọc theo ngành nghề">
-                        <option value="">Mọi ngành nghề</option>
-                        @foreach (var industryOption in industries)
+                <tbody id="cvsBody">
+                    @foreach (var company in Model)
+                    {
+                        var industry = company.Industry?.Trim() ?? "";
+                        var totalPosts = company.JobPosts.Count;
+
+                        var approvedPosts = company.JobPosts.Count(
+                        job => job.ApprovalStatus == "Approved");
+
+                        var state = company.VerificationStatus switch
                         {
-                            <option value="@industryOption">@industryOption</option>
-                        }
-                    </select>
-                </div>
-                <div class="col-6 col-md-4 col-xl-2">
-                    <select id="postFilter" class="form-select" aria-label="Lọc theo tin tuyển dụng">
-                        <option value="">Mọi doanh nghiệp</option>
-                        <option value="has">Đã có tin</option>
-                        <option value="none">Chưa có tin</option>
-                    </select>
-                </div>
-                <div class="col-6 col-md-4 col-xl-2">
-                    <select id="sortSelect" class="form-select" aria-label="Sắp xếp">
-                        <option value="default">Sắp xếp mặc định</option>
-                        <option value="name-asc">Tên A → Z</option>
-                        <option value="name-desc">Tên Z → A</option>
-                        <option value="posts-desc">Nhiều tin nhất</option>
-                        <option value="approved-desc">Nhiều tin đã duyệt nhất</option>
-                    </select>
-                </div>
-                <div class="col-6 col-xl-auto">
-                    <button type="button" id="resetFilters" class="btn btn-outline-secondary w-100">
-                        Đặt lại
-                    </button>
-                </div>
-            </div>
-        </div>
+                            "Verified" => "Verified",
+                            "Rejected" => "Rejected",
+                            _ => "Pending"
+                        };
 
-        @if (Model.Count == 0)
-        {
-            <div class="text-center py-5">
-                <p class="text-muted mb-3">Chưa có doanh nghiệp nào.</p>
-                <a class="btn btn-primary cp-add-btn" href="@Url.RouteUrl("AdminCreateCompany")">
-                    + Thêm doanh nghiệp đầu tiên
-                </a>
-            </div>
-        }
-        else
-        {
-            <div class="table-responsive cp-table-wrap">
-                <table class="table table-hover align-middle cp-table">
-                    <thead>
-                        <tr>
-                            <th scope="col">Doanh nghiệp</th>
-                            <th scope="col">Ngành nghề</th>
-                            <th scope="col" class="text-center">Tổng số tin</th>
-                            <th scope="col" class="text-center">Tin đã duyệt</th>
-                            <th scope="col" class="text-end">Thao tác</th>
-                        </tr>
-                    </thead>
-                    <tbody id="companyTableBody">
-                        @foreach (var company in Model)
-                        {
-                            var totalPosts = company.JobPosts.Count;
-                            var approvedCount = company.JobPosts.Count(job => job.ApprovalStatus == "Approved");
-                            var industry = string.IsNullOrWhiteSpace(company.Industry) ? "" : company.Industry.Trim();
-                            var initial = string.IsNullOrWhiteSpace(company.CompanyName)
-                            ? "?"
-                            : company.CompanyName.Trim().Substring(0, 1).ToUpperInvariant();
-                            var avatarBg = avatarPalette[Math.Abs(company.CompanyId.GetHashCode()) % avatarPalette.Length];
+                        var initial = string.IsNullOrWhiteSpace(company.CompanyName)
+                        ? "?"
+                        : company.CompanyName.Trim()
+                        .Substring(0, 1).ToUpperInvariant();
 
-                            <tr data-industry="@industry"
-                                data-posts="@(totalPosts > 0 ? "has" : "none")"
-                                data-total="@totalPosts"
-                                data-approved="@approvedCount"
-                                data-name="@company.CompanyName"
-                                data-search="@company.CompanyName @industry">
-                                <td>
-                                    <div class="d-flex align-items-center gap-3">
-                                        <span class="cp-avatar" style="background:@avatarBg">@initial</span>
-                                        <span class="cp-name">@company.CompanyName</span>
+                        <tr data-company-row
+                            data-name="@company.CompanyName"
+                            data-search="@company.CompanyName @industry"
+                            data-industry="@industry"
+                            data-state="@state"
+                            data-total="@totalPosts"
+                            data-approved="@approvedPosts">
+
+                            <td>
+                                <div class="cvs-company">
+                                    <span class="cvs-avatar">@initial</span>
+                                    <div>
+                                        <strong>@company.CompanyName</strong>
+                                        <small>
+                                            Mã số thuế:
+                                            @(company.TaxCode ?? "Chưa cập nhật")
+                                        </small>
                                     </div>
-                                </td>
-                                <td>
-                                    @if (industry.Length == 0)
+                                </div>
+                            </td>
+
+                            <td>
+                                @(industry.Length > 0 ? industry : "Chưa cập nhật")
+                            </td>
+
+                            <td>@totalPosts</td>
+                            <td>@approvedPosts</td>
+
+                            <td>
+                                @if (state == "Verified")
+                                {
+                                    <span class="cvs-badge cvs-verified">
+                                        ✓ Đã xác minh
+                                    </span>
+                                }
+                                else if (state == "Rejected")
+                                {
+                                    <span class="cvs-badge cvs-rejected">
+                                        Đã từ chối
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="cvs-badge cvs-pending">
+                                        Chưa xác minh
+                                    </span>
+                                }
+                            </td>
+
+                            <td>
+                                <div class="cvs-actions">
+                                    <a class="cvs-button"
+                                       href="@Url.Action("Details", "CompanyProfile",
+                                                                                  new { area = "", id = company.CompanyId })">
+                                    Xem hồ sơ
+                                </a>
+
+                                    <a class="cvs-button"
+                                       href="@Url.RouteUrl("AdminEditCompany",
+                                                                              new { id = company.CompanyId })">
+                                    Sửa
+                                </a>
+
+                                    <form method="post"
+                                          asp-antiforgery="false"
+                                          action="@Url.RouteUrl("AdminCompanyVerification",
+                                                                                    new { id = company.CompanyId })"
+                                      onsubmit="return confirm('Bạn muốn cập nhật trạng thái xác minh doanh nghiệp này?');">
+
+                                        @Html.AntiForgeryToken()
+
+                                    @if (state != "Verified")
+                                        {
+                                            <button type="submit"
+                                                    name="status"
+                                                    value="Verified"
+                                                    class="cvs-button cvs-primary">
+                                                Xác minh
+                                            </button>
+                                        }
+
+                                        @if (state != "Rejected")
+                                        {
+                                            <button type="submit"
+                                                    name="status"
+                                                    value="Rejected"
+                                                    class="cvs-button cvs-danger">
+                                                Từ chối
+                                            </button>
+                                        }
+
+                                        @if (state != "Pending")
+                                        {
+                                            <button type="submit"
+                                                    name="status"
+                                                    value="Pending"
+                                                    class="cvs-button">
+                                                Chờ xác minh
+                                            </button>
+                                        }
+                                    </form>
+
+                                    @if (totalPosts == 0)
                                     {
-                                        <span class="text-muted fst-italic">Chưa cập nhật</span>
-                                    }
+                                        <form method="post"
+                                              asp-antiforgery="false"
+                                              action="@Url.RouteUrl("AdminDeleteCompany",
+                                                                                                new { id = company.CompanyId })"
+                                      onsubmit="return confirm('Bạn chắc chắn muốn xóa doanh nghiệp này?');">
+
+                                            @Html.AntiForgeryToken()
+
+                                            <button type="submit"
+                                                    class="cvs-button cvs-danger">
+                                                Xóa
+                                            </button>
+                                        </form>
+                                                                }
                                     else
                                     {
-                                        <span class="badge cp-pill bg-primary-subtle text-primary">@industry</span>
+                                        <span class="cvs-disabled">
+                                            Đã có tin · Không thể xóa
+                                        </span>
                                     }
-                                </td>
-                                <td class="text-center"><span class="cp-count">@totalPosts</span></td>
-                                <td class="text-center">
-                                    @if (approvedCount > 0)
-                                    {
-                                        <span class="cp-count bg-success-subtle text-success">@approvedCount</span>
-                                    }
-                                    else
-                                    {
-                                        <span class="cp-count text-muted">0</span>
-                                    }
-                                </td>
-                                <td>
-                                    <div class="d-flex flex-wrap justify-content-end align-items-center gap-2">
-                                        <a class="btn btn-outline-primary btn-sm cp-act text-nowrap"
-                                           href="@Url.Action("Details", "CompanyProfile", new { area = "", id = company.CompanyId })"
-                                           title="Xem hồ sơ" aria-label="Xem hồ sơ @company.CompanyName">Xem hồ sơ</a>
-
-                                        <a class="btn btn-outline-secondary btn-sm cp-act text-nowrap"
-                                           href="@Url.RouteUrl("AdminEditCompany", new { id = company.CompanyId })"
-                                           title="Sửa" aria-label="Sửa @company.CompanyName">Sửa</a>
-
-                                        @if (totalPosts == 0)
-                                        {
-                                            <form method="post"
-                                                  action="@Url.RouteUrl("AdminDeleteCompany", new { id = company.CompanyId })"
-                                                  class="m-0"
-                                                  onsubmit="return confirm('Bạn có chắc muốn xóa hồ sơ doanh nghiệp này?');">
-                                                @Html.AntiForgeryToken()
-                                                <button type="submit" class="btn btn-outline-danger btn-sm cp-act text-nowrap"
-                                                        title="Xóa" aria-label="Xóa @company.CompanyName">
-                                                    Xóa
-                                                </button>
-                                            </form>
-                                        }
-                                        else
-                                        {
-                                            <span class="cp-lock" title="Không thể xóa vì doanh nghiệp đã có tin tuyển dụng">
-                                                Không thể xóa · Đã có tin
-                                            </span>
-                                        }
-                                    </div>
-                                </td>
-                            </tr>
-                        }
-
-                        <tr id="noResultRow" class="d-none">
-                            <td colspan="5" class="text-center text-muted py-5">
-                                Không tìm thấy doanh nghiệp phù hợp.
+                                </div>
                             </td>
                         </tr>
-                    </tbody>
-                </table>
-            </div>
+                    }
 
-            <div class="cp-footer text-muted small">
-                Hiển thị <strong id="visibleCount">@Model.Count</strong> / @Model.Count doanh nghiệp
-            </div>
-        }
+                    <tr id="cvsEmpty" hidden="@(Model.Count > 0)">
+                        <td colspan="6" class="cvs-empty">
+                            Không có doanh nghiệp phù hợp.
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="cvs-footer">
+            Hiển thị <strong id="cvsCount">@Model.Count</strong>
+            / @Model.Count doanh nghiệp
+        </div>
     </div>
-</div>
+</section>
 
 @section Scripts {
     <script>
-        (function () {
-            const searchInput    = document.getElementById('companySearch');
-            const industryFilter = document.getElementById('industryFilter');
-            const postFilter     = document.getElementById('postFilter');
-            const sortSelect     = document.getElementById('sortSelect');
-            const resetBtn       = document.getElementById('resetFilters');
-            const tbody          = document.getElementById('companyTableBody');
-            const visibleCount   = document.getElementById('visibleCount');
-            const noResultRow    = document.getElementById('noResultRow');
+        (() => {
+            const search = document.getElementById('cvsSearch');
+            const industry = document.getElementById('cvsIndustry');
+            const status = document.getElementById('cvsStatus');
+            const posts = document.getElementById('cvsPosts');
+            const sort = document.getElementById('cvsSort');
+            const reset = document.getElementById('cvsReset');
+            const body = document.getElementById('cvsBody');
+            const empty = document.getElementById('cvsEmpty');
+            const count = document.getElementById('cvsCount');
 
-            if (!tbody) return;
+            const rows = Array.from(
+                body.querySelectorAll('[data-company-row]')
+            );
 
-            // Bỏ dấu tiếng Việt để tìm kiếm không phân biệt dấu
-            const normalize = (text) => (text || '')
-                .toString()
+            const normalize = text => (text || '')
                 .toLowerCase()
                 .normalize('NFD')
                 .replace(/[\u0300-\u036f]/g, '')
                 .replace(/đ/g, 'd')
                 .trim();
 
-            const rows = Array.from(tbody.querySelectorAll('tr[data-search]'));
-            rows.forEach((r, i) => {
-                r.dataset.searchNorm = normalize(r.dataset.search);
-                r.dataset.order = i; // thứ tự ban đầu
+            rows.forEach((row, index) => {
+                row.dataset.order = index;
+                row.dataset.normalized = normalize(row.dataset.search);
             });
 
-            function applySort() {
-                const mode = sortSelect.value;
-                const sorted = rows.slice().sort((a, b) => {
-                    switch (mode) {
-                        case 'name-asc':      return normalize(a.dataset.name).localeCompare(normalize(b.dataset.name), 'vi');
-                        case 'name-desc':     return normalize(b.dataset.name).localeCompare(normalize(a.dataset.name), 'vi');
-                        case 'posts-desc':    return b.dataset.total - a.dataset.total;
-                        case 'approved-desc': return b.dataset.approved - a.dataset.approved;
-                        default:              return a.dataset.order - b.dataset.order;
-                    }
-                });
-                sorted.forEach(r => tbody.insertBefore(r, noResultRow));
-            }
-
-            function applyFilters() {
-                const keyword  = normalize(searchInput.value);
-                const industry = industryFilter.value;
-                const posts    = postFilter.value;
-                let shown = 0;
+            function update() {
+                const keyword = normalize(search.value);
+                let visible = 0;
 
                 rows.forEach(row => {
-                    const match =
-                        (!keyword  || row.dataset.searchNorm.includes(keyword)) &&
-                        (!industry || row.dataset.industry === industry) &&
-                        (!posts    || row.dataset.posts === posts);
+                    const total = Number(row.dataset.total);
 
-                    row.classList.toggle('d-none', !match);
-                    if (match) shown++;
+                    const matches =
+                        (!keyword ||
+                            row.dataset.normalized.includes(keyword)) &&
+                        (!industry.value ||
+                            row.dataset.industry === industry.value) &&
+                        (!status.value ||
+                            row.dataset.state === status.value) &&
+                        (!posts.value ||
+                            (posts.value === 'has' ? total > 0 : total === 0));
+
+                    row.hidden = !matches;
+
+                    if (matches) visible++;
                 });
 
-                if (visibleCount) visibleCount.textContent = shown;
-                if (noResultRow)  noResultRow.classList.toggle('d-none', shown !== 0);
+                const sorted = rows.slice().sort((a, b) => {
+                    switch (sort.value) {
+                        case 'name-asc':
+                            return a.dataset.name.localeCompare(
+                                b.dataset.name, 'vi');
+
+                        case 'name-desc':
+                            return b.dataset.name.localeCompare(
+                                a.dataset.name, 'vi');
+
+                        case 'posts-desc':
+                            return Number(b.dataset.total) -
+                                Number(a.dataset.total);
+
+                        case 'approved-desc':
+                            return Number(b.dataset.approved) -
+                                Number(a.dataset.approved);
+
+                        default:
+                            return Number(a.dataset.order) -
+                                Number(b.dataset.order);
+                    }
+                });
+
+                sorted.forEach(row => body.insertBefore(row, empty));
+
+                empty.hidden = visible > 0;
+                count.textContent = visible;
             }
 
-            searchInput.addEventListener('input', applyFilters);
-            industryFilter.addEventListener('change', applyFilters);
-            postFilter.addEventListener('change', applyFilters);
-            sortSelect.addEventListener('change', applySort);
+            search.addEventListener('input', update);
 
-            resetBtn.addEventListener('click', function () {
-                searchInput.value = '';
-                industryFilter.value = '';
-                postFilter.value = '';
-                sortSelect.value = 'default';
-                applySort();
-                applyFilters();
-                searchInput.focus();
+            [industry, status, posts, sort].forEach(element => {
+                element.addEventListener('change', update);
             });
+
+            reset.addEventListener('click', () => {
+                search.value = '';
+                industry.value = '';
+                status.value = '';
+                posts.value = '';
+                sort.value = 'default';
+
+                update();
+                search.focus();
+            });
+
+            update();
         })();
     </script>
 }

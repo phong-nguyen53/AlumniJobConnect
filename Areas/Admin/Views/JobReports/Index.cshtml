@@ -1,0 +1,25 @@
+@model AlumniJobConnect.Features.JobReports.ReportPage
+@using AlumniJobConnect.Features.JobReports
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@{ ViewData["Title"] = "Báo cáo vi phạm"; Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml"; }
+<link rel="stylesheet" href="@Url.Content("~/assets/css/job-reports.css")" asp-append-version="true" />
+<section class="jr-page jr-admin">
+    <div class="jr-heading"><div><span class="jr-eyebrow">KIỂM TRA NỘI DUNG TUYỂN DỤNG</span><h1>Báo cáo vi phạm</h1><p>Tiếp nhận phản ánh, kiểm tra và thông báo kết quả cho sinh viên.</p></div></div>
+    <form method="get" action="@Url.Action("Index", "JobReports", new { area="Admin" })" class="jr-filter">
+        <label for="state">Trạng thái</label><select id="state" name="state"><option value="">Tất cả báo cáo</option>
+            @foreach (var item in ReportLabels.States) { <option value="@item.Key" selected="@(item.Key==Model.State)">@item.Value</option> }
+        </select><button class="jr-button" type="submit">Lọc báo cáo</button>
+    </form>
+    <div class="jr-panel jr-table-wrap"><table class="jr-table"><thead><tr><th>Tin bị phản ánh</th><th>Lý do</th><th>Ngày gửi</th><th>Trạng thái</th><th>Thao tác</th></tr></thead><tbody>
+        @foreach (var item in Model.Items)
+        {
+            <tr><td><strong>@item.JobTitle</strong><small>@item.CompanyName · #@item.ReportId</small></td><td>@ReportLabels.Reason(item.Reason)</td><td>@item.CreatedAt.ToString("dd/MM/yyyy HH:mm")</td><td><span class="jr-badge">@ReportLabels.State(item.State)</span></td><td><a class="jr-link" href="@Url.Action("Details", "JobReports", new { area="Admin", id=item.ReportId })">Xem và xử lý →</a></td></tr>
+        }
+        @if (!Model.Items.Any()) { <tr><td colspan="5" class="jr-empty">Chưa có báo cáo phù hợp.</td></tr> }
+    </tbody></table></div>
+    <nav class="jr-pagination" aria-label="Phân trang">
+        @if (Model.Page > 1) { <a href="@Url.Action("Index", "JobReports", new { area="Admin", state=Model.State, page=Model.Page-1 })">← Trang trước</a> }
+        <span>Trang @Model.Page</span>
+        @if (Model.HasMore) { <a href="@Url.Action("Index", "JobReports", new { area="Admin", state=Model.State, page=Model.Page+1 })">Trang sau →</a> }
+    </nav>
+</section>

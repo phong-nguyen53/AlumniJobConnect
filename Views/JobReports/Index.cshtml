@@ -1,0 +1,23 @@
+@model AlumniJobConnect.Features.JobReports.ReportPage
+@using AlumniJobConnect.Features.JobReports
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@{ ViewData["Title"] = "Báo cáo của tôi"; }
+<link rel="stylesheet" href="@Url.Content("~/assets/css/job-reports.css")" asp-append-version="true" />
+<section class="jr-page">
+    <div class="jr-heading"><div><span class="jr-eyebrow">PHẢN ÁNH TUYỂN DỤNG</span><h1>Báo cáo của tôi</h1><p>Theo dõi tiến độ kiểm tra và phản hồi của quản trị viên.</p></div><a class="jr-button jr-outline" href="@Url.Action("Jobs", "Home", new { area="" })">Tìm việc làm</a></div>
+    @if (TempData["ReportMessage"] is string message) { <div class="jr-notice" role="status">@message</div> }
+    @if (!Model.Items.Any()) { <div class="jr-panel jr-empty">Bạn chưa gửi báo cáo nào. Bạn có thể báo cáo tại trang chi tiết tin tuyển dụng.</div> }
+    @foreach (var item in Model.Items)
+    {
+        <article class="jr-panel jr-item">
+            <div class="jr-heading"><div><span class="jr-eyebrow">BÁO CÁO #@item.ReportId</span><h2>@item.JobTitle</h2><p>@item.CompanyName · @item.CreatedAt.ToString("dd/MM/yyyy HH:mm")</p></div><span class="jr-badge">@ReportLabels.State(item.State)</span></div>
+            <p><strong>Lý do:</strong> @ReportLabels.Reason(item.Reason)</p><div class="jr-text">@item.Details</div>
+            @if (!string.IsNullOrWhiteSpace(item.AdminNote)) { <div class="jr-note"><strong>Phản hồi của quản trị viên</strong><div class="jr-text">@item.AdminNote</div><small>Cập nhật: @item.UpdatedAt.ToString("dd/MM/yyyy HH:mm")</small></div> }
+        </article>
+    }
+    <nav class="jr-pagination" aria-label="Phân trang">
+        @if (Model.Page > 1) { <a href="@Url.Action("Index", "JobReports", new { area="", page=Model.Page-1 })">← Trang trước</a> }
+        <span>Trang @Model.Page</span>
+        @if (Model.HasMore) { <a href="@Url.Action("Index", "JobReports", new { area="", page=Model.Page+1 })">Trang sau →</a> }
+    </nav>
+</section>

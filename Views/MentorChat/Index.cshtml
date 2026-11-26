@@ -213,6 +213,68 @@
     let sending = false;
     let loadedOnce = false;
     let stopped = false;
+    let lastReadId = 0;
+let markingRead = false;
+
+async function markDisplayedMessagesRead() {
+    if (document.hidden || markingRead || lastId <= lastReadId) {
+        return;
+    }
+
+    // Chỉ đánh dấu khi đã cuộn đến cuối nội dung đang hiển thị.
+    const nearBottom =
+        box.scrollHeight - box.scrollTop - box.clientHeight < 100;
+
+    if (!nearBottom) return;
+
+    const token = form.querySelector(
+        'input[name="__RequestVerificationToken"]'
+    )?.value;
+
+    if (!token) return;
+
+    markingRead = true;
+    const throughId = lastId;
+
+    try {
+        const data = new FormData();
+        data.set("__RequestVerificationToken", token);
+        data.set("conversationId", conversationId);
+        data.set("throughMessageId", throughId);
+
+        const response = await fetch(
+            '@Url.RouteUrl("ReadMentorChat")',
+            {
+                method: "POST",
+                body: data,
+                headers: { Accept: "application/json" }
+            }
+        );
+
+        const result = await response.json().catch(() => null);
+
+        if (!response.ok || response.redirected || !result?.success) {
+            throw new Error("Chưa cập nhật được trạng thái đã đọc.");
+        }
+
+        lastReadId = throughId;
+
+        // Dùng để thông báo bộ đếm cập nhật lại.
+        window.dispatchEvent(new Event("mentorchat:read"));
+    } catch (error) {
+        console.warn(error.message);
+    } finally {
+        markingRead = false;
+    }
+}
+
+box.addEventListener("scroll", markDisplayedMessagesRead);
+
+document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) {
+        markDisplayedMessagesRead();
+    }
+});
 
     function appendMessage(message) {
         if (message.messageId <= lastId) return;
@@ -293,6 +355,7 @@
             placeholder.hidden = lastId > 0;
             placeholder.textContent = "Chưa có tin nhắn. Hãy gửi lời chào!";
             loadedOnce = true;
+            await markDisplayedMessagesRead();
 
             if (status.dataset.source === "load") {
                 status.textContent = "";

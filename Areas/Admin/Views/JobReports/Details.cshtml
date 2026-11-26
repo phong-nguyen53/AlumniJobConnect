@@ -1,0 +1,43 @@
+@model AlumniJobConnect.Features.JobReports.ReportRow
+@using AlumniJobConnect.Features.JobReports
+@using AlumniJobConnect.Models
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@{ ViewData["Title"] = "Xử lý báo cáo"; Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml"; var job = ViewBag.CurrentJob as JobPost; var closed = Model.State is "Kept" or "Removed"; }
+<link rel="stylesheet" href="@Url.Content("~/assets/css/job-reports.css")" asp-append-version="true" />
+<section class="jr-page jr-admin">
+    <a class="jr-link" href="@Url.Action("Index", "JobReports", new { area="Admin" })">← Danh sách báo cáo</a>
+    <div class="jr-heading"><div><span class="jr-eyebrow">BÁO CÁO #@Model.ReportId</span><h1>Kiểm tra tin tuyển dụng</h1><p>@Model.JobTitle · @Model.CompanyName</p></div><span class="jr-badge">@ReportLabels.State(Model.State)</span></div>
+    @if (TempData["ReportMessage"] is string message) { <div class="jr-notice" role="status">@message</div> }
+    @if (TempData["ReportError"] is string error) { <div class="jr-error" role="alert">@error</div> }
+    <div class="jr-columns">
+        <div>
+            <article class="jr-panel jr-item"><h2>Nội dung phản ánh</h2><p><strong>Người gửi:</strong> @ViewBag.Reporter (UserId: @Model.ReporterUserId)</p><p><strong>Thời điểm:</strong> @Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")</p><p><strong>Lý do:</strong> @ReportLabels.Reason(Model.Reason)</p><div class="jr-text">@Model.Details</div></article>
+            <article class="jr-panel jr-item"><h2>Tin tuyển dụng hiện tại</h2>
+                @if (job == null) { <div class="jr-note">Tin đã bị xóa. Bản chụp tại thời điểm báo cáo vẫn được lưu bên dưới. Thao tác gỡ sẽ chỉ ghi nhận kết quả xử lý.</div> }
+                else {
+                    <h3>@job.Title</h3><p>@job.Company?.CompanyName · @job.WorkLocation</p><p><strong>Hiển thị:</strong> @(job.IsPublished ? "Có" : "Không") · <strong>Duyệt:</strong> @job.ApprovalStatus</p>
+                    <h3>Mô tả</h3><div class="jr-text">@job.JobDescription</div><h3>Yêu cầu</h3><div class="jr-text">@job.Requirements</div><h3>Quyền lợi</h3><div class="jr-text">@job.Benefits</div>
+                }
+            </article>
+        </div>
+        <aside class="jr-panel jr-item"><h2>Kết quả kiểm tra</h2>
+            @if (closed) {
+                <p>Báo cáo đã được xử lý bởi: <strong>@ViewBag.Handler</strong></p><div class="jr-text">@Model.AdminNote</div><small>@Model.UpdatedAt.ToString("dd/MM/yyyy HH:mm")</small>
+            } else {
+                @if (Model.State == "Pending") {
+                    <form method="post" action="@Url.Action("Process", "JobReports", new { area="Admin" })" asp-antiforgery="false">
+                        @Html.AntiForgeryToken()<input type="hidden" name="id" value="@Model.ReportId" /><input type="hidden" name="version" value="@Model.Version" /><input type="hidden" name="decision" value="Reviewing" />
+                        <button type="submit" class="jr-button jr-outline">Đánh dấu đang xử lý</button>
+                    </form>
+                }
+                <form method="post" action="@Url.Action("Process", "JobReports", new { area="Admin" })" asp-antiforgery="false" class="jr-form">
+                    @Html.AntiForgeryToken()<input type="hidden" name="id" value="@Model.ReportId" /><input type="hidden" name="version" value="@Model.Version" />
+                    <label for="decision">Hướng xử lý</label><select id="decision" name="decision" required><option value="">Chọn kết quả kiểm tra</option><option value="Kept">Giữ tin sau khi kiểm tra</option><option value="Removed">Gỡ tin do vi phạm</option></select>
+                    <label for="note">Nội dung phản hồi *</label><textarea id="note" name="note" required maxlength="2000" rows="6" placeholder="Ghi rõ căn cứ và kết quả kiểm tra…"></textarea>
+                    <div class="jr-note">Gỡ tin sẽ ẩn tin khỏi trang công khai và chuyển trạng thái duyệt sang Rejected. Đơn ứng tuyển được giữ nguyên. Giữ tin không tự khôi phục tin đã bị gỡ bởi báo cáo khác. Người gửi sẽ nhận thông báo kết quả.</div>
+                    <button type="submit" class="jr-button">Lưu kết quả và thông báo</button>
+                </form>
+            }
+        </aside>
+    </div>
+</section>

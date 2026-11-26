@@ -15,6 +15,24 @@
 
     var isLoggedIn = User.Identity?.IsAuthenticated == true;
 
+    var isVerifiedEmployer = false;
+
+    if (isLoggedIn &&
+        User.IsInRole("Employer") &&
+        int.TryParse(
+            User.FindFirstValue(ClaimTypes.NameIdentifier),
+            out var employerUserId))
+    {
+        isVerifiedEmployer = await NotificationDb.Companies
+            .AsNoTracking()
+            .AnyAsync(company =>
+                company.UserId == employerUserId &&
+                company.VerificationStatus == "Verified" &&
+                company.User.IsActive &&
+                company.User.UserRoles.Any(
+                    role => role.Role.RoleName == "Employer"));
+    }
+
     var displayName = string.IsNullOrWhiteSpace(User.Identity?.Name)
         ? "Tài khoản của bạn"
         : User.Identity!.Name;
@@ -199,8 +217,31 @@
             }
         </span>
 
-        <span class="ac-account-name">
-            @(isLoggedIn? displayName : "Tài khoản")
+        <span class="ac-account-identity">
+            <span class="ac-account-name">
+                @(isLoggedIn? displayName : "Tài khoản")
+            </span>
+
+            @if (isVerifiedEmployer)
+            {
+                <span class="ac-verified-icon"
+                      title="Doanh nghiệp đã được xác minh"
+                      aria-label="Doanh nghiệp đã được xác minh">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path fill="currentColor"
+                              d="M12 2 15 4 18.5 4.5 19 8 21 11
+                             19.5 14.5 19 18 15.5 19 12 22
+                             8.5 20 5 19 4 15.5 2 12
+                             4 8.5 5 5 8.5 4Z" />
+                        <path d="m7.5 12 3 3 6-6"
+                              fill="none"
+                              stroke="white"
+                              stroke-width="2"
+                              stroke-linecap="round"
+                              stroke-linejoin="round" />
+                    </svg>
+                </span>
+            }
         </span>
 
         <svg width="14" height="14"
@@ -223,6 +264,14 @@
                 </span>
 
                 <strong>@displayName</strong>
+
+                @if (isVerifiedEmployer)
+                {
+                    <span class="ac-verified-label">
+                        <span aria-hidden="true">✓</span>
+                        Doanh nghiệp đã xác minh
+                    </span>
+                }
 
                 <small>
                     @if (User.IsInRole("Admin"))
@@ -354,6 +403,57 @@
 </details>
 
 <style>
+
+    .ac-account-identity {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        min-width: 0;
+    }
+
+    .ac-verified-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        width: 23px;
+        height: 23px;
+        padding: 2px;
+        border-radius: 50%;
+        background: #fff;
+        color: #1686ed;
+    }
+
+        .ac-verified-icon svg {
+            display: block;
+            width: 19px;
+            height: 19px;
+        }
+
+    /* Giữ huy hiệu đứng yên khi mở menu.
+       CSS cũ của bạn đang xoay mọi SVG trong nút tài khoản. */
+    .ac-account .ac-account-toggle .ac-verified-icon svg,
+    .ac-account[open] > .ac-account-toggle .ac-verified-icon svg {
+        transform: none;
+        transition: none;
+    }
+
+    .ac-account-info .ac-verified-label {
+        display: inline-flex;
+        align-items: center;
+        align-self: flex-start;
+        gap: 6px;
+        padding: 5px 10px;
+        border: 1px solid #cfe5fb;
+        border-radius: 999px;
+        background: #edf6ff;
+        color: #1976c9;
+        font-size: 11px;
+        font-weight: 600;
+        line-height: 1.6;
+    }
+
+
     .ac-bell {
         position: relative;
         min-width: 44px;
@@ -847,7 +947,6 @@
         }
     }
 </style>
-
 <script>
     (() => {
         function setupAccountMenus() {

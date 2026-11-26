@@ -465,7 +465,7 @@
 <section class="job-detail-page">
     <div class="container">
         <a href="@Url.Action("Jobs", "Home",
-                                new { area = "", categoryId = Model.JobCategoryId })"
+                                           new { area = "", categoryId = Model.JobCategoryId })"
            class="jd-back">
             ← Xem việc làm cùng ngành
         </a>
@@ -596,6 +596,14 @@
                 </dl>
 
                 <div class="jd-actions">
+                    @if (isAlumni)
+                    {
+                        <a href="@Url.Action("Create", "JobReports", new { area = "", jobPostId = Model.JobPostId })" class="jd-button jd-chat">
+                            <i class="fas fa-flag" aria-hidden="true"></i> Báo cáo tin tuyển dụng
+                        </a>
+                        <a href="@Url.Action("Index", "JobReports", new { area = "" })" class="jd-help">Theo dõi báo cáo của tôi →</a>
+                    }
+
                     @if (!isOpen)
                     {
                         <div class="jd-notice">
