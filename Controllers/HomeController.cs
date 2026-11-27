@@ -1,11 +1,10 @@
-﻿using System.Collections.Generic;
-using System.Diagnostics;
-using System.Security.Claims;
-using AlumniJobConnect.Models;
+﻿using AlumniJobConnect.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using System.Diagnostics;
+using System.Security.Claims;
 
 namespace AlumniJobConnect.Controllers
 {
@@ -67,6 +66,7 @@ namespace AlumniJobConnect.Controllers
         }
 
         [HttpGet]
+        [AllowAnonymous]
         public IActionResult Alumni()
         {
             return RedirectToRoute("MentorDirectory");

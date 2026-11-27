@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AlumniJobConnect.Controllers;
 
-[Authorize(Roles = "Alumni,Admin")]
+[Authorize(Roles = "Alumni,Employer,Admin")]
 public class MentorsController : Controller
 {
     private readonly AlumniJobConnectContext _context;

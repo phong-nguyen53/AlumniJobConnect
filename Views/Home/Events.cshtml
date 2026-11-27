@@ -17,283 +17,937 @@
     var registeredEventIds =
         ViewData["RegisteredEventIds"] as System.Collections.Generic.HashSet<int>
         ?? new System.Collections.Generic.HashSet<int>();
+
+    var totalCount = Model.Count;
+    var upcomingCount = Model.Count(e => e.StartAt > now);
+    var registeredCount = Model.Count(e => registeredEventIds.Contains(e.EventId));
 }
 
 <style>
-    .events-page .events-hero {
-        background: linear-gradient(135deg, #0d6efd 0%, #4f46e5 100%);
-        color: #fff;
-        border-radius: 1rem;
+    .ev {
+        --ev-ink: #0f172a;
+        --ev-muted: #64748b;
+        --ev-line: #e8ecf3;
+        --ev-brand: #4f46e5;
+        --ev-brand-2: #0ea5e9;
+        --ev-ok: #059669;
+        --ev-warn: #d97706;
+        --ev-bad: #dc2626;
+        color: var(--ev-ink);
     }
 
-    .events-page .event-card {
-        border-radius: 1rem;
+    /* ---------- Hero ---------- */
+    .ev-hero {
+        position: relative;
         overflow: hidden;
+        border-radius: 1.5rem;
+        padding: clamp(1.75rem, 4vw, 3.25rem);
+        color: #fff;
+        background: radial-gradient(900px 400px at 85% -10%, rgba(14,165,233,.55), transparent 60%), radial-gradient(700px 380px at 0% 110%, rgba(236,72,153,.35), transparent 60%), linear-gradient(135deg, #1e1b4b 0%, #312e81 45%, #4f46e5 100%);
+        box-shadow: 0 1.25rem 2.5rem -1rem rgba(49,46,129,.55);
+    }
+
+        .ev-hero::before,
+        .ev-hero::after {
+            content: "";
+            position: absolute;
+            border-radius: 50%;
+            border: 1px solid rgba(255,255,255,.14);
+            pointer-events: none;
+        }
+
+        .ev-hero::before {
+            width: 340px;
+            height: 340px;
+            right: -90px;
+            top: -120px;
+        }
+
+        .ev-hero::after {
+            width: 520px;
+            height: 520px;
+            right: -190px;
+            top: -200px;
+        }
+
+    .ev-eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: .5rem;
+        font-size: .75rem;
+        font-weight: 600;
+        letter-spacing: .12em;
+        text-transform: uppercase;
+        padding: .35rem .8rem;
+        border-radius: 999px;
+        background: rgba(255,255,255,.14);
+        backdrop-filter: blur(6px);
+    }
+
+        .ev-eyebrow i {
+            width: .5rem;
+            height: .5rem;
+            border-radius: 50%;
+            background: #34d399;
+            box-shadow: 0 0 0 0 rgba(52,211,153,.7);
+            animation: ev-pulse 2s infinite;
+        }
+
+    .ev-hero h1 {
+        font-size: clamp(1.75rem, 4vw, 2.75rem);
+        font-weight: 800;
+        letter-spacing: -.02em;
+        margin: .9rem 0 .5rem;
+    }
+
+    .ev-hero p {
+        max-width: 38rem;
+        opacity: .8;
+        margin: 0;
+    }
+
+    .ev-stats {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .75rem;
+        margin-top: 1.75rem;
+    }
+
+    .ev-stat {
+        min-width: 7.5rem;
+        padding: .7rem 1rem;
+        border-radius: 1rem;
+        background: rgba(255,255,255,.12);
+        border: 1px solid rgba(255,255,255,.18);
+        backdrop-filter: blur(8px);
+    }
+
+        .ev-stat b {
+            display: block;
+            font-size: 1.6rem;
+            line-height: 1.1;
+            font-weight: 800;
+        }
+
+        .ev-stat span {
+            font-size: .78rem;
+            opacity: .75;
+        }
+
+    .ev-cta {
+        display: inline-flex;
+        align-items: center;
+        gap: .5rem;
+        background: #fff;
+        color: #312e81;
+        font-weight: 700;
+        padding: .8rem 1.4rem;
+        border-radius: 999px;
+        text-decoration: none;
+        box-shadow: 0 .5rem 1.25rem rgba(0,0,0,.2);
         transition: transform .15s ease, box-shadow .15s ease;
     }
 
-        .events-page .event-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 .75rem 1.5rem rgba(16, 24, 40, .12) !important;
+        .ev-cta:hover {
+            transform: translateY(-2px);
+            color: #312e81;
+            box-shadow: 0 .75rem 1.5rem rgba(0,0,0,.25);
         }
 
-    .events-page .date-badge {
-        width: 64px;
-        flex-shrink: 0;
-        border-radius: .85rem;
-        background: #eef2ff;
-        color: #4338ca;
-        text-align: center;
-        padding: .5rem 0;
-        line-height: 1.15;
+    /* ---------- Toolbar ---------- */
+    .ev-toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .75rem;
+        align-items: center;
+        justify-content: space-between;
+        margin: 1.75rem 0 1.5rem;
     }
 
-        .events-page .date-badge .day {
-            font-size: 1.5rem;
-            font-weight: 700;
-        }
-
-        .events-page .date-badge .month {
-            font-size: .72rem;
-            text-transform: uppercase;
-            letter-spacing: .04em;
-        }
-
-        .events-page .date-badge .year {
-            font-size: .68rem;
-            opacity: .7;
-        }
-
-    .events-page .event-started .date-badge {
+    .ev-seg {
+        display: inline-flex;
+        padding: .25rem;
+        gap: .25rem;
         background: #f1f5f9;
-        color: #64748b;
+        border-radius: 999px;
     }
 
-    .events-page .event-desc {
+        .ev-seg a, .ev-seg button {
+            border: 0;
+            background: transparent;
+            color: var(--ev-muted);
+            font-weight: 600;
+            font-size: .88rem;
+            padding: .5rem 1rem;
+            border-radius: 999px;
+            text-decoration: none;
+            transition: all .15s ease;
+            cursor: pointer;
+        }
+
+            .ev-seg a:hover, .ev-seg button:hover {
+                color: var(--ev-ink);
+            }
+
+        .ev-seg .active {
+            background: #fff;
+            color: var(--ev-brand);
+            box-shadow: 0 1px 3px rgba(15,23,42,.12);
+        }
+
+    .ev-search {
+        position: relative;
+        flex: 1 1 16rem;
+        max-width: 22rem;
+    }
+
+        .ev-search input {
+            width: 100%;
+            border: 1px solid var(--ev-line);
+            background: #fff;
+            border-radius: 999px;
+            padding: .6rem 1rem .6rem 2.6rem;
+            font-size: .92rem;
+            transition: border-color .15s ease, box-shadow .15s ease;
+        }
+
+            .ev-search input:focus {
+                outline: 0;
+                border-color: var(--ev-brand);
+                box-shadow: 0 0 0 .25rem rgba(79,70,229,.15);
+            }
+
+        .ev-search .ic {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--ev-muted);
+        }
+
+    /* ---------- Card ---------- */
+    .ev-card {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        background: #fff;
+        border: 1px solid var(--ev-line);
+        border-radius: 1.25rem;
+        overflow: hidden;
+        transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+        animation: ev-rise .5s ease both;
+        animation-delay: calc(var(--i, 0) * 60ms);
+    }
+
+        .ev-card::before {
+            content: "";
+            height: 5px;
+            background: linear-gradient(90deg, var(--ev-brand), var(--ev-brand-2));
+        }
+
+        .ev-card:hover {
+            transform: translateY(-5px);
+            border-color: #c7d2fe;
+            box-shadow: 0 1.25rem 2rem -1rem rgba(79,70,229,.35);
+        }
+
+        .ev-card.is-past::before {
+            background: linear-gradient(90deg, #cbd5e1, #94a3b8);
+        }
+
+        .ev-card.is-past .ev-title {
+            color: #475569;
+        }
+
+        .ev-card.is-past:hover {
+            border-color: var(--ev-line);
+            box-shadow: 0 .75rem 1.5rem -1rem rgba(15,23,42,.2);
+        }
+
+    .ev-body {
+        padding: 1.35rem 1.4rem 1.1rem;
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+    }
+
+    .ev-top {
+        display: flex;
+        gap: 1rem;
+        align-items: flex-start;
+    }
+
+    /* ticket-style date */
+    .ev-date {
+        position: relative;
+        flex-shrink: 0;
+        width: 4.1rem;
+        text-align: center;
+        border-radius: .9rem;
+        overflow: hidden;
+        border: 1px solid #c7d2fe;
+        background: #fff;
+        line-height: 1.1;
+    }
+
+        .ev-date .m {
+            display: block;
+            padding: .28rem 0;
+            font-size: .68rem;
+            font-weight: 700;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+            color: #fff;
+            background: linear-gradient(135deg, var(--ev-brand), #7c3aed);
+        }
+
+        .ev-date .d {
+            display: block;
+            font-size: 1.75rem;
+            font-weight: 800;
+            padding-top: .3rem;
+            color: var(--ev-ink);
+        }
+
+        .ev-date .y {
+            display: block;
+            font-size: .66rem;
+            color: var(--ev-muted);
+            padding-bottom: .35rem;
+        }
+
+    .ev-card.is-past .ev-date {
+        border-color: var(--ev-line);
+    }
+
+        .ev-card.is-past .ev-date .m {
+            background: #94a3b8;
+        }
+
+    .ev-title {
+        font-size: 1.12rem;
+        font-weight: 700;
+        line-height: 1.3;
+        margin: 0 0 .5rem;
+        overflow-wrap: anywhere;
+    }
+
+    .ev-company {
+        display: inline-flex;
+        align-items: center;
+        gap: .5rem;
+        min-width: 0;
+    }
+
+    .ev-avatar {
+        flex-shrink: 0;
+        width: 1.55rem;
+        height: 1.55rem;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        font-size: .72rem;
+        font-weight: 700;
+        color: #fff;
+        background: hsl(var(--h, 240) 60% 50%);
+    }
+
+    .ev-company span:last-child {
+        font-size: .84rem;
+        font-weight: 600;
+        color: var(--ev-muted);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    /* chips */
+    .ev-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .4rem;
+        margin: 1rem 0 .9rem;
+        min-height: 1.6rem;
+    }
+
+    .ev-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: .35rem;
+        font-size: .73rem;
+        font-weight: 600;
+        padding: .22rem .65rem;
+        border-radius: 999px;
+    }
+
+        .ev-chip::before {
+            content: "";
+            width: .4rem;
+            height: .4rem;
+            border-radius: 50%;
+            background: currentColor;
+        }
+
+        .ev-chip.open {
+            color: #047857;
+            background: #d1fae5;
+        }
+
+        .ev-chip.soon {
+            color: #b45309;
+            background: #fef3c7;
+        }
+
+        .ev-chip.closed {
+            color: #b91c1c;
+            background: #fee2e2;
+        }
+
+        .ev-chip.past {
+            color: #475569;
+            background: #e2e8f0;
+        }
+
+        .ev-chip.count {
+            color: #4338ca;
+            background: #e0e7ff;
+        }
+
+    /* meta list */
+    .ev-meta {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: grid;
+        gap: .6rem;
+    }
+
+        .ev-meta li {
+            display: flex;
+            gap: .65rem;
+            align-items: flex-start;
+            font-size: .88rem;
+        }
+
+        .ev-meta .ico {
+            flex-shrink: 0;
+            width: 1.9rem;
+            height: 1.9rem;
+            border-radius: .6rem;
+            display: grid;
+            place-items: center;
+            background: #eef2ff;
+            color: var(--ev-brand);
+        }
+
+        .ev-meta small {
+            display: block;
+            font-size: .7rem;
+            color: var(--ev-muted);
+            text-transform: uppercase;
+            letter-spacing: .05em;
+        }
+
+        .ev-meta strong {
+            font-weight: 600;
+            overflow-wrap: anywhere;
+        }
+
+    .ev-desc {
         display: -webkit-box;
         -webkit-line-clamp: 3;
         -webkit-box-orient: vertical;
         overflow: hidden;
         white-space: pre-wrap;
+        overflow-wrap: anywhere;
+        font-size: .86rem;
+        color: var(--ev-muted);
+        margin: 1.1rem 0 0;
+        padding-top: 1rem;
+        border-top: 1px dashed var(--ev-line);
     }
 
-    .events-page .meta-row {
-        display: flex;
+    .ev-body .ev-spacer {
+        flex: 1;
+    }
+
+    /* footer */
+    .ev-foot {
+        padding: 1rem 1.4rem 1.25rem;
+        display: grid;
         gap: .6rem;
+    }
+
+    .ev-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: .45rem;
+        width: 100%;
+        font-weight: 700;
+        font-size: .92rem;
+        padding: .7rem 1rem;
+        border-radius: .85rem;
+        border: 1px solid transparent;
+        text-decoration: none;
+        transition: transform .15s ease, box-shadow .15s ease, background .15s ease;
+        cursor: pointer;
+    }
+
+        .ev-btn.primary {
+            color: #fff;
+            background: linear-gradient(135deg, var(--ev-brand), #7c3aed);
+            box-shadow: 0 .5rem 1rem -.4rem rgba(79,70,229,.7);
+        }
+
+            .ev-btn.primary:hover {
+                transform: translateY(-1px);
+                color: #fff;
+                box-shadow: 0 .75rem 1.25rem -.4rem rgba(79,70,229,.75);
+            }
+
+        .ev-btn.ghost {
+            color: var(--ev-brand);
+            background: #fff;
+            border-color: #c7d2fe;
+        }
+
+            .ev-btn.ghost:hover {
+                background: #eef2ff;
+                color: var(--ev-brand);
+            }
+
+        .ev-btn.danger {
+            color: var(--ev-bad);
+            background: #fff;
+            border-color: #fecaca;
+            width: auto;
+            padding: .45rem .9rem;
+            font-size: .82rem;
+        }
+
+            .ev-btn.danger:hover {
+                background: #fef2f2;
+            }
+
+        .ev-btn:disabled {
+            color: #94a3b8;
+            background: #f8fafc;
+            border-color: var(--ev-line);
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+    .ev-registered {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: .6rem;
+        padding: .6rem .8rem;
+        border-radius: .85rem;
+        background: #ecfdf5;
+        color: #047857;
+        font-weight: 700;
         font-size: .9rem;
     }
 
-    .events-page .meta-label {
-        width: 80px;
-        flex-shrink: 0;
-        color: #6c757d;
+        .ev-registered span {
+            display: inline-flex;
+            align-items: center;
+            gap: .4rem;
+        }
+
+    /* empty */
+    .ev-empty {
+        text-align: center;
+        padding: 3.5rem 1.5rem;
+        border: 2px dashed var(--ev-line);
+        border-radius: 1.5rem;
+        background: linear-gradient(180deg, #fafbff, #fff);
     }
 
-    .events-page .event-footer {
-        background: #fff;
-        border-top: 1px solid #eef0f3;
-        padding: 1rem 1.5rem;
+        .ev-empty .big {
+            width: 4.5rem;
+            height: 4.5rem;
+            margin: 0 auto 1rem;
+            display: grid;
+            place-items: center;
+            border-radius: 1.25rem;
+            background: #eef2ff;
+            color: var(--ev-brand);
+        }
+
+    .ic {
+        width: 1.05rem;
+        height: 1.05rem;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+    }
+
+        .ic.lg {
+            width: 2rem;
+            height: 2rem;
+        }
+
+    @@keyframes ev-rise {
+        from {
+            opacity: 0;
+            transform: translateY(14px);
+        }
+
+        to {
+            opacity: 1;
+            transform: none;
+        }
+    }
+
+    @@keyframes ev-pulse {
+        70% {
+            box-shadow: 0 0 0 .5rem rgba(52,211,153,0);
+        }
+
+        100% {
+            box-shadow: 0 0 0 0 rgba(52,211,153,0);
+        }
+    }
+
+    @@media (prefers-reduced-motion: reduce) {
+        .ev-card, .ev-eyebrow i {
+            animation: none;
+        }
+
+        .ev-card, .ev-btn, .ev-cta {
+            transition: none;
+        }
     }
 </style>
 
-<div class="container py-5 events-page">
-    <div class="events-hero p-4 p-md-5 mb-4 shadow-sm">
-        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+        <symbol id="i-cal" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="3" /><path d="M16 2v4M8 2v4M3 10h18" /></symbol>
+        <symbol id="i-pin" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1 1 16 0z" /><circle cx="12" cy="10" r="3" /></symbol>
+        <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" /></symbol>
+        <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></symbol>
+        <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5" /></symbol>
+        <symbol id="i-users" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" /></symbol>
+        <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></symbol>
+        <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6" /></symbol>
+    </defs>
+</svg>
+
+<div class="container py-4 py-md-5 ev">
+
+    @* ================= HERO ================= *@
+    <section class="ev-hero">
+        <div class="d-flex flex-wrap justify-content-between align-items-end gap-4 position-relative">
             <div>
-                <h1 class="h2 fw-bold mb-1">Sự kiện doanh nghiệp</h1>
-                <p class="mb-0 opacity-75">
-                    Cập nhật các hội thảo, ngày hội việc làm và hoạt động kết nối do doanh nghiệp tổ chức.
+                <span class="ev-eyebrow"><i></i> Kết nối cùng doanh nghiệp</span>
+                <h1>Sự kiện doanh nghiệp</h1>
+                <p>
+                    Hội thảo, ngày hội việc làm và những buổi gặp gỡ do doanh nghiệp tổ chức —
+                    đăng ký sớm để không bỏ lỡ cơ hội nghề nghiệp tiếp theo của bạn.
                 </p>
+
+                <div class="ev-stats">
+                    <div class="ev-stat"><b>@totalCount</b><span>@(showMyEvents ? "Đã đăng ký" : "Tổng sự kiện")</span></div>
+                    <div class="ev-stat"><b>@upcomingCount</b><span>Sắp diễn ra</span></div>
+                    @if (canRegister && !showMyEvents)
+                    {
+                        <div class="ev-stat"><b>@registeredCount</b><span>Bạn đã tham gia</span></div>
+                    }
+                </div>
             </div>
 
             @if (isEmployer)
             {
-                <a class="btn btn-light fw-semibold px-4"
-                   href="@Url.Content("~/EmployerEvents/Create")">
-                    + Đăng sự kiện
+                <a class="ev-cta" href="@Url.Content("~/EmployerEvents/Create")">
+                    <svg class="ic"><use href="#i-plus" /></svg> Đăng sự kiện
                 </a>
             }
         </div>
-    </div>
+    </section>
 
+    @* ================= ALERTS ================= *@
     @if (TempData["EventRegistrationSuccess"] is string success)
     {
-        <div class="alert alert-success border-0 shadow-sm" role="status">
-            @success
+        <div class="alert alert-success border-0 shadow-sm rounded-4 mt-4 mb-0 d-flex align-items-center gap-2" role="status">
+            <svg class="ic"><use href="#i-check" /></svg> @success
         </div>
     }
 
     @if (TempData["EventRegistrationError"] is string error)
     {
-        <div class="alert alert-warning border-0 shadow-sm" role="alert">
+        <div class="alert alert-warning border-0 shadow-sm rounded-4 mt-4 mb-0" role="alert">
             @error
         </div>
     }
 
-    @if (canRegister)
-    {
-        <nav class="d-flex flex-wrap gap-2 mb-4" aria-label="Lọc sự kiện">
-            <a class="btn @(showMyEvents ? "btn-outline-primary" : "btn-primary")"
-               href="@Url.Action("Events", "Home", new { mine = false })">
-                Tất cả sự kiện
-            </a>
+    @* ================= TOOLBAR ================= *@
+    <div class="ev-toolbar">
+        <div class="d-flex flex-wrap gap-2 align-items-center">
+            @if (canRegister)
+            {
+                <nav class="ev-seg" aria-label="Lọc sự kiện">
+                    <a class="@(showMyEvents ? "" : "active")" href="@Url.Action("Events", "Home", new { mine = false })">Tất cả sự kiện</a>
+                    <a class="@(showMyEvents ? "active" : "")" href="@Url.Action("Events", "Home", new { mine = true })">Đã đăng ký</a>
+                </nav>
+            }
 
-            <a class="btn @(showMyEvents ? "btn-primary" : "btn-outline-primary")"
-               href="@Url.Action("Events", "Home", new { mine = true })">
-                Sự kiện đã đăng ký
-            </a>
-        </nav>
-    }
+            @if (Model.Count > 0)
+            {
+                <div class="ev-seg" role="group" aria-label="Lọc theo thời gian" id="evTime">
+                    <button type="button" class="active" data-filter="all">Tất cả</button>
+                    <button type="button" data-filter="upcoming">Sắp diễn ra</button>
+                    <button type="button" data-filter="past">Đã qua</button>
+                </div>
+            }
+        </div>
 
+        @if (Model.Count > 0)
+        {
+            <label class="ev-search mb-0">
+                <svg class="ic"><use href="#i-search" /></svg>
+                <input type="search" id="evSearch" placeholder="Tìm theo tên sự kiện, doanh nghiệp, địa điểm…" autocomplete="off" />
+            </label>
+        }
+    </div>
+
+    @* ================= LIST ================= *@
     @if (Model.Count == 0)
     {
-        <div class="card border-0 shadow-sm">
-            <div class="card-body text-center text-muted py-5">
-                <div class="fs-1 mb-2" aria-hidden="true">📅</div>
-                <p class="mb-0" role="status">
-                    @(showMyEvents
-                                    ? "Bạn chưa đăng ký sự kiện nào."
-                                    : "Chưa có sự kiện nào do doanh nghiệp đăng.")
-            </p>
+        <div class="ev-empty">
+            <div class="big"><svg class="ic lg"><use href="#i-cal" /></svg></div>
+            <h2 class="h5 fw-bold mb-1">
+                @(showMyEvents ? "Bạn chưa đăng ký sự kiện nào" : "Chưa có sự kiện nào")
+            </h2>
+            <p class="text-muted mb-3" role="status">
+                @(showMyEvents
+                            ? "Hãy khám phá các sự kiện đang mở và đăng ký tham gia ngay."
+                            : "Doanh nghiệp chưa đăng sự kiện nào. Hãy quay lại sau nhé!")
+        </p>
+
+        @if (showMyEvents)
+            {
+                <a class="ev-btn primary" style="width:auto" href="@Url.Action("Events", "Home", new { mine = false })">
+                    Xem tất cả sự kiện
+                    <svg class="ic"><use href="#i-arrow" /></svg>
+                </a>
+            }
         </div>
-    </div>
-        }
+    }
     else
     {
-        <div class="row g-4">
+        <div class="row g-4" id="evGrid">
+            @{
+                var idx = 0;
+            }
             @foreach (var item in Model)
             {
                 var hasStarted = item.StartAt <= now;
-                var deadlinePassed = item.RegistrationDeadline is DateTime deadlineAt
-                && deadlineAt < now;
+                var deadlinePassed = item.RegistrationDeadline is DateTime deadlineAt && deadlineAt < now;
+                var deadlineSoon = !deadlinePassed
+                && item.RegistrationDeadline is DateTime soonAt
+                && (soonAt - now).TotalHours <= 48;
                 var isRegistered = registeredEventIds.Contains(item.EventId);
                 var isClosed = hasStarted || deadlinePassed;
 
-                <div class="col-md-6 col-lg-4">
-                    <article class="card event-card border-0 shadow-sm h-100 @(hasStarted ? "event-started" : "")">
-                        <div class="card-body p-4 d-flex flex-column">
-                            <div class="d-flex gap-3 mb-3">
-                                <div class="date-badge" aria-hidden="true">
-                                    <div class="day">@item.StartAt.ToString("dd")</div>
-                                    <div class="month">Th@(item.StartAt.ToString("MM"))</div>
-                                    <div class="year">@item.StartAt.ToString("yyyy")</div>
+                var daysLeft = (item.StartAt.Date - now.Date).Days;
+                var countdown = hasStarted
+                ? null
+                : daysLeft <= 0 ? "Diễn ra hôm nay"
+                : daysLeft == 1 ? "Ngày mai"
+                : $"Còn {daysLeft} ngày";
+
+                var companyName = item.CompanyName ?? string.Empty;
+                var initial = string.IsNullOrWhiteSpace(companyName) ? "?" : companyName.Trim().Substring(0, 1).ToUpper();
+                var hue = companyName.Sum(c => (int)c) % 360;
+                var searchText = $"{item.EventName} {companyName} {item.Location}".ToLowerInvariant();
+
+                <div class="col-md-6 col-lg-4 ev-item"
+                     data-status="@(hasStarted ? "past" : "upcoming")"
+                     data-search="@searchText">
+                    <article class="ev-card @(hasStarted ? "is-past" : "")" style="--i:@(idx++ % 9)">
+                        <div class="ev-body">
+                            <div class="ev-top">
+                                <div class="ev-date" aria-hidden="true">
+                                    <span class="m">Th@(item.StartAt.ToString("MM"))</span>
+                                    <span class="d">@item.StartAt.ToString("dd")</span>
+                                    <span class="y">@item.StartAt.ToString("yyyy")</span>
                                 </div>
 
-                                <div class="flex-grow-1 text-break">
-                                    <h2 class="h5 fw-bold mb-1">@item.EventName</h2>
-                                    <div class="text-primary fw-semibold small">
-                                        @item.CompanyName
+                                <div class="min-w-0">
+                                    <h2 class="ev-title">@item.EventName</h2>
+                                    <div class="ev-company">
+                                        <span class="ev-avatar" style="--h:@hue" aria-hidden="true">@initial</span>
+                                        <span>@item.CompanyName</span>
                                     </div>
                                 </div>
                             </div>
 
-                            <div class="mb-3">
+                            <div class="ev-chips">
                                 @if (hasStarted)
                                 {
-                                    <span class="badge rounded-pill bg-secondary">
-                                        Đã qua giờ bắt đầu
-                                    </span>
+                                    <span class="ev-chip past">Đã qua giờ bắt đầu</span>
                                 }
                                 else if (deadlinePassed)
                                 {
-                                    <span class="badge rounded-pill bg-warning text-dark">
-                                        Hết hạn đăng ký
-                                    </span>
+                                    <span class="ev-chip closed">Hết hạn đăng ký</span>
                                 }
-                        </div>
-
-                        <div class="d-flex flex-column gap-2 mb-3">
-                            <div class="meta-row">
-                                <span class="meta-label">Bắt đầu</span>
-                                <span class="fw-semibold">
-                                    @item.StartAt.ToString("dd/MM/yyyy HH:mm")
-                                </span>
-                            </div>
-
-                            <div class="meta-row">
-                                <span class="meta-label">Địa điểm</span>
-                                <span class="text-break">
-                                    @(string.IsNullOrWhiteSpace(item.Location)
-                                                                    ? "Chưa cập nhật"
-                                                                    : item.Location)
-                            </span>
-                        </div>
-
-                        @if (item.RegistrationDeadline is DateTime deadline)
+                                else if (deadlineSoon)
                                 {
-                                    <div class="meta-row">
-                                        <span class="meta-label">Hạn đăng ký</span>
-                                        <span>@deadline.ToString("dd/MM/yyyy HH:mm")</span>
-                                    </div>
-                                }
-                            </div>
-
-                            @if (!string.IsNullOrWhiteSpace(item.Description))
-                            {
-                                <p class="event-desc text-break text-muted small border-top pt-3 mt-auto mb-0">@item.Description</p>
-                            }
-                        </div>
-
-                        @if (canRegister)
-                        {
-                            <div class="event-footer">
-                                @if (isRegistered)
-                                {
-                                    <div class="d-flex flex-wrap align-items-center gap-2">
-                                        <span class="badge rounded-pill bg-success">
-                                            Đã đăng ký
-                                        </span>
-
-                                        @if (showMyEvents && !hasStarted)
-                                        {
-                                            <form method="post"
-                                                  action="@Url.RouteUrl("CancelCompanyEventRegistration")"
-                                                  class="m-0"
-                                                  onsubmit="return confirm('Bạn muốn hủy đăng ký sự kiện này?');">
-                                                @Html.AntiForgeryToken()
-                                                <input type="hidden" name="eventId" value="@item.EventId" />
-
-                                                <button type="submit" class="btn btn-outline-danger btn-sm">
-                                                    Hủy đăng ký
-                                                </button>
-                                            </form>
-                                        }
-                                    </div>
-                                }
-                                else if (isClosed)
-                                {
-                                    <button type="button" class="btn btn-outline-secondary w-100" disabled>
-                                        Đã đóng đăng ký
-                                    </button>
+                                    <span class="ev-chip soon">Sắp hết hạn đăng ký</span>
                                 }
                                 else
                                 {
-                                    <form method="post"
-                                          action="@Url.RouteUrl("RegisterCompanyEvent")"
-                                          class="m-0">
-                                        @Html.AntiForgeryToken()
-                                        <input type="hidden" name="eventId" value="@item.EventId" />
+                                    <span class="ev-chip open">Đang mở đăng ký</span>
+                                }
 
-                                        <button type="submit" class="btn btn-primary w-100 fw-semibold">
-                                            Đăng ký tham gia
-                                        </button>
-                                    </form>
+                                @if (countdown is not null)
+                                {
+                                    <span class="ev-chip count">@countdown</span>
                                 }
                             </div>
-                        }
 
-                        @if (employerUserId == item.CreatedByUserId)
+                            <ul class="ev-meta">
+                                <li>
+                                    <span class="ico"><svg class="ic"><use href="#i-cal" /></svg></span>
+                                    <span>
+                                        <small>Bắt đầu</small>
+                                        <strong>@item.StartAt.ToString("dd/MM/yyyy HH:mm")</strong>
+                                    </span>
+                                </li>
+                                <li>
+                                    <span class="ico"><svg class="ic"><use href="#i-pin" /></svg></span>
+                                    <span>
+                                        <small>Địa điểm</small>
+                                        <strong>
+                                            @(string.IsNullOrWhiteSpace(item.Location) ? "Chưa cập nhật" : item.Location)
+                                        </strong>
+                                    </span>
+                                </li>
+                                @if (item.RegistrationDeadline is DateTime deadline)
+                                {
+                                    <li>
+                                        <span class="ico"><svg class="ic"><use href="#i-clock" /></svg></span>
+                                        <span>
+                                            <small>Hạn đăng ký</small>
+                                            <strong>@deadline.ToString("dd/MM/yyyy HH:mm")</strong>
+                                        </span>
+                                    </li>
+                                }
+                            </ul>
+
+                            <div class="ev-spacer"></div>
+
+                            @if (!string.IsNullOrWhiteSpace(item.Description))
+                            {
+                                <p class="ev-desc">@item.Description</p>
+                            }
+                        </div>
+
+                        @if (canRegister || employerUserId == item.CreatedByUserId)
                         {
-                            <div class="event-footer">
-                                <a class="btn btn-outline-primary w-100"
-                                   href="@Url.RouteUrl("CompanyEventParticipants", new { eventId = item.EventId })">
-                                    Xem người đăng ký
-                                </a>
+                            <div class="ev-foot">
+                                @if (canRegister)
+                                {
+                                    if (isRegistered)
+                                    {
+                                        <div class="ev-registered">
+                                            <span><svg class="ic"><use href="#i-check" /></svg> Đã đăng ký</span>
+
+                                            @if (showMyEvents && !hasStarted)
+                                            {
+                                                <form method="post"
+                                                      action="@Url.RouteUrl("CancelCompanyEventRegistration")"
+                                                      class="m-0"
+                                                      onsubmit="return confirm('Bạn muốn hủy đăng ký sự kiện này?');">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="eventId" value="@item.EventId" />
+                                                    <button type="submit" class="ev-btn danger">Hủy đăng ký</button>
+                                                </form>
+                                            }
+                                        </div>
+                                    }
+                                    else if (isClosed)
+                                    {
+                                        <button type="button" class="ev-btn" disabled>Đã đóng đăng ký</button>
+                                    }
+                                    else
+                                    {
+                                        <form method="post"
+                                              action="@Url.RouteUrl("RegisterCompanyEvent")"
+                                              class="m-0">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="eventId" value="@item.EventId" />
+                                            <button type="submit" class="ev-btn primary">
+                                                Đăng ký tham gia <svg class="ic"><use href="#i-arrow" /></svg>
+                                            </button>
+                                        </form>
+                                    }
+                                }
+
+                                @if (employerUserId == item.CreatedByUserId)
+                                {
+                                    <a class="ev-btn ghost"
+                                       href="@Url.RouteUrl("CompanyEventParticipants", new { eventId = item.EventId })">
+                                        <svg class="ic"><use href="#i-users" /></svg> Xem người đăng ký
+                                    </a>
+                                }
                             </div>
                         }
                     </article>
                 </div>
             }
         </div>
+
+        <div id="evNoResult" class="ev-empty mt-4" hidden>
+            <div class="big"><svg class="ic lg"><use href="#i-search" /></svg></div>
+            <h2 class="h5 fw-bold mb-1">Không tìm thấy sự kiện phù hợp</h2>
+            <p class="text-muted mb-0">Thử đổi từ khóa hoặc bộ lọc thời gian nhé.</p>
+        </div>
+
+        <script>
+            (function () {
+                var grid = document.getElementById('evGrid');
+                if (!grid) return;
+
+                var items = Array.prototype.slice.call(grid.querySelectorAll('.ev-item'));
+                var input = document.getElementById('evSearch');
+                var empty = document.getElementById('evNoResult');
+                var tabs = document.querySelectorAll('#evTime button');
+                var filter = 'all';
+
+                function apply() {
+                    var q = (input ? input.value : '').trim().toLowerCase();
+                    var shown = 0;
+
+                    items.forEach(function (el) {
+                        var okStatus = filter === 'all' || el.dataset.status === filter;
+                        var okText = !q || (el.dataset.search || '').indexOf(q) !== -1;
+                        var visible = okStatus && okText;
+                        el.hidden = !visible;
+                        if (visible) shown++;
+                    });
+
+                    empty.hidden = shown !== 0;
+                }
+
+                tabs.forEach(function (btn) {
+                    btn.addEventListener('click', function () {
+                        tabs.forEach(function (b) { b.classList.remove('active'); });
+                        btn.classList.add('active');
+                        filter = btn.dataset.filter;
+                        apply();
+                    });
+                });
+
+                if (input) input.addEventListener('input', apply);
+            })();
+        </script>
     }
 </div>

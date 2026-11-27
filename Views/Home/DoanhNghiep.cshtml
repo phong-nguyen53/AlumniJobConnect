@@ -4,50 +4,229 @@
     ViewData["Title"] = "Doanh nghiệp";
 }
 
+<style>
+    .ajc-hero {
+        position: relative;
+        overflow: hidden;
+        border-radius: 1.25rem;
+        padding: 3rem 2rem;
+        color: #fff;
+        background: linear-gradient(135deg, #0d6efd 0%, #6610f2 100%);
+    }
+
+    .ajc-hero::before,
+    .ajc-hero::after {
+        content: "";
+        position: absolute;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, .12);
+    }
+
+    .ajc-hero::before { width: 260px; height: 260px; top: -90px; right: -60px; }
+    .ajc-hero::after  { width: 160px; height: 160px; bottom: -70px; right: 160px; }
+
+    .ajc-hero > * { position: relative; z-index: 1; }
+
+    .ajc-search {
+        max-width: 520px;
+        border-radius: 50rem;
+        overflow: hidden;
+        box-shadow: 0 .5rem 1.5rem rgba(0, 0, 0, .15);
+    }
+
+    .ajc-search .form-control,
+    .ajc-search .input-group-text {
+        border: 0;
+        padding-top: .8rem;
+        padding-bottom: .8rem;
+    }
+
+    .ajc-search .form-control:focus { box-shadow: none; }
+
+    .ajc-card {
+        border: 1px solid rgba(0, 0, 0, .06);
+        border-radius: 1rem;
+        transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+    }
+
+    .ajc-card:hover {
+        transform: translateY(-6px);
+        border-color: rgba(13, 110, 253, .35);
+        box-shadow: 0 1rem 2rem rgba(13, 110, 253, .15) !important;
+    }
+
+    .ajc-avatar {
+        width: 60px;
+        height: 60px;
+        flex-shrink: 0;
+        border-radius: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.6rem;
+        font-weight: 700;
+        color: #fff;
+        box-shadow: 0 .4rem .8rem rgba(0, 0, 0, .15);
+    }
+
+    .ajc-av-0 { background: linear-gradient(135deg, #0d6efd, #6ea8fe); }
+    .ajc-av-1 { background: linear-gradient(135deg, #6610f2, #a370f7); }
+    .ajc-av-2 { background: linear-gradient(135deg, #d63384, #f08bb9); }
+    .ajc-av-3 { background: linear-gradient(135deg, #fd7e14, #ffb066); }
+    .ajc-av-4 { background: linear-gradient(135deg, #198754, #6fd6a4); }
+    .ajc-av-5 { background: linear-gradient(135deg, #0dcaf0, #6edff6); }
+
+    .ajc-name {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .ajc-badge {
+        background: rgba(13, 110, 253, .08);
+        color: #0d6efd;
+        font-weight: 500;
+        border-radius: 50rem;
+        padding: .4rem .85rem;
+    }
+
+    .ajc-badge.is-empty {
+        background: #f1f3f5;
+        color: #868e96;
+        font-style: italic;
+    }
+
+    .ajc-btn {
+        border-radius: 50rem;
+        padding-left: 1.1rem;
+        padding-right: 1.1rem;
+    }
+
+    .ajc-btn .ajc-arrow { display: inline-block; transition: transform .2s ease; }
+    .ajc-card:hover .ajc-arrow { transform: translateX(4px); }
+
+    .ajc-empty {
+        border: 2px dashed #dee2e6;
+        border-radius: 1rem;
+        background: #fff;
+    }
+</style>
+
 <div class="container py-5">
-    <header class="rounded-3 bg-light p-4 p-md-5 mb-4">
-        <h1 class="h2 fw-bold mb-2">Doanh nghiệp</h1>
-        <p class="text-muted mb-0">
-            Khám phá các doanh nghiệp đang tham gia AlumniJobConnect.
+
+    <header class="ajc-hero mb-5">
+        <span class="badge rounded-pill bg-white text-primary fw-semibold mb-3 px-3 py-2">
+            AlumniJobConnect
+        </span>
+        <h1 class="display-6 fw-bold mb-2">Doanh nghiệp</h1>
+        <p class="lead mb-4 opacity-75">
+            Khám phá các doanh nghiệp đang đồng hành cùng cộng đồng cựu sinh viên.
         </p>
+
+        @if (Model.Count > 0)
+        {
+            <div class="input-group ajc-search">
+                <span class="input-group-text bg-white text-muted" aria-hidden="true">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85zm-5.242.656a5 5 0 1 1 0-10 5 5 0 0 1 0 10z" />
+                    </svg>
+                </span>
+                <input id="companySearch"
+                       type="search"
+                       class="form-control"
+                       placeholder="Tìm theo tên doanh nghiệp hoặc ngành nghề..."
+                       aria-label="Tìm kiếm doanh nghiệp"
+                       autocomplete="off" />
+            </div>
+        }
     </header>
 
     @if (Model.Count == 0)
     {
-        <div class="alert alert-light border" role="status">
-            Chưa có hồ sơ doanh nghiệp nào.
+        <div class="ajc-empty text-center p-5" role="status">
+            <div class="display-4 mb-2" aria-hidden="true">🏢</div>
+            <h2 class="h5 fw-bold">Chưa có hồ sơ doanh nghiệp nào</h2>
+            <p class="text-muted mb-0">Hãy quay lại sau, các doanh nghiệp mới sẽ sớm xuất hiện tại đây.</p>
         </div>
     }
     else
     {
-        <p class="text-muted mb-3">@Model.Count doanh nghiệp</p>
+        <div class="d-flex align-items-center justify-content-between mb-3">
+            <p class="text-muted mb-0">
+                Hiển thị <strong id="companyCount" class="text-body">@Model.Count</strong>
+                / @Model.Count doanh nghiệp
+            </p>
+        </div>
 
-        <div class="row g-4">
+        <div class="row g-4" id="companyGrid">
             @foreach (var company in Model)
             {
-                <div class="col-md-6 col-lg-4">
-                    <article class="card border-0 shadow-sm h-100">
-                        <div class="card-body p-4 d-flex flex-column">
-                            <h2 class="h5 fw-bold mb-2">
-                                @company.CompanyName
-                            </h2>
+                var name = string.IsNullOrWhiteSpace(company.CompanyName) ? "Chưa đặt tên" : company.CompanyName.Trim();
+                var hasIndustry = !string.IsNullOrWhiteSpace(company.Industry);
+                var industry = hasIndustry ? company.Industry!.Trim() : "Chưa cập nhật ngành nghề";
+                var initial = name.Substring(0, 1).ToUpperInvariant();
+                var colorIndex = name.Sum(c => (int)c) % 6;
 
-                            <p class="text-muted mb-3">
-                                @(string.IsNullOrWhiteSpace(company.Industry)
-                                                        ? "Chưa cập nhật ngành nghề"
-                                                        : company.Industry)
-                    </p>
+                <div class="col-md-6 col-lg-4 company-item"
+                     data-search="@((name + " " + (hasIndustry ? industry : "")).ToLowerInvariant())">
+                    <article class="card ajc-card shadow-sm h-100">
+                        <div class="card-body p-4 d-flex flex-column">
+                            <div class="d-flex align-items-center gap-3 mb-3">
+                                <div class="ajc-avatar ajc-av-@colorIndex" aria-hidden="true">@initial</div>
+                                <h2 class="h5 fw-bold mb-0 ajc-name" title="@name">@name</h2>
+                            </div>
+
+                            <div class="mb-4">
+                                <span class="ajc-badge @(hasIndustry ? "" : "is-empty") d-inline-block small">
+                                    @industry
+                                </span>
+                            </div>
 
                             <div class="mt-auto">
-                                <a class="btn btn-outline-primary btn-sm"
+                                <a class="btn btn-primary ajc-btn btn-sm w-100"
                                    href="@Url.Action("Details", "CompanyProfile", new { area = "", id = company.CompanyId })">
-                                    Xem hồ sơ
+                                    Xem hồ sơ <span class="ajc-arrow" aria-hidden="true">→</span>
                                 </a>
                             </div>
                         </div>
                     </article>
                 </div>
-                }
+            }
+        </div>
+
+        <div id="noResult" class="ajc-empty text-center p-5 mt-2 d-none" role="status">
+            <div class="display-4 mb-2" aria-hidden="true">🔍</div>
+            <h2 class="h5 fw-bold">Không tìm thấy doanh nghiệp phù hợp</h2>
+            <p class="text-muted mb-0">Thử đổi từ khóa khác nhé.</p>
         </div>
     }
 </div>
+
+@if (Model.Count > 0)
+{
+    <script>
+        (function () {
+            var input = document.getElementById('companySearch');
+            if (!input) return;
+
+            var items = document.querySelectorAll('.company-item');
+            var counter = document.getElementById('companyCount');
+            var noResult = document.getElementById('noResult');
+
+            input.addEventListener('input', function () {
+                var keyword = input.value.trim().toLowerCase();
+                var visible = 0;
+
+                items.forEach(function (el) {
+                    var match = el.getAttribute('data-search').indexOf(keyword) !== -1;
+                    el.classList.toggle('d-none', !match);
+                    if (match) visible++;
+                });
+
+                counter.textContent = visible;
+                noResult.classList.toggle('d-none', visible !== 0);
+            });
+        })();
+    </script>
+}

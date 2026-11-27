@@ -249,9 +249,14 @@
             }
 
         .mentor-inbox {
-            right: 24px;
-            bottom: 90px;
+            right: 30px;
+            bottom: 92px;
+            gap: 12px;
+            padding: 7px 20px 7px 7px;
+            font-size: 14px;
+            letter-spacing: .2px;
             background: linear-gradient(135deg, #00b074, #008f68);
+            border: 1px solid rgba(255, 255, 255, .28);
             box-shadow: var(--aj-shadow-brand);
         }
 
@@ -260,14 +265,44 @@
                 box-shadow: 0 14px 32px rgba(0, 143, 104, .5);
             }
 
+            .mentor-inbox .mentor-icon {
+                display: grid;
+                flex: none;
+                place-items: center;
+                width: 40px;
+                height: 40px;
+                background: rgba(255, 255, 255, .2);
+                border-radius: 50%;
+                transition: transform .25s ease, background .2s ease;
+            }
+
+            .mentor-inbox:hover .mentor-icon {
+                background: rgba(255, 255, 255, .3);
+                transform: rotate(-8deg) scale(1.06);
+            }
+
+            .mentor-inbox .mentor-label {
+                line-height: 1;
+                white-space: nowrap;
+            }
+
             .mentor-inbox .mentor-badge {
+                position: absolute;
+                top: -7px;
+                right: -5px;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
                 min-width: 24px;
-                padding: 2px 8px;
-                font-size: .8rem;
-                text-align: center;
+                height: 24px;
+                padding: 0 6px;
                 color: #fff;
-                background: #dc3545;
-                border-radius: 20px;
+                font-size: 11px;
+                font-weight: 700;
+                line-height: 1;
+                background: #e5384b;
+                border: 2px solid #fff;
+                border-radius: 999px;
                 animation: ajPulse 2s infinite;
             }
 
@@ -319,9 +354,12 @@
             .mentor-inbox {
                 right: 14px;
                 bottom: 80px;
-                padding: 12px 16px;
-                font-size: 14px;
+                padding: 7px;
             }
+
+                .mentor-inbox .mentor-label {
+                    display: none;
+                }
 
             .ai-assistant-link {
                 left: 12px;
@@ -494,8 +532,15 @@
            data-unread-url="@Url.RouteUrl("MentorChatUnread")"
            aria-label="Mở tin nhắn tư vấn">
 
-            <span aria-hidden="true">💬</span>
-            <span>Tin nhắn</span>
+            <span class="mentor-icon" aria-hidden="true">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
+                     stroke="currentColor" stroke-width="2"
+                     stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 8.9 8.9 0 0 1-3.6-.8L3 21l1.9-5.2A8.3 8.3 0 0 1 3 11.5 8.5 8.5 0 0 1 12 3a8.5 8.5 0 0 1 9 8.5Z" />
+                    <path d="M8 10.5h8M8 14h5" />
+                </svg>
+            </span>
+            <span class="mentor-label">Tin nhắn</span>
 
             <span id="mentorUnreadBadge"
                   class="mentor-badge"

@@ -5,86 +5,864 @@
     ViewData["Title"] = "Tìm cựu sinh viên";
     var companyFilter = ViewData["CompanyFilter"] as string ?? "";
     var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+    var availableCount = Model.Count(p => p.IsAvailable);
+    var hasFilter = companyFilter.Length > 0;
+
+    string[] Tags(string text) =>
+        (text ?? "")
+            .Split(new[] { ',', ';', '|', '/' }, StringSplitOptions.RemoveEmptyEntries)
+            .Select(t => t.Trim())
+            .Where(t => t.Length > 0)
+            .ToArray();
+
+    string Initial(string fullName)
+    {
+        if (string.IsNullOrWhiteSpace(fullName)) return "?";
+        var last = fullName.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries).Last();
+        return last.Substring(0, 1).ToUpper();
+    }
 }
 
-<div class="container py-5">
-    <header class="rounded-3 bg-light p-4 p-md-5 mb-4">
-        <h1 class="h2 fw-bold mb-2">Tìm cựu sinh viên</h1>
-        <p class="text-muted mb-0">
-            Tìm anh chị đi trước để hỏi về công việc và kinh nghiệm ứng tuyển.
-        </p>
+<style>
+    .mt-page {
+        --mt-primary: #00a673;
+        --mt-primary-dark: #008c61;
+        --mt-soft: #e8f7f0;
+        --mt-ink: #14302a;
+        --mt-text: #476357;
+        --mt-muted: #6b7f76;
+        --mt-line: #dcebe4;
+        --mt-bg: #f6fbf8;
+        color: var(--mt-ink);
+    }
+
+        .mt-page .ic {
+            flex: none;
+            width: 18px;
+            height: 18px;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+    /* ---------- Hero ---------- */
+    .mt-hero {
+        position: relative;
+        overflow: hidden;
+        padding: 44px 40px 118px;
+        border-radius: 24px;
+        color: #fff;
+        background: radial-gradient(560px 280px at 92% 0%, rgba(255,255,255,.2), transparent 65%), radial-gradient(460px 280px at 0% 110%, rgba(0,0,0,.2), transparent 60%), linear-gradient(135deg, #00b27c 0%, #0a7a5a 100%);
+    }
+
+        .mt-hero::before,
+        .mt-hero::after {
+            content: "";
+            position: absolute;
+            border-radius: 50%;
+            border: 1px solid rgba(255,255,255,.16);
+            pointer-events: none;
+        }
+
+        .mt-hero::before {
+            width: 300px;
+            height: 300px;
+            right: -70px;
+            top: -110px;
+        }
+
+        .mt-hero::after {
+            width: 480px;
+            height: 480px;
+            right: -170px;
+            top: -190px;
+        }
+
+    .mt-hero-inner {
+        position: relative;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 24px;
+    }
+
+    .mt-eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 14px;
+        border-radius: 999px;
+        background: rgba(255,255,255,.16);
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: .1em;
+        text-transform: uppercase;
+    }
+
+    .mt-hero h1 {
+        margin: 16px 0 10px;
+        color: #fff;
+        font-size: clamp(28px, 4vw, 40px);
+        font-weight: 800;
+        letter-spacing: -.02em;
+    }
+
+    .mt-hero p {
+        max-width: 560px;
+        margin: 0;
+        color: rgba(255,255,255,.88);
+        font-size: 16px;
+        line-height: 1.6;
+    }
+
+    .mt-stats {
+        display: flex;
+        gap: 12px;
+    }
+
+    .mt-stat {
+        min-width: 120px;
+        padding: 12px 18px;
+        border-radius: 16px;
+        background: rgba(255,255,255,.14);
+        border: 1px solid rgba(255,255,255,.22);
+        backdrop-filter: blur(8px);
+    }
+
+        .mt-stat b {
+            display: block;
+            font-size: 28px;
+            font-weight: 800;
+            line-height: 1.1;
+        }
+
+        .mt-stat span {
+            font-size: 13px;
+            opacity: .85;
+        }
+
+    /* ---------- Search panel ---------- */
+    .mt-panel {
+        position: relative;
+        z-index: 2;
+        margin: -70px 24px 20px;
+        padding: 22px 24px;
+        border: 1px solid var(--mt-line);
+        border-radius: 20px;
+        background: #fff;
+        box-shadow: 0 20px 48px rgba(10, 80, 55, .13);
+    }
+
+        .mt-panel label.mt-label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: .02em;
+        }
+
+    .mt-form-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+
+    .mt-field {
+        position: relative;
+        flex: 1 1 18rem;
+    }
+
+        .mt-field .ic {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--mt-primary);
+            pointer-events: none;
+        }
+
+    .mt-input {
+        display: block;
+        width: 100%;
+        min-height: 48px;
+        padding: 11px 14px 11px 42px;
+        border: 1px solid transparent;
+        border-radius: 12px;
+        background: var(--mt-bg);
+        color: var(--mt-ink);
+        font-size: 15px;
+        transition: border-color .15s, box-shadow .15s, background .15s;
+    }
+
+        .mt-input::placeholder {
+            color: #98aaa1;
+        }
+
+        .mt-input:hover {
+            border-color: var(--mt-line);
+        }
+
+        .mt-input:focus {
+            outline: none;
+            background: #fff;
+            border-color: var(--mt-primary);
+            box-shadow: 0 0 0 4px rgba(0, 166, 115, .14);
+        }
+
+    .mt-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        min-height: 48px;
+        padding: 10px 26px;
+        border: 1px solid transparent;
+        border-radius: 12px;
+        font: inherit;
+        font-weight: 700;
+        text-decoration: none;
+        cursor: pointer;
+        transition: transform .15s, box-shadow .15s, background .15s;
+    }
+
+        .mt-btn.primary {
+            background: linear-gradient(135deg, #00b27c, var(--mt-primary-dark));
+            color: #fff;
+            box-shadow: 0 10px 20px -8px rgba(0, 140, 97, .7);
+        }
+
+            .mt-btn.primary:hover {
+                transform: translateY(-1px);
+                color: #fff;
+                box-shadow: 0 14px 24px -8px rgba(0, 140, 97, .75);
+            }
+
+        .mt-btn.ghost {
+            background: #fff;
+            border-color: #d5e4dc;
+            color: var(--mt-text);
+        }
+
+            .mt-btn.ghost:hover {
+                background: var(--mt-bg);
+                color: var(--mt-ink);
+            }
+
+    .mt-foot {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px 10px;
+        margin-top: 14px;
+        padding-top: 14px;
+        border-top: 1px dashed var(--mt-line);
+    }
+
+        .mt-foot .lbl {
+            color: var(--mt-muted);
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+    .mt-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 5px 8px 5px 12px;
+        border-radius: 999px;
+        background: var(--mt-soft);
+        color: #00724f;
+        font-size: 13px;
+        font-weight: 600;
+    }
+
+        .mt-chip a {
+            display: grid;
+            place-items: center;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            color: #00724f;
+            line-height: 1;
+            text-decoration: none;
+        }
+
+            .mt-chip a:hover {
+                background: rgba(0, 114, 79, .16);
+            }
+
+    /* ---------- Result head ---------- */
+    .mt-result-head {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin: 28px 0 18px;
+    }
+
+        .mt-result-head h2 {
+            margin: 0;
+            font-size: 22px;
+            font-weight: 800;
+        }
+
+        .mt-result-head p {
+            margin: 4px 0 0;
+            color: var(--mt-muted);
+            font-size: 14px;
+        }
+
+        .mt-result-head strong {
+            color: var(--mt-primary-dark);
+        }
+
+    .mt-switch {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        margin: 0;
+        color: var(--mt-text);
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        user-select: none;
+    }
+
+        .mt-switch input {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .mt-switch .track {
+            position: relative;
+            width: 40px;
+            height: 22px;
+            border-radius: 999px;
+            background: #cfe0d8;
+            transition: background .2s;
+        }
+
+            .mt-switch .track::after {
+                content: "";
+                position: absolute;
+                left: 3px;
+                top: 3px;
+                width: 16px;
+                height: 16px;
+                border-radius: 50%;
+                background: #fff;
+                box-shadow: 0 1px 3px rgba(0,0,0,.25);
+                transition: transform .2s;
+            }
+
+        .mt-switch input:checked + .track {
+            background: var(--mt-primary);
+        }
+
+            .mt-switch input:checked + .track::after {
+                transform: translateX(18px);
+            }
+
+        .mt-switch input:focus-visible + .track {
+            box-shadow: 0 0 0 4px rgba(0,166,115,.22);
+        }
+
+    /* ---------- Card ---------- */
+    .mt-card {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        overflow: hidden;
+        border: 1px solid var(--mt-line);
+        border-radius: 22px;
+        background: #fff;
+        box-shadow: 0 4px 16px rgba(25, 80, 55, .04);
+        transition: transform .2s, box-shadow .2s, border-color .2s;
+        animation: mt-rise .5s ease both;
+        animation-delay: calc(var(--i, 0) * 55ms);
+    }
+
+        .mt-card::before {
+            content: "";
+            height: 72px;
+            background: radial-gradient(160px 80px at 100% 0%, rgba(255,255,255,.35), transparent 70%), linear-gradient(135deg, hsl(var(--h, 160) 55% 48%), hsl(calc(var(--h, 160) + 30) 60% 38%));
+        }
+
+        .mt-card:hover {
+            transform: translateY(-5px);
+            border-color: #b7e0cf;
+            box-shadow: 0 20px 36px -16px rgba(25, 80, 55, .3);
+        }
+
+        .mt-card.is-away::before {
+            filter: grayscale(.85);
+            opacity: .8;
+        }
+
+    .mt-body {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        padding: 0 24px 22px;
+    }
+
+    .mt-avatar-wrap {
+        position: relative;
+        width: 72px;
+        margin: -36px 0 12px;
+    }
+
+    .mt-avatar {
+        display: grid;
+        place-items: center;
+        width: 72px;
+        height: 72px;
+        border: 4px solid #fff;
+        border-radius: 50%;
+        background: hsl(var(--h, 160) 55% 94%);
+        color: hsl(var(--h, 160) 60% 30%);
+        font-size: 28px;
+        font-weight: 800;
+        box-shadow: 0 8px 18px -8px rgba(0,0,0,.3);
+    }
+
+    .mt-dot {
+        position: absolute;
+        right: 2px;
+        bottom: 4px;
+        width: 16px;
+        height: 16px;
+        border: 3px solid #fff;
+        border-radius: 50%;
+        background: #22c55e;
+    }
+
+    .mt-card.is-away .mt-dot {
+        background: #94a3b8;
+    }
+
+    .mt-name {
+        margin: 0 0 4px;
+        font-size: 20px;
+        font-weight: 800;
+        overflow-wrap: anywhere;
+    }
+
+    .mt-role {
+        margin: 0;
+        color: var(--mt-ink);
+        font-size: 15px;
+        font-weight: 600;
+        overflow-wrap: anywhere;
+    }
+
+    .mt-company {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        margin: 6px 0 0;
+        color: var(--mt-muted);
+        font-size: 14px;
+        overflow-wrap: anywhere;
+    }
+
+        .mt-company .ic {
+            width: 15px;
+            height: 15px;
+            color: var(--mt-primary);
+        }
+
+    .mt-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 14px;
+    }
+
+    .mt-tag {
+        padding: 4px 11px;
+        border-radius: 999px;
+        background: var(--mt-soft);
+        color: #007a55;
+        font-size: 12.5px;
+        font-weight: 700;
+    }
+
+    .mt-intro {
+        display: -webkit-box;
+        -webkit-line-clamp: 4;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        margin: 14px 0 0;
+        padding: 12px 14px;
+        border-left: 3px solid var(--mt-primary);
+        border-radius: 0 12px 12px 0;
+        background: var(--mt-bg);
+        color: var(--mt-text);
+        font-size: 14px;
+        line-height: 1.65;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+    }
+
+    .mt-spacer {
+        flex: 1;
+        min-height: 14px;
+    }
+
+    .mt-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 5px 12px;
+        border-radius: 999px;
+        font-size: 12.5px;
+        font-weight: 700;
+    }
+
+        .mt-status::before {
+            content: "";
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: currentColor;
+        }
+
+        .mt-status.on {
+            background: #dcfce7;
+            color: #15803d;
+        }
+
+        .mt-status.off {
+            background: #e2e8f0;
+            color: #475569;
+        }
+
+    .mt-actions {
+        margin-top: 14px;
+    }
+
+        .mt-actions form {
+            margin: 0;
+        }
+
+    .mt-cta {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        width: 100%;
+        min-height: 46px;
+        padding: 10px 14px;
+        border: 1px solid transparent;
+        border-radius: 13px;
+        font: inherit;
+        font-size: 14.5px;
+        font-weight: 700;
+        text-decoration: none;
+        cursor: pointer;
+        transition: transform .15s, box-shadow .15s, background .15s, color .15s;
+    }
+
+        .mt-cta.primary {
+            background: linear-gradient(135deg, #00b27c, var(--mt-primary-dark));
+            color: #fff;
+            box-shadow: 0 10px 20px -10px rgba(0, 140, 97, .75);
+        }
+
+            .mt-cta.primary:hover {
+                transform: translateY(-1px);
+                color: #fff;
+            }
+
+        .mt-cta.outline {
+            background: #fff;
+            border-color: var(--mt-primary);
+            color: var(--mt-primary-dark);
+        }
+
+            .mt-cta.outline:hover {
+                background: var(--mt-primary);
+                color: #fff;
+            }
+
+    .mt-me {
+        margin-left: 6px;
+        padding: 5px 12px;
+        border-radius: 999px;
+        background: #fef3c7;
+        color: #92600a;
+        font-size: 12.5px;
+        font-weight: 700;
+    }
+
+    /* ---------- Empty ---------- */
+    .mt-empty {
+        padding: 56px 20px;
+        text-align: center;
+        border: 1px dashed #bcd6c9;
+        border-radius: 20px;
+        background: linear-gradient(180deg, var(--mt-bg), #fff);
+    }
+
+        .mt-empty .big {
+            display: grid;
+            place-items: center;
+            width: 72px;
+            height: 72px;
+            margin: 0 auto 14px;
+            border-radius: 20px;
+            background: var(--mt-soft);
+            color: var(--mt-primary);
+        }
+
+            .mt-empty .big .ic {
+                width: 34px;
+                height: 34px;
+                stroke-width: 1.7;
+            }
+
+        .mt-empty h3 {
+            margin-bottom: 6px;
+            font-size: 20px;
+            font-weight: 800;
+        }
+
+    @@keyframes mt-rise {
+        from {
+            opacity: 0;
+            transform: translateY(14px);
+        }
+
+        to {
+            opacity: 1;
+            transform: none;
+        }
+    }
+
+    @@media (prefers-reduced-motion: reduce) {
+        .mt-card {
+            animation: none;
+        }
+
+        .mt-page * {
+            transition: none !important;
+        }
+    }
+
+    @@media (max-width: 767px) {
+        .mt-hero {
+            padding: 28px 22px 106px;
+            border-radius: 18px;
+        }
+
+        .mt-panel {
+            margin: -70px 6px 18px;
+            padding: 18px;
+        }
+
+        .mt-btn {
+            flex: 1 1 100%;
+        }
+    }
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+        <symbol id="mt-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></symbol>
+        <symbol id="mt-building" viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2" /><path d="M9 7h2M13 7h2M9 11h2M13 11h2M9 15h2M13 15h2" /></symbol>
+        <symbol id="mt-chat" viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-11.5 7.2L4 20l1-4.3A8 8 0 1 1 21 12z" /></symbol>
+        <symbol id="mt-edit" viewBox="0 0 24 24"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" /></symbol>
+        <symbol id="mt-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5" /><path d="M2.5 20a6.5 6.5 0 0 1 13 0" /><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14.5a6.5 6.5 0 0 1 3.5 5.5" /></symbol>
+        <symbol id="mt-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12" /></symbol>
+        <symbol id="mt-spark" viewBox="0 0 24 24"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M18.4 5.6l-2.8 2.8M8.4 15.6l-2.8 2.8" /></symbol>
+    </defs>
+</svg>
+
+<div class="container py-5 mt-page">
+
+    @* ================= HERO ================= *@
+    <header class="mt-hero">
+        <div class="mt-hero-inner">
+            <div>
+                <span class="mt-eyebrow">
+                    <svg class="ic" width="14" height="14" aria-hidden="true"><use href="#mt-spark" /></svg>
+                    Kết nối cựu sinh viên
+                </span>
+                <h1>Tìm cựu sinh viên</h1>
+                <p>
+                    Tìm anh chị đi trước để hỏi về công việc và kinh nghiệm ứng tuyển —
+                    một cuộc trò chuyện đúng người có thể mở ra cơ hội mới.
+                </p>
+            </div>
+
+            <div class="mt-stats">
+                <div class="mt-stat"><b>@Model.Count</b><span>@(hasFilter ? "Kết quả phù hợp" : "Cựu sinh viên")</span></div>
+                <div class="mt-stat"><b>@availableCount</b><span>Sẵn sàng tư vấn</span></div>
+            </div>
+        </div>
     </header>
 
     @if (TempData["MentorRequestSuccess"] is string success)
     {
-        <div class="alert alert-success" role="status">@success</div>
+        <div class="alert alert-success border-0 shadow-sm rounded-4 mt-4 mb-0" role="status">@success</div>
     }
 
-    <form method="get" action="@Url.RouteUrl("MentorDirectory")" class="mb-4">
-        <label for="company" class="form-label fw-semibold">Công ty đang làm</label>
-        <div class="d-flex flex-wrap gap-2">
-            <input id="company" name="company" type="search"
-                   class="form-control w-auto flex-grow-1"
-                   value="@companyFilter" placeholder="Ví dụ FPT Software" />
-            <button type="submit" class="btn btn-primary">Tìm cựu sinh viên</button>
-            <a class="btn btn-outline-secondary" href="@Url.RouteUrl("MentorDirectory")">Đặt lại</a>
+    @* ================= SEARCH ================= *@
+    <form method="get" action="@Url.RouteUrl("MentorDirectory")" class="mt-panel" role="search">
+        <label for="company" class="mt-label">Công ty đang làm</label>
+        <div class="mt-form-row">
+            <div class="mt-field">
+                <svg class="ic" aria-hidden="true"><use href="#mt-building" /></svg>
+                <input id="company" name="company" type="search"
+                       class="mt-input"
+                       value="@companyFilter" placeholder="Ví dụ FPT Software" />
+            </div>
+
+            <button type="submit" class="mt-btn primary">
+                <svg class="ic" aria-hidden="true"><use href="#mt-search" /></svg>
+                Tìm cựu sinh viên
+            </button>
+
+            <a class="mt-btn ghost" href="@Url.RouteUrl("MentorDirectory")">Đặt lại</a>
         </div>
+
+        @if (hasFilter)
+        {
+            <div class="mt-foot">
+                <span class="lbl">Đang lọc:</span>
+                <span class="mt-chip">
+                    Công ty: @companyFilter
+                    <a href="@Url.RouteUrl("MentorDirectory")" aria-label="Bỏ lọc công ty">
+                        <svg class="ic" width="12" height="12" aria-hidden="true"><use href="#mt-x" /></svg>
+                    </a>
+                </span>
+            </div>
+        }
     </form>
 
+    @* ================= LIST ================= *@
     @if (Model.Count == 0)
     {
-        <div class="alert alert-light border" role="status">
-            @(companyFilter.Length > 0
-                    ? "Không tìm thấy cựu sinh viên tại công ty bạn nhập."
-                    : "Hiện chưa có hồ sơ cựu sinh viên.")
-    </div>
-        }
+        <div class="mt-empty mt-4">
+            <div class="big"><svg class="ic" aria-hidden="true"><use href="#mt-users" /></svg></div>
+            <h3>@(hasFilter ? "Không tìm thấy cựu sinh viên" : "Chưa có hồ sơ cựu sinh viên")</h3>
+            <p class="text-muted mb-0" role="status">
+                @(hasFilter
+                            ? "Không tìm thấy cựu sinh viên tại công ty bạn nhập."
+                            : "Hiện chưa có hồ sơ cựu sinh viên.")
+        </p>
+
+        @if (hasFilter)
+            {
+                <a class="mt-btn primary mt-4" href="@Url.RouteUrl("MentorDirectory")">Xem tất cả cựu sinh viên</a>
+            }
+        </div>
+    }
     else
     {
-        <p class="text-muted">@Model.Count cựu sinh viên trong kết quả</p>
-        <div class="row g-4">
+        <div class="mt-result-head">
+            <div>
+                <h2>Danh sách cựu sinh viên</h2>
+                <p aria-live="polite"><strong id="mtShown">@Model.Count</strong> cựu sinh viên trong kết quả</p>
+            </div>
+
+            @if (availableCount > 0 && availableCount < Model.Count)
+            {
+                <label class="mt-switch">
+                    <input type="checkbox" id="mtOnlyAvailable" />
+                    <span class="track" aria-hidden="true"></span>
+                    Chỉ hiện người sẵn sàng tư vấn
+                </label>
+            }
+        </div>
+
+        <div class="row g-4" id="mtGrid">
+            @{
+                var idx = 0;
+            }
             @foreach (var person in Model)
             {
-                <div class="col-md-6 col-lg-4">
-                    <article class="card border-0 shadow-sm h-100">
-                        <div class="card-body p-4 d-flex flex-column">
-                            <h2 class="h5 fw-bold mb-2">@person.FullName</h2>
-                            <p class="mb-1">
+                var hue = (person.FullName ?? "").Sum(c => (int)c) % 360;
+                var tags = Tags(person.Expertise);
+                var isMe = currentUserId == person.UserId.ToString();
+
+                <div class="col-md-6 col-lg-4 mt-item" data-available="@(person.IsAvailable ? "true" : "false")">
+                    <article class="mt-card @(person.IsAvailable ? "" : "is-away")" style="--h:@hue; --i:@(idx++ % 9)">
+                        <div class="mt-body">
+                            <div class="mt-avatar-wrap">
+                                <div class="mt-avatar" aria-hidden="true">@Initial(person.FullName)</div>
+                                <span class="mt-dot" title="@(person.IsAvailable ? "Sẵn sàng tư vấn" : "Tạm ngừng nhận tư vấn")"></span>
+                            </div>
+
+                            <h2 class="mt-name">@person.FullName</h2>
+
+                            <p class="mt-role">
                                 @(string.IsNullOrWhiteSpace(person.JobTitle) ? "Chưa cập nhật vị trí" : person.JobTitle)
                             </p>
-                            <p class="text-muted mb-3">
+
+                            <p class="mt-company">
+                                <svg class="ic" aria-hidden="true"><use href="#mt-building" /></svg>
                                 @(string.IsNullOrWhiteSpace(person.CompanyName) ? "Chưa cập nhật công ty" : person.CompanyName)
                             </p>
-                            @if (!string.IsNullOrWhiteSpace(person.Expertise))
+
+                            @if (tags.Length > 0)
                             {
-                                <p class="text-primary fw-semibold mb-2">@person.Expertise</p>
+                                <div class="mt-tags">
+                                    @foreach (var tag in tags.Take(4))
+                                    {
+                                        <span class="mt-tag">@tag</span>
+                                    }
+                                    @if (tags.Length > 4)
+                                    {
+                                        <span class="mt-tag">+@(tags.Length - 4)</span>
+                                    }
+                                </div>
                             }
+
                             @if (!string.IsNullOrWhiteSpace(person.Introduction))
                             {
-                                <p class="text-break" style="white-space: pre-wrap;">@person.Introduction</p>
+                                <p class="mt-intro">@person.Introduction</p>
                             }
-                            <div class="mt-auto pt-3">
-                                @if (person.IsAvailable)
-                                {
-                                    <span class="badge bg-success">Sẵn sàng tư vấn</span>
-                                }
-                                else
-                                {
-                                    <span class="badge bg-secondary">Tạm ngừng nhận tư vấn</span>
-                                }
 
-                                @if (currentUserId == person.UserId.ToString())
+                            <div class="mt-spacer"></div>
+
+                            <div class="mt-actions">
+                                <div class="mb-3">
+                                    @if (person.IsAvailable)
+                                    {
+                                        <span class="mt-status on">Sẵn sàng tư vấn</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="mt-status off">Tạm ngừng nhận tư vấn</span>
+                                    }
+
+                                    @if (isMe)
+                                    {
+                                        <span class="mt-me">Hồ sơ của bạn</span>
+                                    }
+                                </div>
+
+                                @if (isMe)
                                 {
-                                    <a class="btn btn-outline-primary btn-sm mt-3 d-block"
+                                    <a class="mt-cta outline"
                                        href="@Url.Action("Index", "Profile")">
+                                        <svg class="ic" aria-hidden="true"><use href="#mt-edit" /></svg>
                                         Cập nhật công việc và tư vấn
                                     </a>
                                 }
                                 else if (person.IsAvailable)
                                 {
                                     <form method="post"
-                                          action="@Url.RouteUrl("StartMentorChat")"
-                                          class="mt-3">
+                                          action="@Url.RouteUrl("StartMentorChat")">
 
                                         @Html.AntiForgeryToken()
 
@@ -92,7 +870,8 @@
                                                name="mentorUserId"
                                                value="@person.UserId" />
 
-                                        <button type="submit" class="btn btn-primary w-100">
+                                        <button type="submit" class="mt-cta primary">
+                                            <svg class="ic" aria-hidden="true"><use href="#mt-chat" /></svg>
                                             Nhắn tin tư vấn
                                         </button>
                                     </form>
@@ -103,5 +882,27 @@
                 </div>
             }
         </div>
+
+        <script>
+            (function () {
+                var toggle = document.getElementById('mtOnlyAvailable');
+                var counter = document.getElementById('mtShown');
+                if (!toggle || !counter) return;
+
+                var items = Array.prototype.slice.call(document.querySelectorAll('#mtGrid .mt-item'));
+
+                toggle.addEventListener('change', function () {
+                    var shown = 0;
+
+                    items.forEach(function (el) {
+                        var hide = toggle.checked && el.dataset.available !== 'true';
+                        el.hidden = hide;
+                        if (!hide) shown++;
+                    });
+
+                    counter.textContent = shown;
+                });
+            })();
+        </script>
     }
 </div>
